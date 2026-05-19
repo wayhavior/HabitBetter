@@ -1,0 +1,2697 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,400;0,700;1,400&family=Itim&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Itim&display=swap');
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+}
+/* คัดลอก CSS เดิมของคุณทั้งหมดมาวางตรงนี้ และหาจุดที่เป็นสีเมนูแล้วเปลี่ยนเป็นโค้ดด้านล่างนี้ครับ */
+
+/* กำหนดสีแยกตาม ID (ย้ายไปไหนสีก็ไม่เปลี่ยน) */
+.menu-item[data-id="tracker"] { border-left: 5px solid #a855f7 !important; }
+.menu-item[data-id="routine"] { border-left: 5px solid #00d2ff !important; }
+.menu-item[data-id="daily"]   { border-left: 5px solid #ff7675 !important; }
+.menu-item[data-id="pomodoro"] { border-left: 5px solid #ff9f43 !important; }
+.menu-item[data-id="expense"] { border-left: 5px solid #00b894 !important; }
+.menu-item[data-id="longterm"] { border-left: 5px solid #f1c40f !important; }
+.menu-item[data-id="notes"]    { border-left: 5px solid #5f27cd !important; }
+.menu-item[data-id="tvm"]      { border-left: 5px solid #badc58 !important; }
+
+/* ===== MASTER CSS: WAYCHECKER 2.4 (อิงตามชุดเดิมของคุณ) ===== */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 20px;
+    transition: 0.3s;
+    min-height: 100vh;
+    /* แก้ไขตรงนี้: ล็อคพื้นหลังให้นิ่ง */
+    background-attachment: fixed;
+    background-color: #121212;
+    background-image: radial-gradient(circle at top, #1e1e1e 0%, #121212 45%, #000000 100%);
+    color: white;
+}
+
+body.dark-mode {
+    background-color: #121212;
+    color: white;
+    /* แก้ไขตรงนี้: ล็อคพื้นหลังโหมดมืดให้นิ่ง */
+    background-image: radial-gradient(circle at top, #1e1e1e 0%, #121212 45%, #000000 100%);
+}
+h1 {
+    text-align: center;
+    margin-top: 40px;  /* ✅ ลดจาก 110px เป็น 40px - ลดช่องว่างด้านบน */
+    margin-bottom: 20px;
+}
+.home-container h1 {
+    margin-top: 100px;
+}
+.home-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: auto;
+    gap: 8px;
+}
+.menu-item {
+    width: 90%;
+    max-width: 350px;
+    padding: 18px 15px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    text-align: center;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: 0.2s;
+}
+.menu-item:active { transform: scale(0.95); }
+body.dark-mode .menu-item { background: #2a2a2a; color: white; }
+
+/* ปุ่ม Fixed มุมจอ */
+.theme-btn, .zoom-btn, .back-btn {
+    position: fixed;
+    top: 15px;
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 22px;
+    cursor: pointer;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    z-index: 1000;
+    overflow: hidden;
+    line-height: 1;
+    padding: 0;
+}
+.theme-btn { right: 15px; }
+.zoom-btn { right: 105px; } 
+.back-btn { left: 15px; background: #00b894; color: white; }
+
+body.dark-mode .theme-btn, body.dark-mode .zoom-btn { background: #2a2a2a; color: white; }
+.settings-btn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 22px;
+    cursor: pointer;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    z-index: 1001;
+    transition: transform 0.2s;
+    overflow: hidden;
+    line-height: 1;
+    padding: 0;
+}
+body.dark-mode .settings-btn { background: #2a2a2a; color: white; }
+.settings-btn:active { transform: scale(0.9); }
+
+.settings-drawer {
+    position: fixed;
+    top: 80px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    transform-origin: top right;
+}
+.settings-drawer.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-20px) scale(0.85);
+    visibility: hidden;
+}
+.settings-drawer.visible {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0) scale(1);
+    visibility: visible;
+}
+
+.info { text-align: center; font-size: 14px; margin-bottom: 8px; }
+.progress-wrap { width: 100%; max-width: 1000px; height: 20px; background: #ddd; border-radius: 20px; margin: 0 auto 10px auto; overflow: hidden; }
+.progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#00c6ff,#0072ff); transition: 0.3s; }
+.grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; max-width: 1000px; margin: auto; }
+.cell { height: 60px; border-radius: 10px; border: 2px solid black; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; background: white; color: black; transition: 0.15s; }
+.summary { background: #ddd; }
+body.dark-mode .cell { border: 2px solid #666; color: white; background: #1f1f1f; }
+body.dark-mode .summary { background: #333; }
+
+.level-0 { background: white; } .level-1 { background: #dff6dd; } .level-2 { background: #b8e994; } .level-3 { background: #78e08f; } .level-4 { background: #38ada9; color: white; } .level-5 { background: #ff3b30; color: white; }
+body.dark-mode .level-0 { background: #1f1f1f; } body.dark-mode .level-1 { background: #2d572c; } body.dark-mode .level-2 { background: #3d7a3a; } body.dark-mode .level-3 { background: #2e8b57; } body.dark-mode .level-4 { background: #1f7a7a; } body.dark-mode .level-5 { background: #ff453a; }
+
+.custom-quote { margin-top: 25px; font-style: italic; color: #666; text-align: center; padding: 0 20px; font-size: 18px; line-height: 1.4; }
+body.dark-mode .custom-quote { color: #bbb; }
+
+.goals-page, .notes-page { display: flex; flex-direction: column; align-items: center; padding: 20px; padding-bottom: 100px; }
+.timer-box { background: #ff7675; color: white; padding: 10px 20px; border-radius: 50px; font-weight: bold; margin-bottom: 20px; font-size: 14px; }
+.add-box { width: 90%; max-width: 350px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.add-box input, .add-box textarea { padding: 15px; border-radius: 12px; border: 1px solid #ccc; font-size: 16px; outline: none; font-family: inherit; }
+.add-box button { padding: 15px; background: #00b894; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
+.goal-item, .note-card { width: 90%; max-width: 350px; background: white; margin: 8px 0; padding: 18px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; }
+.goal-item.done { opacity: 0.6; text-decoration: line-through; background: #dff6dd; }
+.long-term-item { border-left: 5px solid #f1c40f; }
+.del-btn { position: absolute; top: 10px; right: 10px; color: #ff3b30; cursor: pointer; opacity: 0.3; }
+body.dark-mode .goal-item, body.dark-mode .note-card { background: #2a2a2a; color: white; }
+
+/* ===== CLOCK DESIGN ===== */
+.datetime-container {
+    text-align: center; margin-bottom: 20px; padding: 15px 30px; background: white;
+    border-radius: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 90%; max-width: 350px;
+}
+body.dark-mode .datetime-container { background: #2a2a2a; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+.home-time { font-size: 48px; font-weight: bold; color: #00b894; letter-spacing: 2px; margin: 0; line-height: 1; }
+.home-date { font-size: 16px; color: #666; margin-top: 8px; font-weight: 500; }
+body.dark-mode .home-date { color: #aaa; }
+
+/* ===== TVM REDESIGN SCOPED ===== */
+.tvm-card-new { 
+    background: white; padding: 25px; border-radius: 25px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); width: 95%; max-width: 380px; 
+    color: black; display: flex; flex-direction: column; gap: 15px;
+}
+.tvm-label-thai { font-size: 14px; font-weight: bold; color: #555; margin-bottom: -10px; text-align: left; width: 100%; }
+.tvm-row-thai { display: flex; gap: 12px; align-items: center; width: 100%; }
+.tvm-card-new input { flex: 1; padding: 15px !important; border-radius: 12px !important; border: 2px solid #eee !important; font-size: 18px !important; background: #f9f9f9 !important; color: black !important; outline: none; transition: 0.2s; }
+.tvm-card-new input:focus { border-color: #00b894 !important; background: white !important; }
+.tvm-card-new button.calc-btn { width: 90px; padding: 15px !important; background: #00b894 !important; color: white !important; border: none !important; border-radius: 12px !important; font-weight: bold !important; cursor: pointer; box-shadow: 0 4px 10px rgba(0,184,148,0.3); }
+.tvm-card-new .reset-btn-thai { width: 100%; background: #ff7675 !important; padding: 15px; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+body.dark-mode .tvm-card-new { background: #2a2a2a; color: white; }
+body.dark-mode .tvm-label-thai { color: #aaa; }
+body.dark-mode .tvm-card-new input { background: #1f1f1f !important; color: white !important; border-color: #444 !important; }
+
+/* ===== POMODORO DESIGN ===== */
+.pomo-card { 
+    background: white; padding: 30px; border-radius: 25px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); width: 95%; max-width: 380px; 
+    color: black; display: flex; flex-direction: column; gap: 20px; text-align: center;
+}
+body.dark-mode .pomo-card { background: #2a2a2a; color: white; }
+.pomo-status-label { font-size: 24px; font-weight: bold; padding: 10px; border-radius: 15px; margin-bottom: 5px; }
+.status-focus { background: #ffeaa7; color: #d63031; }
+.status-break { background: #dff9fb; color: #0984e3; }
+.pomo-timer-display { font-size: 72px; font-weight: bold; color: #ff7675; letter-spacing: 2px; }
+.pomo-btns { display: flex; gap: 10px; justify-content: center; }
+.pomo-btns button { flex: 1; padding: 15px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
+.btn-start { background: #00b894; }
+.btn-stop { background: #fab1a0; }
+.btn-reset { background: #74b9ff; }
+.pomo-setup-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+.pomo-input-box { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: bold; }
+.pomo-input-box input { padding: 8px; border-radius: 10px; border: 1px solid #ddd; text-align: center; font-size: 16px; width: 100%; box-sizing: border-box; }
+
+/* ===== EXPENSE & ARCHIVE DESIGN (ใหม่) ===== */
+.expense-card {
+    background: white; padding: 25px; border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 95%; max-width: 380px;
+    margin-bottom: 20px; color: black;
+}
+body.dark-mode .expense-card { background: #2a2a2a; color: white; }
+.expense-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+.summary-box { padding: 15px; border-radius: 15px; text-align: center; }
+.income-box { background: #dff6dd; color: #2d572c; }
+.out-box { background: #ffeaa7; color: #d63031; }
+.balance-box { grid-column: span 2; background: #00b894; color: white; font-size: 24px; font-weight: bold; }
+.archive-item {
+    background: #eee; padding: 12px; border-radius: 15px; margin-bottom: 10px;
+    font-size: 14px; border: 1px solid #ccc; color: #333; text-align: left;
+}
+body.dark-mode .archive-item { background: #333; color: #ddd; border-color: #444; }
+.expense-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px; background: white; border-radius: 15px;
+    margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; color: black;
+}
+body.dark-mode .expense-item { background: #333; color: white; }
+.ex-type-in { border-left: 5px solid #00b894; }
+.ex-type-out { border-left: 5px solid #ff7675; }
+.ex-amt { font-weight: bold; font-size: 18px; }
+.ex-date { font-size: 11px; color: #999; }
+/* =====================================
+   HOME FIX ONLY
+   ไม่ยุ่ง 720 tracker
+===================================== */
+
+/* เฉพาะหน้า home */
+.home-container{
+
+    justify-content: flex-start !important;
+
+    min-height: auto !important;
+
+    padding-top: 20px !important;
+}
+
+/* title หน้า home เท่านั้น */
+.home-container h1{
+
+    margin-top: 0 !important;
+
+    margin-bottom: 20px !important;
+}
+
+/* เฉพาะปุ่มในหน้า home */
+.home-container .theme-btn,
+.home-container .zoom-btn{
+
+    width: 64px !important;
+    height: 64px !important;
+
+    border-radius: 18px !important;
+
+    font-size: 28px !important;
+}
+
+/* กันนาฬิกาถูกดัน */
+.home-container .datetime-container{
+    margin-top: 0 !important;
+}
+
+/* menu spacing */
+.home-container .menu-item{
+    margin-top: 0 !important;
+}
+/* =========================================
+   HABIT BETTER UI UPGRADE
+   วางท้ายสุดของ CSS เดิม
+========================================= */
+
+/* ===== BACKGROUND ===== */
+
+body.dark-mode{
+
+    background:
+    radial-gradient(
+        circle at top,
+        #1e1e1e 0%,
+        #121212 45%,
+        #000 100%
+    );
+}
+
+/* ===== TITLE ===== */
+
+.home-container h1{
+
+    font-size: 52px;
+
+    font-weight: 800;
+
+    letter-spacing: -1px;
+
+    margin-bottom: 25px !important;
+
+    text-shadow:
+    0 0 18px rgba(255,255,255,0.06);
+}
+
+/* ===== GLASS EFFECT ===== */
+
+.menu-item,
+.datetime-container,
+.progress-wrap{
+
+    background:
+    rgba(40,40,40,0.75) !important;
+
+    backdrop-filter:
+    blur(12px);
+
+    -webkit-backdrop-filter:
+    blur(12px);
+
+    border:
+    1px solid rgba(255,255,255,0.05);
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,0.35);
+}
+
+/* ===== MENU ITEM ===== */
+
+.menu-item{
+
+    position: relative;
+
+    overflow: hidden;
+
+    transition:
+    transform .18s ease,
+    box-shadow .18s ease;
+}
+
+.menu-item:hover{
+
+    transform:
+    translateY(-3px);
+
+    box-shadow:
+    0 12px 32px rgba(0,0,0,.35);
+}
+
+.menu-item:active{
+
+    transform:
+    scale(.97);
+}
+
+/* ===== LEFT ACCENT ===== */
+
+/* ===== MENU COLORS FINAL FIX (8 MENUS) ===== */
+
+/* 1. 📅 720 Day Tracker */
+.home-container .menu-item:nth-child(4) {
+    border-left: 5px solid #5f27cd !important;
+}
+
+/* 1. Tracker */
+.home-container .menu-item:nth-of-type(4) {
+    border-left: 5px solid #a855f7 !important;
+}
+
+/* 2. Daily Routine (ใหม่) */
+.home-container .menu-item:nth-of-type(5) {
+    border-left: 5px solid #00d2ff !important;
+}
+
+/* 3. Daily Goals */
+.home-container .menu-item:nth-of-type(6) {
+    border-left: 5px solid #ff7675 !important;
+}
+
+/* 4. Pomodoro */
+.home-container .menu-item:nth-of-type(7) {
+    border-left: 5px solid #ff3b30 !important;
+}
+
+/* 5. Expense */
+.home-container .menu-item:nth-of-type(8) {
+    border-left: 5px solid #00b894 !important;
+}
+
+/* 6. Long-term Goals */
+.home-container .menu-item:nth-of-type(9) {
+    border-left: 5px solid #f1c40f !important;
+}
+
+/* 7. My Notes */
+.home-container .menu-item:nth-of-type(10) {
+    border-left: 5px solid #74b9ff !important;
+}
+
+/* 8. TVM Calculator */
+.home-container .menu-item:nth-of-type(11) {
+    border-left: 5px solid #e17055 !important;
+}
+
+/* ===== CLOCK ===== */
+
+.datetime-container{
+
+    padding:
+    22px 30px !important;
+
+    border-radius:
+    28px !important;
+}
+
+.home-time{
+
+    font-size:
+    58px !important;
+
+    text-shadow:
+    0 0 18px rgba(0,255,180,.28);
+}
+
+/* ===== DATE ===== */
+
+.home-date{
+
+    letter-spacing: .5px;
+
+    opacity: .9;
+}
+
+/* ===== PROGRESS ===== */
+
+.progress-wrap{
+
+    height:
+    30px !important;
+
+    border-radius:
+    30px !important;
+
+    overflow: hidden;
+}
+
+.progress-bar{
+
+    background:
+    linear-gradient(
+        90deg,
+        #00d2ff,
+        #00ffae
+    ) !important;
+
+    box-shadow:
+    0 0 18px rgba(0,255,174,.45);
+
+    animation:
+    glowBar 2s infinite alternate;
+}
+
+/* ===== GLOW ===== */
+
+@keyframes glowBar{
+
+    from{
+        filter: brightness(1);
+    }
+
+    to{
+        filter: brightness(1.2);
+    }
+}
+
+/* ===== BUTTON ===== */
+
+.theme-btn,
+.zoom-btn{
+
+    background:
+    rgba(40,40,40,0.8) !important;
+
+    backdrop-filter:
+    blur(10px);
+
+    border:
+    1px solid rgba(255,255,255,.05);
+
+    transition:
+    .2s;
+}
+
+.theme-btn:hover,
+.zoom-btn:hover{
+
+    transform:
+    translateY(-2px);
+}
+
+/* ===== QUOTE ===== */
+
+.custom-quote{
+
+    margin-top:
+    35px !important;
+
+    font-size:
+    20px !important;
+
+    opacity:
+    .75;
+
+    line-height:
+    1.6;
+}
+
+/* ===== SCROLL ===== */
+
+::-webkit-scrollbar{
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:
+    rgba(255,255,255,0.15);
+
+    border-radius:
+    20px;
+}
+
+/* ===== MINI FLOAT EFFECT ===== */
+
+.menu-item::before{
+
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: -120%;
+
+    width: 80%;
+    height: 100%;
+
+    background:
+    linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.06),
+        transparent
+    );
+
+    transition: .6s;
+}
+
+.menu-item:hover::before{
+    left: 140%;
+}
+
+/* ===== EXP TEXT ===== */
+
+.info{
+
+    font-weight: bold;
+
+    letter-spacing: .5px;
+}
+
+/* ===== MOBILE FEEL ===== */
+
+*{
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== AUTO PAGE TRANSITION ===== */
+
+#app > *{
+
+    animation:
+    pageFade .28s ease;
+}
+
+@keyframes pageFade{
+
+    from{
+
+        opacity: 0;
+
+        transform:
+        translateY(12px);
+    }
+
+    to{
+
+        opacity: 1;
+
+        transform:
+        translateY(0);
+    }
+}
+
+/* ===== EXP UI (NEW) ===== */
+.exp-container { 
+    background: rgba(255,255,255,0.1); 
+    padding: 15px; 
+    border-radius: 15px; 
+    margin-bottom: 10px; 
+    width: 90vw;
+    max-width: calc(100% - 40px);
+    box-sizing: border-box;
+    text-align: left; 
+}
+.exp-bar-bg { 
+    background: #333; 
+    height: 12px; 
+    border-radius: 6px; 
+    overflow: hidden; 
+    margin: 5px 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+.exp-bar-fill { 
+    background: linear-gradient(90deg, #00b894, #55efc4); 
+    height: 100%; 
+    transition: width 0.6s cubic-bezier(0.17, 0.67, 0.83, 0.67); 
+}
+.confetti-piece { position: fixed; width: 10px; height: 10px; top: -10px; z-index: 9999; animation: fall linear forwards; border-radius: 2px; }
+@keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+
+/* --- ส่วน Dashboard Card --- */
+.dashboard-card-big {
+    width: 90%; max-width: 350px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 25px; padding: 18px;
+    margin-bottom: 10px; display: flex;
+    flex-direction: column; gap: 12px;
+}
+    
+.db-big-row { display: flex; justify-content: space-between; align-items: center; }
+.db-big-label { font-size: 14px; opacity: 0.7; color: #fff; }
+.db-big-value { font-size: 20px; font-weight: bold; color: #00b894; }
+
+/* --- ระบบ Menu Grid 2 คอลัมน์ --- */
+/* 1. ปรับรางเมนูให้ขยายเต็มและอยู่ตรงกลางเป๊ะ */
+.home-menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* แบ่งครึ่ง 50/50 เท่ากันเป๊ะ */
+    gap: 8px;
+    width: 90%;            /* ความกว้างรวมของกลุ่มเมนู */
+    max-width: 400px;      /* คุมไม่ให้บานเกินไปในจอคอม */
+    margin: 5px auto;        /* จัดกลุ่มนี้ให้อยู่กึ่งกลางหน้าจอ */
+    padding: 0;
+    box-sizing: border-box;
+  
+}
+
+/* 2. ปรับปุ่มเมนูให้ยืดหยุ่นตามช่อง Grid */
+.home-menu-grid .menu-item {
+    width: 100% !important; /* บังคับให้ปุ่มกว้างเท่ากับช่อง Grid */
+    max-width: none !important; /* ล้างค่าเดิมที่อาจค้างอยู่ */
+    margin: 0 !important;   /* ล้าง margin เดิมที่อาจทำให้เบี้ยว */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    padding: 15px 5px;      /* ปรับความสูงปุ่มให้พอดี */
+}
+
+/* 3. สำหรับปุ่มที่ยาวเต็มแถว (อันดับ 1-2) */
+.full-row {
+    grid-column: span 2;    /* สั่งให้ครองพื้นที่ทั้ง 2 คอลัมน์ */
+}
+
+/* --- ส่วนกระปุกหมู (Piggy Bank) --- */
+.piggy-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 14px; padding: 10px 14px;
+    margin: 6px auto 12px auto; width: 95%; max-width: 400px;
+    text-align: center; border: 1px solid rgba(255, 118, 117, 0.2);
+}
+.piggy-icon { font-size: 30px; display: block; margin-bottom: 3px; }
+.piggy-text { font-size: 12px; color: #ff7675; font-weight: bold; margin-bottom: 4px; }
+.piggy-progress-bar {
+    background: rgba(255, 255, 255, 0.1); height: 7px;
+    border-radius: 5px; margin: 5px 0; overflow: hidden;
+}
+.piggy-fill {
+    background: linear-gradient(90deg, #ff7675, #fab1a0);
+    height: 100%; transition: width 0.4s ease-out;
+}
+.piggy-btns { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+.piggy-btns button {
+    background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 118, 117, 0.3);
+    color: #ff7675; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 12px;
+}
+/* ปุ่ม ยืนยัน/ยกเลิก */
+.btn-confirm { background: #00b894 !important; color: white !important; border: none !important; }
+.btn-cancel { background: #ff7675 !important; color: white !important; border: none !important; }
+
+.coach-section {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* จัดให้อยู่กลางหน้าจอ */
+    margin: 30px auto; /* เว้นระยะบนล่าง และจัดกลางซ้ายขวา */
+    padding: 10px;
+    width: 95%; /* ให้กว้างเกือบเต็มจอ */
+}
+
+.coach-photo {
+    width: 250px;  /* ขยายขนาดรูปจาก 90 เป็น 100 */
+    height: 250px;
+    border-radius: 50%;
+    border: 4px solid #ff9f43; /* เพิ่มความหนาขอบส้ม */
+    object-fit: cover;
+    flex-shrink: 0; /* ป้องกันรูปโดนบีบจนเบี้ยว */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.quote-bubble {
+    margin-left: 15px;
+    position: relative;
+    Background: rgba(255, 159, 67, 0.05); /* เพิ่มพื้นหลังสีเขียวจางๆ ให้ดูมีมิติ */
+    border: 2px solid #ff9f43;
+    border-radius: 15px;
+    padding: 12px 25px;
+    color: #ffffff;
+    font-family: 'Kanit', sans-serif; /* <<< เพิ่มบรรทัดนี้ลงไป (แทรกได้เลย) */
+    font-size: 30px;
+    line-height: 1.4;
+    max-width: 450px; /* *** จุดสำคัญ: จำกัดความกว้างไม่ให้ยาวเกินไป *** */
+    font-style: italic;
+    word-wrap: break-word; /* ให้ตัดคำขึ้นบรรทัดใหม่ถ้าประโยคยาว */
+}
+
+/* หางลูกศร (ขยับตำแหน่งตามรูปที่ขยายขึ้น) */
+.quote-bubble::after {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 6px 10px 6px 0;
+    border-style: solid;
+    border-color: transparent #2ecc71 transparent transparent;
+}
+/* ส่วนของ Coach ในหน้า Home */
+.home-coach-card {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin: 5px 0 0 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 10px;
+}
+
+.home-coach-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2.5px solid #ff9f43; /* วงกลมสีส้มตามที่ต้องการ */
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.home-quote-bubble {
+    position: relative;
+    border: 1.5px solid #f1c40f; 
+    border-radius: 15px;
+    padding: 10px 12px;      /* ลดพื้นที่ว่างข้างใน */
+    color: #fff;
+    font-size: 13px;         /* ลดขนาดตัวหนังสือ */
+    flex: 1;
+    font-family: 'Kanit', sans-serif; 
+    font-style: italic;
+    background: rgba(0, 0, 0, 0.4);
+    letter-spacing: 0.5px;   /* ลดระยะห่างตัวอักษร */
+    line-height: 1.4;        /* ลดระยะห่างระหว่างบรรทัด */
+}
+}
+/* ===== MATRIX THEME ===== */
+body.matrix-mode {
+    background: #000 !important;
+    color: #00ff41 !important;
+}
+body.matrix-mode .home-container,
+body.matrix-mode .goals-page,
+body.matrix-mode .notes-page {
+    background: #000 !important;
+}
+body.matrix-mode .menu-item,
+body.matrix-mode .dashboard-card-big,
+body.matrix-mode .exp-container,
+body.matrix-mode .note-card,
+body.matrix-mode .goal-item,
+body.matrix-mode .pomo-card,
+body.matrix-mode .tvm-card-new,
+body.matrix-mode .expense-card {
+    background: #001a00 !important;
+    border-top: 1px solid #00ff41 !important;
+    border-right: 1px solid #00ff41 !important;
+    border-bottom: 1px solid #00ff41 !important;
+    color: #00ff41 !important;
+    box-shadow: 0 0 8px rgba(0,255,65,0.3) !important;
+}
+body.matrix-mode h1 {
+    color: #00ff41 !important;
+    text-shadow: 0 0 10px #00ff41 !important;
+}
+body.matrix-mode button {
+    background: #001a00 !important;
+    color: #00ff41 !important;
+    border: 1px solid #00ff41 !important;
+}
+body.matrix-mode .exp-bar-fill {
+    background: #00ff41 !important;
+}
+body.matrix-mode input,
+body.matrix-mode textarea {
+    background: #001a00 !important;
+    color: #00ff41 !important;
+    border: 1px solid #00ff41 !important;
+}
+/* --- แก้ไขธีม Matrix ให้ดำสนิท ไม่มีขอบขาว --- */
+html, body {
+    background-color: #000000 !important; /* บังคับให้พื้นหลังชั้นนอกสุดเป็นสีดำสนิทไว้ก่อนกันเหนียว */
+}
+
+body.matrix-mode {
+    background: #000000 url('https://w0.peakpx.com/wallpaper/518/847/HD-wallpaper-matrix-rain-code-digital.jpg') repeat !important;
+    background-size: contain !important; /* ช่วยให้รูปโค้ด Matrix เรียงตัวสวยไม่ล้นเบี้ยว */
+    color: #00ff41 !important;
+}
+
+/* บังคับให้พื้นที่แสดงผลของแอปทั้งหมดเป็นสีโปร่งแสง เพื่อให้เห็นพื้นหลัง Matrix ข้างหลังได้เต็มจอ 100% */
+body.matrix-mode #app,
+body.matrix-mode .home-container,
+body.matrix-mode .main-content {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+/* ===== LIGHT MODE (NEW DESIGN) ===== */
+body.light-mode {
+    background-color: #f5f7fa;
+    background-image: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%);
+    color: #2c3e50;
+}
+
+body.light-mode h1 {
+    color: #1a5490;
+    text-shadow: none;
+}
+
+body.light-mode .menu-item {
+    background: white;
+    color: #2c3e50;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e8eef5;
+}
+
+body.light-mode .menu-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+body.light-mode .theme-btn, 
+body.light-mode .zoom-btn {
+    background: white;
+    color: #2c3e50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+body.light-mode .settings-btn {
+    background: white;
+    color: #2c3e50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+body.light-mode .cell {
+    border: 2px solid #d4d8dd;
+    background: white;
+    color: #2c3e50;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+body.light-mode .summary {
+    background: #f0f4f8;
+}
+
+body.light-mode .level-0 { background: white; color: #2c3e50; }
+body.light-mode .level-1 { background: #e8f5e9; color: #2e7d32; }
+body.light-mode .level-2 { background: #c8e6c9; color: #1b5e20; }
+body.light-mode .level-3 { background: #a5d6a7; color: #1b5e20; }
+body.light-mode .level-4 { background: #81c784; color: white; }
+body.light-mode .level-5 { background: #00c853; color: white; }
+
+body.light-mode .custom-quote {
+    color: #546e7a;
+}
+
+body.light-mode .datetime-container {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e8eef5;
+}
+
+body.light-mode .home-time {
+    color: #1a5490;
+}
+
+body.light-mode .home-date {
+    color: #78909c;
+}
+
+body.light-mode .add-box input, 
+body.light-mode .add-box textarea {
+    background: white;
+    color: #2c3e50;
+    border: 1px solid #d4d8dd;
+}
+
+body.light-mode .add-box input:focus,
+body.light-mode .add-box textarea:focus {
+    border-color: #1a5490;
+    box-shadow: 0 0 0 3px rgba(26, 84, 144, 0.1);
+}
+
+body.light-mode .goal-item, 
+body.light-mode .note-card {
+    background: white;
+    color: #2c3e50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e8eef5;
+}
+
+body.light-mode .goal-item.done {
+    background: #e8f5e9;
+    color: #558b2f;
+}
+
+body.light-mode .pomo-card {
+    background: white;
+    color: #2c3e50;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e8eef5;
+}
+
+body.light-mode .tvm-card-new {
+    background: white;
+    color: #2c3e50;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e8eef5;
+}
+
+body.light-mode .tvm-label-thai {
+    color: #546e7a;
+}
+
+body.light-mode .tvm-card-new input {
+    background: #f5f7fa !important;
+    color: #2c3e50 !important;
+    border: 1px solid #d4d8dd !important;
+}
+
+body.light-mode .tvm-card-new input:focus {
+    border-color: #1a5490 !important;
+    background: white !important;
+    box-shadow: 0 0 0 3px rgba(26, 84, 144, 0.1) !important;
+}
+
+body.light-mode .tvm-card-new button.calc-btn {
+    background: #1a5490 !important;
+    box-shadow: 0 4px 12px rgba(26, 84, 144, 0.3);
+}
+
+body.light-mode .tvm-card-new .reset-btn-thai {
+    background: #e57373 !important;
+}
+
+body.light-mode .progress-wrap {
+    background: #e8eef5;
+}
+
+body.light-mode .progress-bar {
+    background: linear-gradient(90deg, #1a5490, #42a5f5);
+}
+
+body.light-mode .timer-box {
+    background: #ff6b6b;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+}
+
+body.light-mode .btn-start {
+    background: #4caf50;
+}
+
+body.light-mode .btn-stop {
+    background: #ff7043;
+}
+
+body.light-mode .btn-reset {
+    background: #42a5f5;
+}
+
+body.light-mode .goals-page,
+body.light-mode .notes-page {
+    background: transparent;
+}
+
+body.light-mode .dashboard-card-big {
+    background: white;
+    color: #2c3e50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e8eef5;
+}
+
+body.light-mode .exp-container {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e8eef5;
+}
+
+body.light-mode .summary-section-card {
+    background: white;
+    border: 1px solid #e8eef5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+body.light-mode .summary-section-card h3 {
+    color: #1a5490;
+}
+
+body.light-mode .badge-card.locked {
+    background: #f5f7fa;
+    border: 2px dashed #d4d8dd;
+    color: #90a4ae;
+}
+
+body.light-mode .badge-card.unlocked {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+body.light-mode .home-coach-card {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e8eef5;
+}
+
+body.light-mode .home-badge-item {
+    background: white;
+    border: 1px solid #e8eef5;
+}
+
+body.light-mode .settings-drawer {
+    background: white;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    border-radius: 12px;
+}
+
+body.light-mode .settings-drawer button {
+    background: white;
+    color: #2c3e50;
+    border: 1px solid #e8eef5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+body.light-mode .settings-drawer button:hover {
+    background: #f5f7fa;
+}
+
+body.cyberpunk-mode {
+    background: #020b12 !important;
+    color: #00fff5 !important;
+}
+body.cyberpunk-mode .home-container,
+body.cyberpunk-mode .goals-page,
+body.cyberpunk-mode .notes-page {
+    background: #020b12 !important;
+}
+body.cyberpunk-mode .menu-item,
+body.cyberpunk-mode .dashboard-card-big,
+body.cyberpunk-mode .exp-container,
+body.cyberpunk-mode .note-card,
+body.cyberpunk-mode .goal-item,
+body.cyberpunk-mode .pomo-card,
+body.cyberpunk-mode .tvm-card-new,
+body.cyberpunk-mode .expense-card {
+    background: #0d1f35 !important;
+    border-top: 1px solid rgba(0,255,245,0.3) !important;
+    border-right: 1px solid rgba(0,255,245,0.3) !important;
+    border-bottom: 1px solid rgba(0,255,245,0.3) !important;
+    color: #00fff5 !important;
+    box-shadow: 0 0 10px rgba(0,255,245,0.15) !important;
+}
+body.cyberpunk-mode h1 {
+    color: #00fff5 !important;
+    text-shadow: 0 0 12px #00fff5, 0 0 24px rgba(0,255,245,0.4) !important;
+}
+body.cyberpunk-mode button {
+    background: #0d1f35 !important;
+    color: #00fff5 !important;
+    border: 1px solid rgba(0,255,245,0.4) !important;
+}
+body.cyberpunk-mode .exp-bar-fill {
+    background: linear-gradient(90deg, #00cc33, #00fff5) !important;
+    box-shadow: 0 0 8px #00fff5 !important;
+}
+body.cyberpunk-mode input,
+body.cyberpunk-mode textarea {
+    background: #0d1f35 !important;
+    color: #00fff5 !important;
+    border: 1px solid rgba(0,255,245,0.3) !important;
+}
+body.cyberpunk-mode .home-time {
+    color: #00fff5 !important;
+    text-shadow: 0 0 20px rgba(0,255,245,0.8) !important;
+}
+.summary-section-card {
+    width: 90%; max-width: 380px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px; padding: 20px;
+    margin-bottom: 15px;
+}
+
+.sum-title {
+    font-size: 16px; font-weight: bold;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.sum-row {
+    display: flex; justify-content: space-between;
+    align-items: center; padding: 8px 0;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.sum-row:last-child { border-bottom: none; }
+.sum-val { font-weight: bold; }
+/* --- ส่วนตกแต่ง Modal (style.css) --- */
+
+/* --- ชุดแก้หน้าต่าง Note Modal ให้สมบูรณ์ --- */
+
+.note-modal-overlay {
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); /* พื้นหลังรอบนอกมืดลง */
+    backdrop-filter: blur(12px); /* เบลอพื้นหลัง */
+    display: flex; align-items: center; justify-content: center; 
+    z-index: 9999;
+}
+
+.note-modal-content {
+    background: #2d3436; 
+    width: 96% !important;
+    max-width: 550px !important;
+    height: auto !important;      /* ให้สูงตามเนื้อหา ไม่บังคับ 80vh */
+    max-height: 75vh !important;  /* กันไม่ให้สูงเกิน 75% จอ */
+    border-radius: 25px !important; 
+    display: flex; 
+    flex-direction: column; 
+    padding: 20px !important;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    transition: background 0.3s ease;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* แก้ไขช่องกรอกหัวข้อ */
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.modal-header input { 
+    flex: 1;
+    background: transparent !important; /* ห้ามมีสีพื้นหลังขาว */
+    border: none !important; 
+    font-size: 28px !important; 
+    font-weight: bold !important; 
+    color: white !important; 
+    outline: none !important; 
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* แก้ไขช่องเนื้อหา */
+.note-modal-content textarea {
+    flex: 1; 
+    background: transparent !important;
+    border: none !important; 
+    color: #eee !important;
+    font-size: 20px !important; 
+    line-height: 1.6; 
+    resize: none; 
+    outline: none; 
+    margin-top: 10px;
+    min-height: 320px;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+/* จัดวางปุ่มและที่เลือกสี */
+.modal-footer { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.save-modal-btn { 
+    background: #00b894 !important; 
+    color: white !important; 
+    padding: 10px 25px !important; 
+    border-radius: 15px !important; 
+    font-weight: bold;
+    border: none !important;
+    cursor: pointer;
+}
+/* ปุ่มเลือกสี (Color Picker) */
+.color-picker {
+    display: flex;
+    gap: 10px;
+}
+
+.color-dot {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.2);
+    transition: 0.2s;
+}
+
+.color-dot:hover {
+    transform: scale(1.2);
+    border-color: white;
+}
+
+/* ปุ่มปิดแบบสวยๆ (ขวาบน) */
+.close-modal-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+/* ฮัฟเวอร์เอฟเฟ็คขยายใหญ่ */
+.close-modal-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+    background: linear-gradient(135deg, #ff5252 0%, #ff3838 100%);
+}
+
+/* แอคทีฟเอฟเฟ็ค (กดลง) */
+.close-modal-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+}
+
+/* ปรับให้ Modal Content รองรับการเปลี่ยนสีพื้นหลัง */
+.note-modal-content {
+    transition: background 0.3s ease; /* เพิ่ม Animation ตอนเปลี่ยนสี */
+}
+/* บังคับตัวหนังสือใน Popup ให้ใหญ่และอ่านง่ายขึ้น */
+.note-modal-content textarea {
+    font-size: 20px !important;
+    line-height: 1.6 !important;
+}
+
+/* ถ้าหน้าจอเล็กกว่า 600px (มือถือ) ให้ปรับขนาดลงนิดนึง */
+@media (max-width: 600px) {
+    .modal-header input {
+        font-size: 20px !important;
+    }
+    .note-modal-content textarea {
+        font-size: 16px !important;
+        min-height: 100px;
+        max-height: 35vh;
+    }
+}
+/* ===== ACHIEVEMENTS PAGE ===== */
+.achievements-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.achievement-section {
+    animation: fadeIn 0.4s ease-in;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+    color: #667eea;
+}
+
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+}
+
+.badge-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    border-radius: 15px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.badge-card.unlocked {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.badge-card.unlocked:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+}
+
+.badge-card.locked {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    opacity: 0.6;
+}
+
+
+
+.badge-emoji {
+    font-size: 48px;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.badge-name {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.badge-desc {
+    font-size: 11px;
+    opacity: 0.85;
+    line-height: 1.3;
+    margin-bottom: 6px;
+}
+
+.badge-status {
+    font-size: 10px;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Animation เมื่อปลดล็อค badge */
+@keyframes slideIn {
+    from {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+body.dark-mode .section-title {
+    color: #667eea;
+}
+
+body.dark-mode .badge-card.locked {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.matrix-mode .badge-card.unlocked {
+    background: linear-gradient(135deg, #00cc33 0%, #00ff00 100%);
+    color: #000;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+body.matrix-mode .section-title {
+    color: #00ff00;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+body.cyberpunk-mode .badge-card.unlocked {
+    background: linear-gradient(135deg, #ff006e 0%, #8338ec 100%);
+    color: #00fff5;
+    text-shadow: 0 0 10px rgba(0, 255, 245, 0.5);
+}
+
+body.cyberpunk-mode .section-title {
+    color: #00fff5;
+    border-bottom-color: rgba(0, 255, 245, 0.3);
+}
+
+/* ===== HOME BADGE CONTAINER (ใหม่) ===== */
+.home-badge-container {
+    width: 95%;
+    max-width: 350px;
+    margin: 5px auto 0;
+    padding: 13px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(176, 132, 250, 0.08) 100%);
+    border: 1.5px solid rgba(102, 126, 234, 0.2);
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: slideInUp 0.4s ease-out;
+}
+
+body.dark-mode .home-badge-container {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(176, 132, 250, 0.15) 100%);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.badge-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #667eea;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+    letter-spacing: 0.5px;
+}
+
+body.dark-mode .badge-label {
+    color: #8fa3ff;
+}
+
+.badge-scroll-wrapper {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 5px 0;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(102, 126, 234, 0.3) transparent;
+}
+
+.badge-scroll-wrapper::-webkit-scrollbar {
+    height: 4px;
+}
+
+.badge-scroll-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.badge-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 10px;
+}
+
+.badge-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.5);
+}
+
+.home-badge-item {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(245, 245, 255, 0.5) 100%);
+    border: 1px solid rgba(102, 126, 234, 0.15);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    min-width: fit-content;
+    min-height: 52px;
+}
+
+body.dark-mode .home-badge-item {
+    background: linear-gradient(135deg, rgba(50, 60, 100, 0.4) 0%, rgba(60, 70, 120, 0.4) 100%);
+    border-color: rgba(102, 126, 234, 0.2);
+}
+
+.home-badge-item:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(240, 240, 255, 0.8) 100%);
+}
+
+body.dark-mode .home-badge-item:hover {
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+    background: linear-gradient(135deg, rgba(70, 80, 130, 0.6) 0%, rgba(80, 100, 150, 0.6) 100%);
+    border-color: rgba(102, 126, 234, 0.5);
+}
+
+.badge-emoji-box {
+    font-size: 28px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: bounce 0.6s ease-in-out infinite;
+}
+
+.home-badge-item:nth-child(odd) .badge-emoji-box {
+    animation-delay: 0s;
+}
+
+.home-badge-item:nth-child(even) .badge-emoji-box {
+    animation-delay: 0.1s;
+}
+
+.badge-text-box {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.badge-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: #333;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+body.dark-mode .badge-name {
+    color: #e0e0ff;
+}
+
+.badge-desc {
+    font-size: 11px;
+    color: #666;
+    opacity: 0.8;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+body.dark-mode .badge-desc {
+    color: #aaa;
+}
+
+/* Animation */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-3px);
+    }
+}
+.home-badge-container {
+    margin-top: 20px;    /* เพิ่มระยะห่างด้านบน */
+    margin-bottom: 25px; /* เพิ่มระยะห่างด้านล่าง ก่อนถึง Dashboard */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+/* =========================================
+   TITAN UI TIGHTEN-UP (บีบระยะห่างหน้า HOME)
+   วางต่อท้ายไฟล์ style.css ได้เลยครับ
+========================================= */
+
+/* 1. บีบระยะห่างระหว่าง Level Bar กับ โค้ชน้าค่อม */
+.exp-container {
+    margin-bottom: 0px !important; /* ลดจากเดิมที่อาจจะห่างมาก */
+}
+
+/* 2. บีบระยะห่างรอบๆ ตัวโค้ชน้าค่อม (บนและล่าง) */
+.home-coach-card {
+    margin-top: 5px !important;
+    margin-bottom: 5px !important;
+    padding: 10px !important; /* ลดความพองของตัวการ์ดด้วย */
+}
+
+/* 3. บีบระยะห่างระหว่าง โค้ช กับ เหรียญรางวัล (Achievement) */
+.home-badge-container {
+    margin-top: 0px !important;
+    margin-bottom: 10px !important;
+}
+
+/* 4. บีบระยะห่างระหว่าง เหรียญรางวัล กับ Dashboard สรุปเงิน */
+.dashboard-card-big {
+    margin-top: 0px !important;
+    margin-bottom: 10px !important;
+    padding: 15px !important; /* ปรับความหนาด้านในให้กระชับ */
+}
+
+/* 5. บีบระยะห่างระหว่าง Dashboard กับ ปุ่มเมนูแรก */
+.home-menu-grid {
+    margin-top: 5px !important;
+    gap: 8px !important; /* ทำให้ปุ่มเมนูแต่ละอันชิดกันขึ้นนิดนึง */
+}
+
+/* 6. บีบระยะห่างระหว่าง ปุ่มเมนูสุดท้าย กับ คำคมล่างสุด */
+.custom-quote {
+    margin-top: 10px !important; 
+    padding-bottom: 20px !important;
+}
+.badge-desc {
+    font-size: 11px !important;    /* ปรับขนาดให้เล็กลงเล็กน้อยเพื่อให้จุข้อความได้มากขึ้น */
+    line-height: 1.3 !important;   /* ปรับระยะห่างระหว่างบรรทัดให้พอดี */
+    white-space: normal !important; /* สั่งให้ข้อความขึ้นบรรทัดใหม่เมื่อสุดขอบกล่อง */
+    overflow: visible !important;   /* ยอมให้ข้อความแสดงออกมาได้ */
+    word-wrap: break-word !important; /* ป้องกันคำยาวๆ ทะลุขอบ */
+    padding: 0 5px !important;     /* เพิ่มช่องว่างซ้ายขวานิดหน่อยไม่ให้ชิดขอบเกินไป */
+    display: block !important;     /* บังคับให้แสดงผลเป็นบล็อกเพื่อการตัดคำที่ถูกต้อง */
+    height: auto !important;       /* ให้ความสูงปรับตามเนื้อหา */
+    margin-top: 4px !important;
+}
+/* ==========================================
+   MOBILE PATCH v2 (No Anti-Refresh)
+   ========================================== */
+
+:root {
+    /* ปรับขนาดพื้นฐานให้ดูเต็มตาบนมือถือ */
+    font-size: 112%; 
+}
+
+/* 1. จัดการ Container หลัก */
+#app {
+    width: 100vw !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 12px !important; 
+    box-sizing: border-box !important;
+}
+
+/* 2. หน้า Home: ขยายปุ่มเมนูให้กดง่าย */
+.home-container .menu-item {
+    padding: 15px 14px !important; 
+    margin-bottom: 10px !important;
+    font-size: 1.1rem !important; 
+    border-radius: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 3. หน้า Tracker: ปรับตาราง 144 ช่องให้พอดีหน้าจอ */
+.grid {
+    grid-template-columns: repeat(10, 1fr) !important;
+    gap: 3px !important;
+    width: 100% !important;
+}
+
+.cell {
+    height: 32px !important; 
+    font-size: 16px !important;
+    border-radius: 4px !important;
+}
+
+/* 4. ปุ่มกด (Buttons) ทั่วไป */
+button {
+    min-height: auto;
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
+/* ✨ ปรับปุ่มรูปภาพให้เล็กลง */
+button[style*="2px 6px"] {
+    min-height: auto !important;
+    padding: 2px 6px !important;
+    font-size: 9px !important;
+}
+
+/* 5. ช่องกรอกข้อมูล (Inputs) */
+input, textarea {
+    font-size: 16px !important; /* กันจอดีดซูมใน iPhone */
+    padding: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 6. หน้า Shop: ล็อคแถวละ 4 ตัว */
+.shop-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 8px !important;
+}
+
+.shop-item img {
+    max-width: 55px !important;
+    height: auto !important;
+}
+
+/* 7. ล้างค่าพื้นหลังและ Overflow */
+body {
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+/* ==========================================
+   TITAN UI TIGHTEN-UP (บีบระยะห่างหน้า HOME)
+   วางต่อท้าย v2 ได้เลยครับ
+   ========================================== */
+
+/* 1. บีบ Level Bar (บนสุด) */
+.exp-container {
+    padding: 6px !important;
+    margin-bottom: 0px !important;
+}
+
+/* 2. บีบส่วน โค้ชและคำคม */
+.home-coach-card {
+    margin-top: 0px !important;
+    margin-bottom: 2px !important;
+    padding: 8px !important; 
+}
+.home-coach-img {
+    width: 60px !important; /* ลดขนาดรูปโค้ช */
+    height: 60px !important;
+}
+.home-quote-bubble {
+    font-size: 14px !important; /* ลดขนาดตัวหนังสือคำคม */
+    padding: 8px !important;
+    line-height: 1.4 !important;
+}
+
+/* 3. บีบส่วน Achievement (เหรียญรางวัล) */
+.home-badge-container {
+    margin-top: 0px !important;
+    margin-bottom: 2px !important;
+    padding: 10px !important;
+}
+.badge-label { font-size: 13px !important; }
+.home-badge-item { padding: 8px !important; min-height: 50px !important; }
+
+/* 4. บีบส่วน Dashboard (สรุปตัวเลข) */
+.dashboard-card-big {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    padding: 12px !important;
+}
+.db-big-value { font-size: 16px !important; }
+
+/* --- แถม: ปรับเมนูหลักให้เตี้ยลงนิดนึง เพื่อช่วยดันให้เมนูโชว์ครบ --- */
+.home-container .menu-item {
+    padding: 13px 13px !important;
+    margin-bottom: 0px !important;
+    font-size: 1rem !important; 
+    border-radius: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+/* ===== FIX: ลด gap บนสุด home ===== */
+#app {
+    padding-top: 0 !important;
+}
+
+.home-container {
+    padding-top: 10px !important;
+}
+
+.exp-container {
+    margin-top: 0 !important;
+}
+
+
+/* ปรับแต่งกล่อง LV Bar บนสุด (สีเทา) */
+.exp-container {
+    background: rgba(255, 255, 255, 0.1); /* สีเทาใสๆ เดิมของคุณ */
+    padding: 6px 6px !important;       /* 1. ลดความสูงโดยลด Padding (บน-ล่าง ซ้าย-ขวา) */
+    border-radius: 12px !important;
+    margin: 0px auto 0px auto !important; /* 2. เว้นระยะห่างให้ดูไม่แน่น */
+    width: 80% !important;              /* 3. บีบความกว้างให้เล็กลงเหลือ 80% (หรือตามชอบ) */
+    max-width: 320px !important;        /* คุมไม่ให้กว้างเกินไปในจอใหญ่ */
+    
+    /* จัดการเนื้อหาข้างในให้ดูสมดุล */
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* ปรับขนาดรูปโปรตัวละครให้เล็กลงเพื่อให้กล่องเตี้ยลงได้ */
+.exp-container img {
+    width: 50px !important;  /* ลดขนาดรูปโปร */
+    height: 70px !important;
+}
+
+/* ปรับแถบ EXP เล็กๆ ข้างในให้เพรียวบางลง */
+.exp-bar-bg {
+    height: 10px !important;  /* ลดความหนาของแถบ EXP หลอดเขียว */
+    margin-top: 0px !important;
+}
+/* ลดขนาดตัวหนังสือ LV. และตัวเลข EXP */
+.exp-container span {
+    font-size: 14px !important; /* ปรับขนาดตัวหนังสือ LV และตัวเลข */
+}
+
+/* ถ้าต้องการเจาะจงเฉพาะตัวเลข EXP (เช่น 500 / 1000) ให้เล็กลงไปอีก */
+.exp-container span[style*="font-size: 12px"] {
+    font-size: 12px !important; /* บีบให้เล็กลงเป็น 10px */
+    opacity: 0.7;               /* ทำให้จางลงนิดหน่อยเพื่อให้ Bar ดูสะอาดตา */
+}
+
+/* ===== MIDNIGHT / LAVENDER THEME ===== */
+body.midnight-mode {
+    background: linear-gradient(135deg, #2d1b4e 0%, #1a0033 50%, #3d2645 100%);
+    color: #e1bee7;
+}
+
+body.midnight-mode h1 {
+    color: #ce93d8;
+    text-shadow: 0 0 20px rgba(206, 147, 216, 0.4);
+}
+
+body.midnight-mode .menu-item {
+    background: rgba(93, 39, 139, 0.6);
+    color: #e1bee7;
+    border: 2px solid #9c27b0;
+    box-shadow: 0 8px 20px rgba(156, 39, 176, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+body.midnight-mode .menu-item:hover {
+    background: rgba(103, 58, 183, 0.7);
+    border-color: #ce93d8;
+}
+
+body.midnight-mode .theme-btn,
+body.midnight-mode .zoom-btn {
+    background: rgba(93, 39, 139, 0.8);
+    color: #ce93d8;
+    border: 1px solid #9c27b0;
+    backdrop-filter: blur(10px);
+}
+
+body.midnight-mode .settings-btn {
+    background: rgba(93, 39, 139, 0.8);
+    color: #ce93d8;
+    border: 1px solid #9c27b0;
+    backdrop-filter: blur(10px);
+}
+
+body.midnight-mode .cell {
+    background: rgba(93, 39, 139, 0.4);
+    color: #e1bee7;
+    border: 1px solid #9c27b0;
+    box-shadow: 0 4px 10px rgba(156, 39, 176, 0.15);
+}
+
+body.midnight-mode .level-0 { background: rgba(93, 39, 139, 0.3); }
+body.midnight-mode .level-1 { background: rgba(142, 68, 173, 0.5); }
+body.midnight-mode .level-2 { background: rgba(155, 89, 182, 0.6); }
+body.midnight-mode .level-3 { background: rgba(186, 85, 211, 0.7); }
+body.midnight-mode .level-4 { background: rgba(206, 147, 216, 0.8); }
+body.midnight-mode .level-5 { background: linear-gradient(135deg, #9c27b0, #ce93d8); }
+
+body.midnight-mode .datetime-container {
+    background: rgba(93, 39, 139, 0.6);
+    border: 1px solid #9c27b0;
+    box-shadow: 0 8px 20px rgba(156, 39, 176, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+body.midnight-mode .home-time {
+    color: #ce93d8;
+}
+
+body.midnight-mode .home-date {
+    color: #b39ddb;
+}
+
+body.midnight-mode .goal-item,
+body.midnight-mode .note-card {
+    background: rgba(93, 39, 139, 0.5);
+    color: #e1bee7;
+    border: 1px solid #9c27b0;
+    box-shadow: 0 8px 20px rgba(156, 39, 176, 0.15);
+}
+
+body.midnight-mode .goal-item.done {
+    background: rgba(75, 192, 192, 0.4);
+    color: #80deea;
+}
+
+body.midnight-mode .add-box input,
+body.midnight-mode .add-box textarea {
+    background: rgba(93, 39, 139, 0.4);
+    color: #e1bee7;
+    border: 1px solid #9c27b0;
+}
+
+body.midnight-mode .add-box input:focus,
+body.midnight-mode .add-box textarea:focus {
+    border-color: #ce93d8;
+    box-shadow: 0 0 10px rgba(206, 147, 216, 0.3);
+}
+
+body.midnight-mode .pomo-card {
+    background: rgba(93, 39, 139, 0.6);
+    color: #e1bee7;
+    border: 1px solid #9c27b0;
+    box-shadow: 0 8px 20px rgba(156, 39, 176, 0.2);
+}
+
+body.midnight-mode .tvm-card-new {
+    background: rgba(93, 39, 139, 0.6);
+    color: #e1bee7;
+    border: 1px solid #9c27b0;
+    box-shadow: 0 8px 20px rgba(156, 39, 176, 0.2);
+}
+
+body.midnight-mode .tvm-label-thai {
+    color: #ce93d8;
+}
+
+body.midnight-mode .tvm-card-new input {
+    background: rgba(93, 39, 139, 0.4) !important;
+    color: #e1bee7 !important;
+    border: 1px solid #9c27b0 !important;
+}
+
+body.midnight-mode .tvm-card-new button.calc-btn {
+    background: #9c27b0 !important;
+    box-shadow: 0 4px 15px rgba(156, 39, 176, 0.4);
+}
+
+body.midnight-mode .progress-wrap {
+    background: rgba(93, 39, 139, 0.4);
+}
+
+body.midnight-mode .progress-bar {
+    background: linear-gradient(90deg, #9c27b0, #ce93d8);
+    box-shadow: 0 0 15px rgba(206, 147, 216, 0.5);
+}
+
+body.midnight-mode .dashboard-card-big,
+body.midnight-mode .exp-container {
+    background: rgba(93, 39, 139, 0.5);
+    color: #e1bee7;
+    border: 1px solid #9c27b0;
+    box-shadow: 0 8px 20px rgba(156, 39, 176, 0.15);
+}
+
+body.midnight-mode .badge-card.locked {
+    background: rgba(93, 39, 139, 0.3);
+    border: 2px dashed #9c27b0;
+    color: #b39ddb;
+}
+
+body.midnight-mode .badge-card.unlocked {
+    background: linear-gradient(135deg, #9c27b0, #ce93d8);
+    color: white;
+    box-shadow: 0 8px 20px rgba(156, 39, 176, 0.3);
+}
+
+/* ===== AUTUMN / SUNSET THEME ===== */
+body.autumn-mode {
+    background: linear-gradient(135deg, #a1887f 0%, #ff8a65 50%, #ffb74d 100%);
+    color: #fff3e0;
+}
+
+body.autumn-mode h1 {
+    color: #5d4037;
+    text-shadow: 0 0 20px rgba(255, 183, 77, 0.3);
+}
+
+body.autumn-mode .menu-item {
+    background: rgba(216, 67, 21, 0.7);
+    color: #fff3e0;
+    border: 2px solid #ff6f00;
+    box-shadow: 0 8px 20px rgba(255, 111, 0, 0.25);
+    backdrop-filter: blur(10px);
+}
+
+body.autumn-mode .menu-item:hover {
+    background: rgba(230, 124, 115, 0.8);
+    border-color: #ffb74d;
+}
+
+body.autumn-mode .theme-btn,
+body.autumn-mode .zoom-btn {
+    background: rgba(216, 67, 21, 0.8);
+    color: #ffb74d;
+    border: 1px solid #ff6f00;
+    backdrop-filter: blur(10px);
+}
+
+body.autumn-mode .settings-btn {
+    background: rgba(216, 67, 21, 0.8);
+    color: #ffb74d;
+    border: 1px solid #ff6f00;
+    backdrop-filter: blur(10px);
+}
+
+body.autumn-mode .cell {
+    background: rgba(216, 67, 21, 0.4);
+    color: #fff3e0;
+    border: 1px solid #ff6f00;
+    box-shadow: 0 4px 10px rgba(255, 111, 0, 0.2);
+}
+
+body.autumn-mode .level-0 { background: rgba(255, 255, 255, 0.6); }
+body.autumn-mode .level-1 { background: rgba(255, 183, 77, 0.4); }
+body.autumn-mode .level-2 { background: rgba(244, 142, 72, 0.6); }
+body.autumn-mode .level-3 { background: rgba(255, 152, 0, 0.7); }
+body.autumn-mode .level-4 { background: rgba(255, 183, 77, 0.8); }
+body.autumn-mode .level-5 { background: linear-gradient(135deg, #ff6f00, #ffb74d); }
+
+body.autumn-mode .datetime-container {
+    background: rgba(216, 67, 21, 0.7);
+    border: 1px solid #ff6f00;
+    box-shadow: 0 8px 20px rgba(255, 111, 0, 0.25);
+    backdrop-filter: blur(10px);
+}
+
+body.autumn-mode .home-time {
+    color: #ffb74d;
+}
+
+body.autumn-mode .home-date {
+    color: #ffe0b2;
+}
+
+body.autumn-mode .goal-item,
+body.autumn-mode .note-card {
+    background: rgba(216, 67, 21, 0.6);
+    color: #fff3e0;
+    border: 1px solid #ff6f00;
+    box-shadow: 0 8px 20px rgba(255, 111, 0, 0.2);
+}
+
+body.autumn-mode .goal-item.done {
+    background: rgba(102, 187, 106, 0.4);
+    color: #c8e6c9;
+}
+
+body.autumn-mode .add-box input,
+body.autumn-mode .add-box textarea {
+    background: rgba(255, 255, 255, 0.9);
+color: #3e2723;
+border: 1px solid #d84315;
+}
+
+body.autumn-mode .add-box input:focus,
+body.autumn-mode .add-box textarea:focus {
+    border-color: #ffb74d;
+    box-shadow: 0 0 10px rgba(255, 183, 77, 0.3);
+}
+
+body.autumn-mode .pomo-card {
+    background: rgba(216, 67, 21, 0.7);
+    color: #fff3e0;
+    border: 1px solid #ff6f00;
+    box-shadow: 0 8px 20px rgba(255, 111, 0, 0.25);
+}
+
+body.autumn-mode .tvm-card-new {
+    background: rgba(216, 67, 21, 0.7);
+    color: #fff3e0;
+    border: 1px solid #ff6f00;
+    box-shadow: 0 8px 20px rgba(255, 111, 0, 0.25);
+}
+
+body.autumn-mode .tvm-label-thai {
+    color: #ffb74d;
+}
+
+body.autumn-mode .tvm-card-new input {
+    background: rgba(216, 67, 21, 0.4) !important;
+    color: #fff3e0 !important;
+    border: 1px solid #ff6f00 !important;
+}
+
+body.autumn-mode .tvm-card-new button.calc-btn {
+    background: #ff6f00 !important;
+    box-shadow: 0 4px 15px rgba(255, 111, 0, 0.4);
+}
+
+body.autumn-mode .progress-wrap {
+    background: rgba(216, 67, 21, 0.4);
+}
+
+body.autumn-mode .progress-bar {
+    background: linear-gradient(90deg, #ff6f00, #ffb74d);
+    box-shadow: 0 0 15px rgba(255, 183, 77, 0.5);
+}
+
+body.autumn-mode .dashboard-card-big,
+body.autumn-mode .exp-container {
+    background: rgba(216, 67, 21, 0.6);
+    color: #fff3e0;
+    border: 1px solid #ff6f00;
+    box-shadow: 0 8px 20px rgba(255, 111, 0, 0.2);
+}
+
+body.autumn-mode .badge-card.locked {
+    background: rgba(216, 67, 21, 0.3);
+    border: 2px dashed #ff6f00;
+    color: #ffe0b2;
+}
+
+body.autumn-mode .badge-card.unlocked {
+    background: linear-gradient(135deg, #ff6f00, #ffb74d);
+    color: white;
+    box-shadow: 0 8px 20px rgba(255, 111, 0, 0.3);
+}
+
+/* ===== SAKURA / CHERRY BLOSSOM THEME ===== */
+body.sakura-mode {
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #f48fb1 100%);
+    color: #880e4f;
+}
+
+body.sakura-mode h1 {
+    color: #c2185b;
+    text-shadow: 0 0 15px rgba(194, 24, 91, 0.2);
+}
+
+body.sakura-mode .menu-item {
+    background: rgba(244, 143, 177, 0.8);
+    color: #880e4f;
+    border: 2px solid #ec407a;
+    box-shadow: 0 8px 20px rgba(236, 64, 122, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+body.sakura-mode .menu-item:hover {
+    background: rgba(236, 64, 122, 0.9);
+    color: #fff;
+    border-color: #c2185b;
+}
+
+body.sakura-mode .theme-btn,
+body.sakura-mode .zoom-btn {
+    background: rgba(244, 143, 177, 0.9);
+    color: #c2185b;
+    border: 1px solid #ec407a;
+    backdrop-filter: blur(10px);
+}
+
+body.sakura-mode .settings-btn {
+    background: rgba(244, 143, 177, 0.9);
+    color: #c2185b;
+    border: 1px solid #ec407a;
+    backdrop-filter: blur(10px);
+}
+
+body.sakura-mode .cell {
+    background: rgba(244, 143, 177, 0.4);
+    color: #880e4f;
+    border: 1px solid #ec407a;
+    box-shadow: 0 4px 10px rgba(236, 64, 122, 0.15);
+}
+
+body.sakura-mode .level-0 { background: rgba(244, 143, 177, 0.3); }
+body.sakura-mode .level-1 { background: rgba(244, 67, 138, 0.5); }
+body.sakura-mode .level-2 { background: rgba(233, 30, 99, 0.6); }
+body.sakura-mode .level-3 { background: rgba(219, 39, 119, 0.7); }
+body.sakura-mode .level-4 { background: rgba(194, 24, 91, 0.8); }
+body.sakura-mode .level-5 { background: linear-gradient(135deg, #ec407a, #f48fb1); }
+
+body.sakura-mode .datetime-container {
+    background: rgba(244, 143, 177, 0.8);
+    border: 1px solid #ec407a;
+    box-shadow: 0 8px 20px rgba(236, 64, 122, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+body.sakura-mode .home-time {
+    color: #c2185b;
+}
+
+body.sakura-mode .home-date {
+    color: #880e4f;
+}
+
+body.sakura-mode .goal-item,
+body.sakura-mode .note-card {
+    background: rgba(244, 143, 177, 0.7);
+    color: #880e4f;
+    border: 1px solid #ec407a;
+    box-shadow: 0 8px 20px rgba(236, 64, 122, 0.15);
+}
+
+body.sakura-mode .goal-item.done {
+    background: rgba(76, 175, 80, 0.4);
+    color: #a5d6a7;
+}
+
+body.sakura-mode .add-box input,
+body.sakura-mode .add-box textarea {
+    background: rgba(244, 143, 177, 0.4);
+    color: #880e4f;
+    border: 1px solid #ec407a;
+}
+
+body.sakura-mode .add-box input:focus,
+body.sakura-mode .add-box textarea:focus {
+    border-color: #c2185b;
+    box-shadow: 0 0 10px rgba(194, 24, 91, 0.3);
+}
+
+body.sakura-mode .pomo-card {
+    background: rgba(244, 143, 177, 0.8);
+    color: #880e4f;
+    border: 1px solid #ec407a;
+    box-shadow: 0 8px 20px rgba(236, 64, 122, 0.2);
+}
+
+body.sakura-mode .tvm-card-new {
+    background: rgba(244, 143, 177, 0.8);
+    color: #880e4f;
+    border: 1px solid #ec407a;
+    box-shadow: 0 8px 20px rgba(236, 64, 122, 0.2);
+}
+
+body.sakura-mode .tvm-label-thai {
+    color: #c2185b;
+}
+
+body.sakura-mode .tvm-card-new input {
+    background: rgba(244, 143, 177, 0.3) !important;
+    color: #880e4f !important;
+    border: 1px solid #ec407a !important;
+}
+
+body.sakura-mode .tvm-card-new button.calc-btn {
+    background: #ec407a !important;
+    box-shadow: 0 4px 15px rgba(236, 64, 122, 0.35);
+}
+
+body.sakura-mode .progress-wrap {
+    background: rgba(244, 143, 177, 0.3);
+}
+
+body.sakura-mode .progress-bar {
+    background: linear-gradient(90deg, #ec407a, #f48fb1);
+    box-shadow: 0 0 15px rgba(236, 64, 122, 0.4);
+}
+
+body.sakura-mode .dashboard-card-big,
+body.sakura-mode .exp-container {
+    background: rgba(244, 143, 177, 0.7);
+    color: #880e4f;
+    border: 1px solid #ec407a;
+    box-shadow: 0 8px 20px rgba(236, 64, 122, 0.15);
+}
+
+body.sakura-mode .badge-card.locked {
+    background: rgba(244, 143, 177, 0.3);
+    border: 2px dashed #ec407a;
+    color: #d81b60;
+}
+
+body.sakura-mode .badge-card.unlocked {
+    background: linear-gradient(135deg, #ec407a, #f48fb1);
+    color: white;
+    box-shadow: 0 8px 20px rgba(236, 64, 122, 0.25);
+}
+/* Sakura Settings Page Override */
+body.sakura-mode .settings-page,
+body.sakura-mode .settings-page p,
+body.sakura-mode .settings-page h1,
+body.sakura-mode .settings-page h3 {
+    color: #d81b60 !important;
+}
+
+body.sakura-mode .settings-page h1 {
+    color: #c2185b !important;
+}
+/* ===== SAVING JARS SYSTEM ===== */
+.saving-jars-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    padding-bottom: 100px;
+}
+
+/* Jar list card hover */
+.jar-card {
+    transition: transform 0.2s, box-shadow 0.3s;
+}
+.jar-card:active {
+    transform: scale(0.97);
+}
+
+/* Custom input for deposit */
+#jar-custom-input::placeholder {
+    color: rgba(255,255,255,0.3);
+}
+#jar-custom-input:focus {
+    border-color: rgba(168, 85, 247, 0.8) !important;
+    background: rgba(255,255,255,0.1) !important;
+}
+
+/* Deposit button states */
+#jar-btn-row button:active {
+    transform: scale(0.93);
+}
+
+/* Saving jar canvas wrapper */
+#jar-pig-canvas {
+    filter: drop-shadow(0 8px 24px rgba(249,168,212,0.25));
+}
+
+/* Milestone badge pill */
+.jar-milestone-badge {
+    display: inline-block;
+    padding: 5px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.4s, color 0.4s, border-color 0.4s;
+}
+
+/* Progress bar fill animation */
+.jar-progress-fill {
+    transition: width 0.7s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+}
+
+/* Popup overlay animations */
+@keyframes jarPopIn {
+    from { opacity: 0; transform: scale(0.75) translateY(20px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0);    }
+}
+@keyframes celebShake {
+    0%, 100% { transform: rotate(-8deg); }
+    50%       { transform: rotate( 8deg); }
+}
+
+/* History list scroll */
+#jar-history-list {
+    max-height: 180px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+#jar-history-list::-webkit-scrollbar { width: 4px; }
+#jar-history-list::-webkit-scrollbar-track { background: transparent; }
+#jar-history-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+/* Action buttons row */
+.jar-action-btn {
+    transition: background 0.2s, transform 0.15s;
+}
+.jar-action-btn:active {
+    transform: scale(0.95);
+}
+
+/* Theme overrides for saving jars */
+body.sakura-mode #jar-pig-canvas {
+    filter: drop-shadow(0 8px 24px rgba(236,64,122,0.3));
+}
+body.midnight-mode #jar-pig-canvas {
+    filter: drop-shadow(0 8px 24px rgba(108,92,231,0.3));
+}
+body.autumn-mode #jar-pig-canvas {
+    filter: drop-shadow(0 8px 24px rgba(255,111,0,0.3));
+}
+body.matrix-mode #jar-pig-canvas {
+    filter: drop-shadow(0 8px 24px rgba(0,255,65,0.3));
+}
+body.cyberpunk-mode #jar-pig-canvas {
+    filter: drop-shadow(0 8px 24px rgba(0,210,255,0.3));
+}
+
+/* ===== FLOATING NAVBAR STYLES ===== */
+/* ===== MODERN NAVBAR DESIGN (REDESIGNED) ===== */
+.floating-navbar {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(50, 50, 50, 0.98);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 75px;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    z-index: 999;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    max-width: 95vw;
+    width: auto;
+}
+
+.navbar-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 10px 16px;
+    border-radius: 14px;
+    border: none;
+    background: transparent;
+    color: #999;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    min-width: 56px;
+    position: relative;
+}
+
+.navbar-icon {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+/* SVG Icons for navbar */
+.navbar-icon[data-icon="house"]::before {
+    content: "🏠";
+    font-size: 20px;
+}
+
+.navbar-icon[data-icon="document"]::before {
+    content: "📋";
+    font-size: 20px;
+}
+
+.navbar-icon[data-icon="grid"]::before {
+    content: "⊞";
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.navbar-icon[data-icon="wallet"]::before {
+    content: "💼";
+    font-size: 20px;
+}
+
+.navbar-icon[data-icon="gear"]::before {
+    content: "⚙";
+    font-size: 20px;
+}
+
+.navbar-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.navbar-btn:hover {
+    color: #ccc;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-btn:active {
+    transform: scale(0.95);
+}
+
+.navbar-btn-active {
+    color: #ffffff; /* ✅ เปลี่ยนเป็นสีขาว */
+    background: rgba(0, 153, 255, 0.25); /* ✅ เพิ่มพื้นหลังสีฟ้าอ่อน */
+    border: 2px solid #0099ff; /* ✅ เพิ่มกรอบสีฟ้า */
+}
+
+.navbar-btn-active::after {
+    display: none; /* ✅ ลบเส้นด้านล่าง เพื่อใช้กรอบแทน */
+}
+
+.navbar-btn-active:hover {
+    background: rgba(0, 153, 255, 0.25); /* ✅ เพิ่มความสว่างตอน hover */
+    transform: scale(1.02); /* ✅ ขยายนิดหน่อยตอน hover */
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+    .floating-navbar {
+        bottom: 22px;
+        padding: 10px 18px;
+        gap: 8px;
+    }
+    
+    .navbar-btn {
+        padding: 8px 12px;
+        min-width: 50px;
+    }
+    
+    .navbar-label {
+        font-size: 10px;
+    }
+    
+    .navbar-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 18px;
+    }
+}
+
+/* =======================================================
+   TITAN UI SPECIFIC PATCH: แก้ปัญหาเฉพาะหน้าที่มีคอนเทนต์ยาว
+   ======================================================= */
+
+/* 1. เจาะจงเฉพาะหน้ากระปุกออมเงินย่อย (หน้าที่มีปุ่มแก้ไข รีเซ็ต ลบ) */
+.goals-page:has(#jar-pig-canvas), 
+.goals-page:has(.jar-action-btn) {
+    padding-bottom: 150px !important;
+}
+
+/* 2. เจาะจงเฉพาะหน้าหลักของกระปุกออมเงิน (ตอนที่เรามีกระปุกเยอะๆ แล้วยาวลงมา) */
+.goals-page:has([onclick*="openJar"]) {
+    padding-bottom: 150px !important;
+}
+
+/* 3. เจาะจงเฉพาะหน้าบันทึกรายจ่าย (Daily Expense) */
+.goals-page:has(.expense-card) {
+    padding-bottom: 150px !important;
+}
+
+/* 4. เจาะจงเฉพาะหน้าสมุดโน้ต (My Notes) */
+.notes-page {
+    padding-bottom: 150px !important;
+}
+
+/* 5. เจาะจงหน้า Daily Goals และ Long-term Goals (เพิ่มตามคำขอ) */
+.goals-page:has(.goal-item) {
+    padding-bottom: 150px !important;
+}
+
+/* 6. ดักจับเพิ่มในกรณีที่หน้า Goals นั้นยังไม่มีรายการข้างใน (หน้าว่าง) ให้เว้นระยะเผื่อกล่องเพิ่มเป้าหมาย (.add-box) */
+.goals-page:has(.add-box) {
+    padding-bottom: 150px !important;
+}
+
+/* =======================================================
+   TITAN UI PATCH: ปรับระยะหัวข้อด้านบนให้เท่ากันทุกหน้าตามสั่ง
+   ======================================================= */
+
+/* 1. หน้าจับเวลา (Pomodoro) */
+.goals-page:has(.timer-display),
+.goals-page:has(#pomodoro-card) {
+    padding-top: 75px !important;
+}
+
+/* 2. หน้าบันทึกรายจ่าย (Expense) */
+.goals-page:has(.expense-card),
+.goals-page:has(#expense-amount) {
+    padding-top: 75px !important;
+}
+
+/* 3. หน้าเป้าหมายรายวัน (Daily Goals) และ เป้าหมายระยะยาว (Long-term Goals) */
+.goals-page:has(.goal-item),
+.goals-page:has(.add-box) {
+    padding-top: 75px !important;
+}
+
+/* สั่งเขยิบเฉพาะตัวหนังสือหัวข้อ (h1) ในหน้าเหล่านั้นลงมาให้สมดุลและเท่ากันเป๊ะ */
+.goals-page:has(.timer-display) h1,
+.goals-page:has(.expense-card) h1,
+.goals-page:has(.goal-item) h1,
+.goals-page:has(.add-box) h1 {
+    margin-top: 15px !important;
+    margin-bottom: 25px !important;
+}
+/* =======================================================
+   TITAN UI POMODORO FIX: ดึงหัวข้อ Pomodoro ที่อยู่นอกกล่องลงมา
+   ======================================================= */
+
+/* สั่งให้ตัวหนังสือหัวข้อ h1 ที่อยู่ติดกับหน้า Pomodoro เขยิบลงมาจากขอบบนสุด */
+h1 + .goals-page:has(.pomo-card) {
+    /* ดันกล่องนาฬิกาลงมาเพิ่มเพื่อหลบหัวข้อ */
+    padding-top: 10px !important; 
+}
+
+/* เจาะจงสั่งตัวหนังสือ h1 หน้า Pomodoro ที่ลอยอยู่นอกกล่องให้เขยิบลงมาเท่าหน้าอื่น */
+#app > h1:has(+ .goals-page .pomo-card) {
+    margin-top: 90px !important;
+    margin-bottom: 10px !important;
+}
+
+/* สั่งให้กล่องเนื้อหาของหน้าที่มีรายการตารางเวลา เขยิบระยะด้านบนให้สมดุล */
+h1 + .goals-page:has(#rt-time),
+h1 + .goals-page:has([onclick*="addRoutine"]) {
+    padding-top: 10px !important; 
+}
+
+/* เจาะจงสั่งตัวหนังสือ h1 หน้า Daily Routine ที่ลอยอยู่นอกกล่องให้เขยิบลงมาเท่าหน้าอื่นเป๊ะ */
+#app > h1:has(+ .goals-page #rt-time),
+#app > h1:has(+ .goals-page [onclick*="addRoutine"]) {
+    margin-top: 90px !important;
+    margin-bottom: 10px !important;
+}
+/* =======================================================
+   HOME ONLY: บล็อกการดึงรีเฟรชเฉพาะหน้าแรก (Home Page)
+   ======================================================= */
+
+/* สั่งบล็อกการ Pull-to-Refresh เฉพาะเวลาที่อยู่หน้าที่มีคลาส .home-container */
+body:has(.home-container) {
+    overscroll-behavior-y: contain !important;
+}
+/* ===== SETTINGS PAGE CSS ===== */
+.settings-page {
+    width: 100%;
+    padding-bottom: 80px;
+    display: flex;
+    flex-direction: column;
+}
+
+body.dark-mode .settings-page {
+    
+    color: white;
+}
