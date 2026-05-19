@@ -1,0 +1,14 @@
+{
+  "background_color": "#000000",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Habit Better",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "short_name": "Habit Better",
+  "start_url": "./index.html",
+  "theme_color": "#000000",
+  "id": "/",
+  "description": "Habit Better",
+  "lang": "th"
+}
