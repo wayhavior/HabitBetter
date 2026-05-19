@@ -10,5 +10,18 @@
   "theme_color": "#000000",
   "id": "/",
   "description": "Habit Better",
-  "lang": "th"
+  "lang": "th",
+  "icons": [
+    {
+      "src": "launchericon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "launchericon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+  
 }
