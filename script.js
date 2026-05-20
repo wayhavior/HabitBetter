@@ -49,8 +49,7 @@ function requestDriveAccess() {
 
     const client = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
-        // ✅ FIX: เพิ่ม scope เพื่อให้อ่านไฟล์ backup เก่าได้
-        scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly',
+        scope: 'https://www.googleapis.com/auth/drive.file',
         callback: (response) => {
 
             accessToken = response.access_token;
@@ -119,11 +118,7 @@ function logout() {
     render();
 }
 
-/* ===== BACKUP FUNCTION =====
- * 📝 BUG FIXES:
- * 1. เพิ่มการบันทึก lastBackupFileId เพื่อให้ restore ได้เร็วครั้งต่อไป
- * 2. เพิ่ม error handling สำหรับ HTTP response
- */
+// ===== BACKUP FUNCTION =====
 async function backupToGoogleDrive() {
     try {
 
@@ -182,9 +177,6 @@ async function backupToGoogleDrive() {
         const data = await res.json();
 
         if (data.id) {
-            // ✅ FIX: บันทึก file ID และชื่อไฟล์เพื่อ restore ได้เร็วครั้งต่อไป
-            localStorage.setItem("lastBackupFileId", data.id);
-            localStorage.setItem("lastBackupFileName", data.name || `HabitBetter-Backup-${Date.now()}.json`);
             alert("✅ Backup สำเร็จ!");
         } else {
             console.error(data);
@@ -198,14 +190,6 @@ async function backupToGoogleDrive() {
 }
 
 // ===== RESTORE FUNCTION =====
-/* 
- * 📝 BUG FIXES:
- * 1. เปลี่ยนจาก if statement แต่ละอัน → loop ด้วย array เพื่อให้ครบทุก key
- * 2. เพิ่มการเช็ค !== undefined && !== null เพื่อหลีกเลี่ยงค่า falsy ที่ถูกต้อง (เช่น empty array)
- * 3. เพิ่ม error handling สำหรับ HTTP response
- * 4. แสดงจำนวนรายการที่ restore ได้
- * 5. บันทึก lastBackupFileId เพื่ออ้างอิงครั้งต่อไป
- */
 async function restoreFromGoogleDrive() {
 
     try {
@@ -246,29 +230,36 @@ async function restoreFromGoogleDrive() {
             }
         );
 
-        if (!fileRes.ok) {
-            throw new Error(`Failed to download backup file: ${fileRes.status}`);
-        }
-
         const backupData = await fileRes.json();
 
-        // ✅ FIX: restore data ด้วย array ของ keys เพื่อให้แน่ใจว่าทุก key ถูก restore
-        const keysToRestore = ['tracker', 'way_piggy', 'saving_jars', 'titanPoints', 'notes', 'expenses', 'tasks', 'routines'];
-        
-        let restoredCount = 0;
-        keysToRestore.forEach(key => {
-            if (backupData[key] !== undefined && backupData[key] !== null) {
-                localStorage.setItem(key, backupData[key]);
-                restoredCount++;
-            }
-        });
+        // restore data
+        if (backupData.tracker)
+            localStorage.setItem("tracker", backupData.tracker);
 
-        // ✅ FIX: บันทึก file ID เพื่อ restore ได้เร็วครั้งต่อไป
-        localStorage.setItem("lastBackupFileId", latestFile.id);
-        localStorage.setItem("lastBackupFileName", latestFile.name);
+        if (backupData.way_piggy)
+            localStorage.setItem("way_piggy", backupData.way_piggy);
+
+        if (backupData.saving_jars)
+            localStorage.setItem("saving_jars", backupData.saving_jars);
+
+        if (backupData.titanPoints)
+            localStorage.setItem("titanPoints", backupData.titanPoints);
+
+        if (backupData.notes)
+            localStorage.setItem("notes", backupData.notes);
+
+        if (backupData.expenses)
+            localStorage.setItem("expenses", backupData.expenses);
+
+        if (backupData.tasks)
+            localStorage.setItem("tasks", backupData.tasks);
+
+        if (backupData.routines)
+            localStorage.setItem("routines", backupData.routines);
 
         alert(
-            `✅ Restore สำเร็จ!\nกู้คืน ${restoredCount} รายการ\nจาก: ${latestFile.name}`
+            "✅ Restore สำเร็จ!\nจาก: " +
+            latestFile.name
         );
 
         setTimeout(() => {
@@ -3599,10 +3590,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.1</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.0</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.1</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.0</div>
                     </div>
                 </div>
             </div>
