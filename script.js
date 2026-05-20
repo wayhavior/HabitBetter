@@ -94,11 +94,16 @@ function handleGoogleLogin(response) {
 
 function logout() {
 
+    const token = localStorage.getItem("googleAccessToken");
+
+    // revoke token จริง
+    if (token && window.google) {
+        google.accounts.oauth2.revoke(token);
+    }
+
+    // ลบ localStorage
     localStorage.removeItem("googleToken");
-
     localStorage.removeItem("googleUser");
-
-    // ลบ access token ด้วย
     localStorage.removeItem("googleAccessToken");
 
     accessToken = null;
