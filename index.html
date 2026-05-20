@@ -1,29 +1,45 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="google" content="notranslate">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Habit Better</title>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://apis.google.com/js/api.js"></script>
-  <link rel="manifest" href="./manifest.json">
-  <link rel="stylesheet" href="./style.css">
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Habit Better</title>
+    <!-- Google Sign-In Library -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Google API Library -->
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
-  <div id="app"></div>
-  
-  <script src="./script.js"></script>
+    <div id="app"></div>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('Service Worker registered!'))
-          .catch(err => console.log('Service Worker registration failed: ', err));
-      });
-    }
-  </script>
+    <!-- โหลด script.js ให้เรียบร้อยก่อน Google APIs -->
+    <script src="./script.js"></script>
+
+    <!-- รอให้ page โหลดจบแล้วเรียก initialization -->
+    <script>
+        // เรียกใช้เมื่อ page โหลดจบ
+        window.addEventListener('load', function() {
+            // ให้เวลา Google APIs โหลด
+            setTimeout(() => {
+                if (typeof initializeGoogleDriveAPI === 'function') {
+                    initializeGoogleDriveAPI();
+                    console.log('✓ Google Drive API initialized');
+                } else {
+                    console.warn('⚠️ initializeGoogleDriveAPI not ready yet');
+                }
+            }, 500);
+
+            // Service Worker registration
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('✓ Service Worker registered!'))
+                    .catch(err => console.log('⚠️ Service Worker registration failed: ', err));
+            }
+        });
+    </script>
 </body>
 </html>
