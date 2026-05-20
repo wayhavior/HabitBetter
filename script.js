@@ -12,7 +12,7 @@ const EXP_PER_LEVEL = 1000;
 // Google OAuth Configuration
 const GOOGLE_CLIENT_ID = "192099173031-arqdd6koquej0is89egvmna3bg7j552m.apps.googleusercontent.com"; // ✏️ เปลี่ยนเป็น Client ID ของคุณ
 const GOOGLE_API_KEY = "AIzaSyATr3RANcNwBMal7MSrtkwG4p4A7vCwq5E";
-
+let accessToken = null;
 /* 1. ย้ายมาบนสุดกัน Error */
 function getToday() { return new Date().toISOString().split("T")[0]; }
 
@@ -45,6 +45,27 @@ function initializeGoogleLogin() {
     initializeGoogleDriveAPI();
 }
 
+function requestDriveAccess() {
+
+    const client = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: (response) => {
+
+            accessToken = response.access_token;
+
+            localStorage.setItem(
+                "googleAccessToken",
+                accessToken
+            );
+
+            alert("✅ เชื่อม Google Drive สำเร็จ");
+        }
+    });
+
+    client.requestAccessToken();
+}
+
 function handleGoogleLogin(response) {
     const token = response.credential;
     
@@ -56,6 +77,7 @@ function handleGoogleLogin(response) {
         
         // เก็บข้อมูล user ใน localStorage
         localStorage.setItem("googleToken", token);
+        requestDriveAccess();
         localStorage.setItem("googleUser", JSON.stringify({
             email: userData.email,
             name: userData.name,
@@ -85,20 +107,14 @@ function logout() {
 // ===== BACKUP FUNCTION =====
 async function backupToGoogleDrive() {
     try {
-        // ✅ ตรวจสอบว่า gapi โหลดแล้ว
-        if (!window.gapi || !window.gapi.auth2) {
-            alert("⚠️ Google API ยังไม่พร้อม กรุณารอสักครู่");
-            return;
-        }
 
-        const auth = gapi.auth2.getAuthInstance();
-        
-        if (!auth || !auth.isSignedIn.get()) {
+        const token = localStorage.getItem("googleAccessToken");
+
+        if (!token) {
             alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
         }
 
-        // เก็บข้อมูลทั้งหมด
         const backupData = {
             tracker: localStorage.getItem("tracker"),
             way_piggy: localStorage.getItem("way_piggy"),
@@ -111,28 +127,51 @@ async function backupToGoogleDrive() {
             timestamp: new Date().toISOString()
         };
 
-        // สร้าง file ขึ้น Google Drive
-        const file = new Blob([JSON.stringify(backupData, null, 2)], {type: 'application/json'});
         const metadata = {
             name: `HabitBetter-Backup-${Date.now()}.json`,
             mimeType: 'application/json'
         };
 
-        // ✅ ใช้ gapi.client.drive.files.create แทน fetch
-        const response = await gapi.client.drive.files.create({
-            resource: metadata,
-            media: file,
-            fields: 'id, name, createdTime'
-        });
+        const form = new FormData();
 
-        if (response.status === 200) {
-            alert("✅ Backup สำเร็จ! ข้อมูลถูกบันทึกไปยัง Google Drive\nไฟล์: " + response.result.name);
+        form.append(
+            "metadata",
+            new Blob([JSON.stringify(metadata)], {
+                type: "application/json"
+            })
+        );
+
+        form.append(
+            "file",
+            new Blob(
+                [JSON.stringify(backupData, null, 2)],
+                { type: "application/json" }
+            )
+        );
+
+        const res = await fetch(
+            "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                body: form
+            }
+        );
+
+        const data = await res.json();
+
+        if (data.id) {
+            alert("✅ Backup สำเร็จ!");
         } else {
-            alert("❌ Backup ล้มเหลว (Status: " + response.status + ")");
+            console.error(data);
+            alert("❌ Backup ไม่สำเร็จ");
         }
-    } catch (error) {
-        console.error("Backup error:", error);
-        alert("❌ เกิดข้อผิดพลาด: " + error.message);
+
+    } catch (err) {
+        console.error(err);
+        alert("❌ " + err.message);
     }
 }
 
