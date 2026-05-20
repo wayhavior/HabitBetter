@@ -28,13 +28,13 @@
         window.addEventListener('load', function() {
             console.log('📄 Page loaded, initializing Google APIs...');
             
-            // ให้เวลา Google APIs โหลด (1 วินาที)
+            // ให้เวลา Google APIs โหลด (1.5 วินาที)
             setTimeout(() => {
                 // 1️⃣ Initialize Google Sign-In ก่อน
                 if (window.google && window.google.accounts && window.google.accounts.id) {
                     try {
                         google.accounts.id.initialize({
-                            client_id: "192099173031-arqdd6koquej0is89egvmna3bg7j552m.apps.googleusercontent.com",
+                            client_id: "192099173031-vo271va68s5p166dpqgj0o20ot715t57.apps.googleusercontent.com",
                             callback: handleGoogleLogin,
                             ux_mode: 'popup',
                             auto_select: false
@@ -54,7 +54,7 @@
                 } else {
                     console.warn('⚠️ initializeGoogleDriveAPI function not ready yet');
                 }
-            }, 1000);
+            }, 1500);
 
             // 3️⃣ Service Worker registration
             if ('serviceWorker' in navigator) {
