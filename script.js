@@ -7,12 +7,204 @@ async function hashPassword(password) {
 const app = document.getElementById("app");
 
 /* ===== CONFIGURATION ===== */
-const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbxTqyoY8PyRGX4_wfo3SUHvUWg7dU8Jxx0og7qZP50aZl5rwvogHcSBNeTqetba0o-i/exec";
-const EXP_PER_LEVEL = 1000; 
+// ✅ ลบ CLOUD_API_URL - ไม่ส่งข้อมูลขึ้น Google Sheets อีกต่อไป
+const EXP_PER_LEVEL = 1000;
+// Google OAuth Configuration
+const GOOGLE_CLIENT_ID = "192099173031-arqdd6koquej0is89egvmna3bg7j552m.apps.googleusercontent.com"; // ✏️ เปลี่ยนเป็น Client ID ของคุณ
+const GOOGLE_API_KEY = "AIzaSyATr3RANcNwBMal7MSrtkwG4p4A7vCwq5E";
 
 /* 1. ย้ายมาบนสุดกัน Error */
 function getToday() { return new Date().toISOString().split("T")[0]; }
 
+/* ===== GOOGLE LOGIN FUNCTIONS ===== */
+// ฟังก์ชันเพื่อ decode JWT token
+function decodeJWT(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        console.error("Error decoding JWT:", e);
+        return null;
+    }
+}
+
+function initializeGoogleLogin() {
+    if (!window.google) {
+        alert("Google Sign-In library ยังไม่โหลด กรุณารอสักครู่");
+        return;
+    }
+
+    google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleLogin
+    });
+    initializeGoogleDriveAPI();
+}
+
+function handleGoogleLogin(response) {
+    const token = response.credential;
+    
+    // Decode token เพื่อดึงข้อมูล user
+    const userData = decodeJWT(token);
+    
+    if (userData) {
+        console.log("Google Login Success:", userData);
+        
+        // เก็บข้อมูล user ใน localStorage
+        localStorage.setItem("googleToken", token);
+        localStorage.setItem("googleUser", JSON.stringify({
+            email: userData.email,
+            name: userData.name,
+            picture: userData.picture,
+            loginTime: new Date().toISOString()
+        }));
+        
+        // refresh หน้า Settings เพื่อแสดงข้อมูล user ใหม่
+        render();
+    } else {
+        alert("ไม่สามารถประมวลผล token ได้ กรุณาลองใหม่");
+    }
+}
+
+function logout() {
+    localStorage.removeItem("googleToken");
+    localStorage.removeItem("googleUser");
+    
+    // ออก Google session
+    if (window.google) {
+        google.accounts.id.disableAutoSelect();
+    }
+    
+    render();
+}
+
+// ===== BACKUP FUNCTION =====
+async function backupToGoogleDrive() {
+    try {
+        const auth = gapi.auth2.getAuthInstance();
+        
+        if (!auth.isSignedIn.get()) {
+            alert("⚠️ กรุณาล็อกอิน Google ก่อน");
+            return;
+        }
+
+        // เก็บข้อมูลทั้งหมด
+        const backupData = {
+            tracker: localStorage.getItem("tracker"),
+            way_piggy: localStorage.getItem("way_piggy"),
+            saving_jars: localStorage.getItem("saving_jars"),
+            titanPoints: localStorage.getItem("titanPoints"),
+            notes: localStorage.getItem("notes"),
+            expenses: localStorage.getItem("expenses"),
+            tasks: localStorage.getItem("tasks"),
+            routines: localStorage.getItem("routines"),
+            timestamp: new Date().toISOString()
+        };
+
+        // สร้าง file ขึ้น Google Drive
+        const file = new Blob([JSON.stringify(backupData, null, 2)], {type: 'application/json'});
+        const metadata = {
+            name: `HabitBetter-Backup-${Date.now()}.json`,
+            mimeType: 'application/json'
+        };
+
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+        form.append('file', file);
+
+        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&key=' + GOOGLE_API_KEY, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().id_token
+            },
+            body: form
+        });
+
+        if (response.ok) {
+            alert("✅ Backup สำเร็จ! ข้อมูลถูกบันทึกไปยัง Google Drive");
+        } else {
+            alert("❌ Backup ล้มเหลว");
+        }
+    } catch (error) {
+        console.error("Backup error:", error);
+        alert("❌ เกิดข้อผิดพลาด: " + error.message);
+    }
+}
+
+// ===== RESTORE FUNCTION =====
+async function restoreFromGoogleDrive() {
+    try {
+        const auth = gapi.auth2.getAuthInstance();
+        
+        if (!auth.isSignedIn.get()) {
+            alert("⚠️ กรุณาล็อกอิน Google ก่อน");
+            return;
+        }
+
+        // ค้นหา backup files
+        const response = await gapi.client.drive.files.list({
+            q: "name contains 'HabitBetter-Backup'",
+            spaces: 'drive',
+            pageSize: 10,
+            fields: 'files(id, name, createdTime)'
+        });
+
+        const files = response.result.files;
+        
+        if (!files || files.length === 0) {
+            alert("ไม่พบ backup files ในระบบของคุณ");
+            return;
+        }
+
+        // เลือก backup ที่ใหม่ที่สุด
+        const latestFile = files[0];
+        
+        // ดาวน์โหลด file
+        const fileContent = await gapi.client.drive.files.get({
+            fileId: latestFile.id,
+            alt: 'media'
+        });
+
+        // restore ข้อมูล
+        const backupData = fileContent.result;
+        
+        if (backupData.tracker) localStorage.setItem("tracker", backupData.tracker);
+        if (backupData.way_piggy) localStorage.setItem("way_piggy", backupData.way_piggy);
+        if (backupData.saving_jars) localStorage.setItem("saving_jars", backupData.saving_jars);
+        if (backupData.titanPoints) localStorage.setItem("titanPoints", backupData.titanPoints);
+        if (backupData.notes) localStorage.setItem("notes", backupData.notes);
+        if (backupData.expenses) localStorage.setItem("expenses", backupData.expenses);
+        if (backupData.tasks) localStorage.setItem("tasks", backupData.tasks);
+        if (backupData.routines) localStorage.setItem("routines", backupData.routines);
+
+        alert("✅ Restore สำเร็จ! ข้อมูลของคุณถูกกู้คืนแล้ว");
+        
+        // รีโหลดหน้า
+        setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+        console.error("Restore error:", error);
+        alert("❌ เกิดข้อผิดพลาด: " + error.message);
+    }
+}
+
+/* ===== GOOGLE DRIVE API FUNCTIONS ===== */
+function initializeGoogleDriveAPI() {
+    gapi.load('client:auth2', () => {
+        gapi.client.init({
+            apiKey: GOOGLE_API_KEY,
+            clientId: GOOGLE_CLIENT_ID,
+            scope: 'https://www.googleapis.com/auth/drive.file'
+        }).then(() => {
+            console.log("Google Drive API initialized");
+        }).catch(error => {
+            console.error("Error initializing Google Drive API:", error);
+        });
+    });
+}
 /* ===== FLOATING NAVBAR FUNCTION (UPDATED - NO RECREATION) ===== */
 function renderFloatingNavbar() {
     let navbar = document.getElementById("floating-navbar");
@@ -581,115 +773,9 @@ function triggerConfetti() {
     }
 }
 
-// ฟังก์ชันส่งข้อมูลไป Cloud
-async function syncToCloud() {
-    // ⭐ ขอ Username จากผู้ใช้
-    let username = localStorage.getItem("username");
-    
-    if (!username) {
-        username = prompt("📝 ตั้ง Username ของคุณ\n(เช่น: john, mike, sarah)\n\nเมื่อเปลี่ยนโทรศัพท์ให้ใช้ Username นี้ในการกู้คืน");
-        
-        if (!username || username.trim() === "") {
-            alert("❌ ต้องตั้ง Username ก่อน!");
-            return;
-        }
-        
-        // บันทึก username ไว้ใน localStorage
-        localStorage.setItem("username", username.trim());
-    }
-    
-    const backupData = {
-        action: "sync",
-        username: username.trim(),  // ⭐ ส่ง username ไป Cloud
-        totalExp: totalExp,
-        titanPoints: titanPoints,
-        ownedItems: ownedItems,
-        equippedItems: equippedItems,
-        unlockedBadges: unlockedBadges,
-        badgeLastCheckDate: badgeLastCheckDate,  // ⭐ NEW: เพิ่ม badge check date
-        my_daily_goals: myDailyGoals,
-        my_longterm_goals: myLongTermGoals,
-        my_notes: myNotes,
-        my_expenses: myExpenses,
-        my_expense_archive: myExpenseArchive,
-        lastExpenseAutoArchiveDate: lastExpenseAutoArchiveDate,
-        my_routines: myRoutines,
-        saving_jars: savingJars,  // ⭐ NEW: เพิ่ม saving jars
-        active_jar_id: activeJarId,  // ⭐ NEW: เพิ่ม active jar ID
-        timestamp: new Date().toLocaleString('th-TH')
-    };
+// ✅ ลบฟังก์ชัน syncToCloud ออก - ไม่ส่งข้อมูลไป Google Sheets อีกต่อไป
 
-    try {
-        alert("กำลังเริ่มการสำรองข้อมูล... กรุณารอสักครู่");
-        await fetch(CLOUD_API_URL, {
-            method: 'POST',
-            mode: 'no-cors', 
-            cache: 'no-cache',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(backupData)
-        });
-        alert(`✅ สำรองข้อมูลของ "${username}" สำเร็จ!`);
-    } catch (error) {
-        alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ");
-    }
-}
-
-// ฟังก์ชันดึงข้อมูลคืนจาก Cloud
-async function restoreFromCloud() {
-    // ⭐ ขอ Username จากผู้ใช้ก่อน restore
-    const username = prompt("🔐 กรอก Username ของคุณ\n(Username ที่คุณตั้งตอนสำรองข้อมูล)");
-    
-    if (!username || username.trim() === "") {
-        alert("❌ ต้องกรอก Username!");
-        return;
-    }
-    
-    if (!confirm("⚠️ ข้อมูลปัจจุบันจะถูกเขียนทับด้วยข้อมูลล่าสุดจาก Cloud ต้องการกู้คืนใช่หรือไม่?")) return;
-    
-    try {
-        alert("⭐กด ตกลง แล้วแล้วรอสักครู่");
-        // ⭐ ส่ง username ไปในการ query
-        const response = await fetch(`${CLOUD_API_URL}?action=restore&username=${encodeURIComponent(username.trim())}`);
-        const result = await response.json();
-
-        // ⭐ ตรวจสอบ error ก่อน!
-        if (result.error) {
-            alert(`❌ ไม่พบข้อมูลของ Username "${username}"\n\nลองตรวจสอบ Username ใหม่`);
-            return;
-        }
-
-        // ✅ ถ้าไม่มี error = ข้อมูลถูกต้อง
-        if (result && result.username) {
-            // บันทึก username ไว้ใน localStorage
-            localStorage.setItem("username", username.trim());
-            
-            // 720 Day Tracker ลบแล้ว (ไม่รับ result.tracker)
-            totalExp = result.totalExp || 0; 
-            myDailyGoals = result.my_daily_goals || [];
-            myLongTermGoals = result.my_longterm_goals || [];
-            myNotes = result.my_notes || [];
-            myExpenses = result.my_expenses || [];
-            myExpenseArchive = result.my_expense_archive || [];
-            lastExpenseAutoArchiveDate = result.lastExpenseAutoArchiveDate || "";
-            myRoutines = result.my_routines || [];
-            titanPoints = result.titanPoints || 0;
-            ownedItems = result.ownedItems || [];
-            equippedItems = result.equippedItems || {};
-            savingJars = result.saving_jars || [];  // ⭐ NEW: คืน saving jars
-            activeJarId = result.active_jar_id || null;  // ⭐ NEW: คืน active jar ID
-            unlockedBadges = result.unlockedBadges || [];
-            badgeLastCheckDate = result.badgeLastCheckDate || "";  // ⭐ NEW: คืน badge check date
-            
-            save(); 
-            alert(`✅ กู้คืนข้อมูลของ "${username}" สำเร็จ!`);
-            render();
-        } else {
-            alert(`❌ ข้อมูลไม่สมบูรณ์ ลองอีกครั้ง`);
-        }
-    } catch (e) {
-        alert("❌ เกิดข้อผิดพลาด: " + e.message);
-    }
-}
+// ✅ ลบฟังก์ชัน restoreFromCloud ออก - ไม่ดึงข้อมูลจาก Google Sheets อีกต่อไป
 
 /* แก้ไขเฉพาะฟังก์ชัน applyZoom */
 function applyZoom() {
@@ -775,16 +861,7 @@ zoomBtn.onclick = () => {
     applyZoom();
 };
 
-const cloudBtn = document.createElement("button");
-cloudBtn.className = "zoom-btn";
-cloudBtn.style.cssText = "position:relative;top:auto;right:auto;box-shadow:none;";
-cloudBtn.style.display = specialButtonsVisible ? "block" : "none";
-cloudBtn.innerText = "☁️";
-cloudBtn.onclick = () => {
-    const choice = prompt("☁️ Cloud Sync\n\nพิมพ์ 1 = สำรองข้อมูลขึ้น Cloud\nพิมพ์ 2 = กู้คืนข้อมูลจาก Cloud\n\nกด Cancel เพื่อออก");
-    if (choice === "1") { syncToCloud(); }
-    else if (choice === "2") { restoreFromCloud(); }
-};
+// ✅ ลบปุ่ม cloudBtn ออก - ไม่มีฟังก์ชัน sync/restore อีกต่อไป
 
 function makeDrawer() {
     const drawer = document.createElement("div");
@@ -1065,7 +1142,7 @@ dbCard.onclick = () => { currentPage = "summary"; render(); };
         const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
-drawer.appendChild(cloudBtn);
+
 app.appendChild(settingsBtn);
 app.appendChild(drawer);
 app.appendChild(homeContainer);
@@ -1200,7 +1277,7 @@ function renderSavingJarsPage() {
     app.innerHTML = '';
     const bBtn = document.createElement('button'); bBtn.className = 'back-btn'; bBtn.innerText = '🏠';
     bBtn.onclick = () => { currentPage = 'home'; render(); };
-    const drawer = makeDrawer(); drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); drawer.appendChild(cloudBtn);
+    const drawer = makeDrawer(); drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
 
     const container = document.createElement('div');
@@ -1263,7 +1340,7 @@ function renderJarDetailPage() {
     app.innerHTML = '';
     const bBtn = document.createElement('button'); bBtn.className = 'back-btn'; bBtn.innerText = '←';
     bBtn.onclick = () => { currentPage = 'saving'; render(); };
-    const drawer = makeDrawer(); drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); drawer.appendChild(cloudBtn);
+    const drawer = makeDrawer(); drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
 
     const container = document.createElement('div');
@@ -2052,7 +2129,7 @@ function renderRoutinePage() {
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
-drawer.appendChild(cloudBtn);
+
 app.appendChild(bBtn);
 app.appendChild(settingsBtn);
 app.appendChild(drawer);
@@ -2126,7 +2203,7 @@ function renderPomoPage() {
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
-drawer.appendChild(cloudBtn);
+
 app.appendChild(bBtn);
 app.appendChild(settingsBtn);
 app.appendChild(drawer);
@@ -2189,7 +2266,7 @@ function renderExpensePage() {
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
-drawer.appendChild(cloudBtn);
+
 app.appendChild(bBtn);
 app.appendChild(settingsBtn);
 app.appendChild(drawer);
@@ -2294,7 +2371,7 @@ function renderTVMPage() {
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
-drawer.appendChild(cloudBtn);
+
 app.appendChild(bBtn);
 app.appendChild(settingsBtn);
 app.appendChild(drawer);
@@ -2341,7 +2418,7 @@ function renderGoalsPage(type) {
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
-drawer.appendChild(cloudBtn);
+
 app.appendChild(bBtn);
 app.appendChild(settingsBtn);
 app.appendChild(drawer);
@@ -2381,7 +2458,7 @@ function renderNotesPage() {
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
-drawer.appendChild(cloudBtn);
+
 app.appendChild(bBtn);
 app.appendChild(settingsBtn);
 app.appendChild(drawer);
@@ -2654,7 +2731,7 @@ function renderAchievementsPage() {
     const drawer = makeDrawer();
     drawer.appendChild(themeBtn);
     drawer.appendChild(zoomBtn);
-    drawer.appendChild(cloudBtn);
+    
     app.appendChild(bBtn);
     app.appendChild(settingsBtn);
     app.appendChild(drawer);
@@ -2729,7 +2806,7 @@ function renderSummaryPage() {
     bBtn.className = "back-btn"; bBtn.innerText = "🏠";
     bBtn.onclick = () => { currentPage = "home"; render(); };
     const drawer = makeDrawer();
-    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); drawer.appendChild(cloudBtn);
+    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
 
     const container = document.createElement("div");
@@ -2996,7 +3073,7 @@ function renderProfilePage() {
     bBtn.onclick = () => { currentPage = "home"; render(); };
     
     const drawer = makeDrawer();
-    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); drawer.appendChild(cloudBtn);
+    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
 
     const container = document.createElement("div"); 
@@ -3087,7 +3164,7 @@ function renderShopPage() {
     bBtn.onclick = () => { currentPage = "home"; render(); };
     app.appendChild(bBtn);
     const drawer = makeDrawer();
-    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); drawer.appendChild(cloudBtn);
+    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(settingsBtn); app.appendChild(drawer);
 
     const container = document.createElement("div"); 
@@ -3185,7 +3262,7 @@ function renderSavingsPage() {
     bBtn.onclick = () => { currentPage = "home"; render(); };
     app.appendChild(bBtn);
     const drawer = makeDrawer();
-    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); drawer.appendChild(cloudBtn);
+    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(settingsBtn); app.appendChild(drawer);
 
     const container = document.createElement("div"); 
@@ -3267,6 +3344,43 @@ function renderSettingsPage() {
             <div style="margin-top: 1.5rem;">
                 <h3 style="font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.5); margin: 1rem 1.25rem 0.75rem; text-transform: uppercase; letter-spacing: 1.5px;">ทั่วไป</h3>
                 <div style="background: rgba(255,255,255,0.08); margin: 0 0.75rem; border-radius: 14px; overflow: hidden;">
+                    ${(() => {
+                        const googleUser = JSON.parse(localStorage.getItem("googleUser") || "null");
+                        if (googleUser) {
+                            // ถ้า login แล้ว แสดงข้อมูล user
+                            return `
+                                <div style="padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                        <img src="${googleUser.picture}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;" />
+                                        <div>
+                                            <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">${googleUser.name}</p>
+                                            <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">${googleUser.email}</p>
+                                        </div>
+                                    </div>
+                                    <button style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.15); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer;" id="google-logout-btn">ออก</button>
+                                </div>
+                            `;
+                        } else {
+                            // ถ้าไม่ login แสดงปุ่ม Sign in
+                            return `
+                                <div style="padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+                                        <svg style="width: 44px; height: 44px;" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                        </svg>
+                                        <div>
+                                            <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">Google Account</p>
+                                            <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">ล็อกอินด้วย Google</p>
+                                        </div>
+                                    </div>
+                                    <button style="padding: 0.5rem 1.2rem; background: white; color: #1f2937; border: 1px solid #d1d5db; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer;" id="google-login-btn">Sign in</button>
+                                </div>
+                            `;
+                        }
+                    })()}
                     <div style="padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; cursor: pointer;" id="theme-item">
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #ff6b6b, #ee5a6f); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: white;">🎨</div>
@@ -3406,11 +3520,29 @@ function renderSettingsPage() {
         const backupBtn = document.getElementById("backup-btn");
         const restoreBtn = document.getElementById("restore-btn");
         const clearAllBtn = document.getElementById("clear-all-btn");
+        const googleLoginBtn = document.getElementById("google-login-btn");
+        const googleLogoutBtn = document.getElementById("google-logout-btn");
 
         if (backBtn) {
             backBtn.onclick = () => {
                 currentPage = "home";
                 render();
+            };
+        }
+
+        if (googleLoginBtn) {
+            googleLoginBtn.onclick = () => {
+                initializeGoogleLogin();
+                google.accounts.id.renderButton(
+                    googleLoginBtn.parentElement,
+                    { theme: "outline", size: "large", width: "250" }
+                );
+            };
+        }
+
+        if (googleLogoutBtn) {
+            googleLogoutBtn.onclick = () => {
+                logout();
             };
         }
 
@@ -3454,20 +3586,16 @@ function renderSettingsPage() {
         }
 
         if (backupBtn) {
-    backupBtn.onclick = async () => {  // ⬅️ เพิ่ม async
-        await syncToCloud();  // ⬅️ เพิ่ม await
-        backupBtn.innerText = "✓ สำรองแล้ว";
-        setTimeout(() => {
-            backupBtn.innerText = "สำรอง";
-        }, 2000);
+    backupBtn.onclick = async () => {
+        await backupToGoogleDrive();
     };
 }
 
-        if (restoreBtn) {
-    restoreBtn.onclick = () => {      
-            restoreFromCloud();
-        }
-    }
+if (restoreBtn) {
+    restoreBtn.onclick = async () => {
+        await restoreFromGoogleDrive();
+    };
+}
 
         if (clearAllBtn) {
             clearAllBtn.onclick = () => {
