@@ -191,63 +191,85 @@ async function backupToGoogleDrive() {
 
 // ===== RESTORE FUNCTION =====
 async function restoreFromGoogleDrive() {
-    try {
-        // ✅ ตรวจสอบว่า gapi โหลดแล้ว
-        if (!window.gapi || !window.gapi.auth2) {
-            alert("⚠️ Google API ยังไม่พร้อม กรุณารอสักครู่");
-            return;
-        }
 
-        const auth = gapi.auth2.getAuthInstance();
-        
-        if (!auth || !auth.isSignedIn.get()) {
+    try {
+
+        const token = localStorage.getItem("googleAccessToken");
+
+        if (!token) {
             alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
         }
 
-        // ค้นหา backup files
-        const response = await gapi.client.drive.files.list({
-            q: "name contains 'HabitBetter-Backup' and trashed=false",
-            spaces: 'drive',
-            pageSize: 10,
-            fields: 'files(id, name, createdTime)',
-            orderBy: 'createdTime desc'
-        });
+        // หา backup ล่าสุด
+        const listRes = await fetch(
+            "https://www.googleapis.com/drive/v3/files?q=name contains 'HabitBetter-Backup' and trashed=false&orderBy=createdTime desc&pageSize=1",
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
 
-        const files = response.result.files;
-        
-        if (!files || files.length === 0) {
-            alert("ไม่พบ backup files ในระบบของคุณ");
+        const listData = await listRes.json();
+
+        if (!listData.files || listData.files.length === 0) {
+            alert("❌ ไม่พบ backup files");
             return;
         }
 
-        // เลือก backup ที่ใหม่ที่สุด
-        const latestFile = files[0];
-        
-        // ดาวน์โหลด file
-        const fileContent = await gapi.client.drive.files.get({
-            fileId: latestFile.id,
-            alt: 'media'
-        });
+        const latestFile = listData.files[0];
 
-        // restore ข้อมูล
-        const backupData = fileContent.result;
-        
-        if (backupData.tracker) localStorage.setItem("tracker", backupData.tracker);
-        if (backupData.way_piggy) localStorage.setItem("way_piggy", backupData.way_piggy);
-        if (backupData.saving_jars) localStorage.setItem("saving_jars", backupData.saving_jars);
-        if (backupData.titanPoints) localStorage.setItem("titanPoints", backupData.titanPoints);
-        if (backupData.notes) localStorage.setItem("notes", backupData.notes);
-        if (backupData.expenses) localStorage.setItem("expenses", backupData.expenses);
-        if (backupData.tasks) localStorage.setItem("tasks", backupData.tasks);
-        if (backupData.routines) localStorage.setItem("routines", backupData.routines);
+        // โหลดไฟล์ backup
+        const fileRes = await fetch(
+            `https://www.googleapis.com/drive/v3/files/${latestFile.id}?alt=media`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
 
-        alert("✅ Restore สำเร็จ! ข้อมูลของคุณถูกกู้คืนแล้ว\nจาก: " + latestFile.name);
-        
-        // รีโหลดหน้า
-        setTimeout(() => window.location.reload(), 1000);
+        const backupData = await fileRes.json();
+
+        // restore data
+        if (backupData.tracker)
+            localStorage.setItem("tracker", backupData.tracker);
+
+        if (backupData.way_piggy)
+            localStorage.setItem("way_piggy", backupData.way_piggy);
+
+        if (backupData.saving_jars)
+            localStorage.setItem("saving_jars", backupData.saving_jars);
+
+        if (backupData.titanPoints)
+            localStorage.setItem("titanPoints", backupData.titanPoints);
+
+        if (backupData.notes)
+            localStorage.setItem("notes", backupData.notes);
+
+        if (backupData.expenses)
+            localStorage.setItem("expenses", backupData.expenses);
+
+        if (backupData.tasks)
+            localStorage.setItem("tasks", backupData.tasks);
+
+        if (backupData.routines)
+            localStorage.setItem("routines", backupData.routines);
+
+        alert(
+            "✅ Restore สำเร็จ!\nจาก: " +
+            latestFile.name
+        );
+
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+
     } catch (error) {
+
         console.error("Restore error:", error);
+
         alert("❌ เกิดข้อผิดพลาด: " + error.message);
     }
 }
