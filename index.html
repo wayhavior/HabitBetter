@@ -5,13 +5,10 @@
     <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Habit Better</title>
-    
-    <!-- Google Sign-In Library (v1) - ต้องมี async defer -->
+    <!-- Google Sign-In Library -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
     <!-- Google API Library -->
     <script src="https://apis.google.com/js/api.js" async defer></script>
-    
     <link rel="manifest" href="./manifest.json">
     <link rel="stylesheet" href="./style.css">
 </head>
@@ -26,37 +23,17 @@
     <script>
         // เรียกใช้เมื่อ page โหลดจบ
         window.addEventListener('load', function() {
-            console.log('📄 Page loaded, initializing Google APIs...');
-            
-            // ให้เวลา Google APIs โหลด (1.5 วินาที)
+            // ให้เวลา Google APIs โหลด
             setTimeout(() => {
-                // 1️⃣ Initialize Google Sign-In ก่อน
-                if (window.google && window.google.accounts && window.google.accounts.id) {
-                    try {
-                        google.accounts.id.initialize({
-                            client_id: "192099173031-vo271va68s5p166dpqgj0o20ot715t57.apps.googleusercontent.com",
-                            callback: handleGoogleLogin,
-                            ux_mode: 'popup',
-                            auto_select: false
-                        });
-                        console.log('✓ Google Sign-In initialized successfully');
-                    } catch(e) {
-                        console.error('✗ Google Sign-In init error:', e);
-                    }
-                } else {
-                    console.warn('⚠️ Google Sign-In library not ready yet');
-                }
-                
-                // 2️⃣ Initialize Google Drive API
                 if (typeof initializeGoogleDriveAPI === 'function') {
                     initializeGoogleDriveAPI();
                     console.log('✓ Google Drive API initialized');
                 } else {
-                    console.warn('⚠️ initializeGoogleDriveAPI function not ready yet');
+                    console.warn('⚠️ initializeGoogleDriveAPI not ready yet');
                 }
-            }, 1500);
+            }, 500);
 
-            // 3️⃣ Service Worker registration
+            // Service Worker registration
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
                     .then(reg => console.log('✓ Service Worker registered!'))
