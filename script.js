@@ -85,16 +85,17 @@ function logout() {
 // ===== BACKUP FUNCTION =====
 async function backupToGoogleDrive() {
     try {
-        // ✅ ตรวจสอบว่า gapi โหลดแล้ว
-        if (!window.gapi || !window.gapi.auth2) {
-            alert("⚠️ Google API ยังไม่พร้อม กรุณารอสักครู่");
+        // ✅ ตรวจสอบว่า user ล็อกอิน Google แล้ว
+        const googleToken = localStorage.getItem("googleToken");
+        
+        if (!googleToken) {
+            alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
         }
 
-        const auth = gapi.auth2.getAuthInstance();
-        
-        if (!auth || !auth.isSignedIn.get()) {
-            alert("⚠️ กรุณาล็อกอิน Google ก่อน");
+        // ✅ ตรวจสอบว่า gapi โหลดแล้ว
+        if (!window.gapi || !window.gapi.client) {
+            alert("⚠️ Google API ยังไม่พร้อม กรุณารอสักครู่");
             return;
         }
 
@@ -118,11 +119,14 @@ async function backupToGoogleDrive() {
             mimeType: 'application/json'
         };
 
-        // ✅ ใช้ gapi.client.drive.files.create แทน fetch
+        // ✅ ใช้ token ที่เก็บไว้เพื่อ authorize request
         const response = await gapi.client.drive.files.create({
             resource: metadata,
             media: file,
-            fields: 'id, name, createdTime'
+            fields: 'id, name, createdTime',
+            headers: {
+                'Authorization': `Bearer ${googleToken}`
+            }
         });
 
         if (response.status === 200) {
@@ -139,16 +143,17 @@ async function backupToGoogleDrive() {
 // ===== RESTORE FUNCTION =====
 async function restoreFromGoogleDrive() {
     try {
-        // ✅ ตรวจสอบว่า gapi โหลดแล้ว
-        if (!window.gapi || !window.gapi.auth2) {
-            alert("⚠️ Google API ยังไม่พร้อม กรุณารอสักครู่");
+        // ✅ ตรวจสอบว่า user ล็อกอิน Google แล้ว
+        const googleToken = localStorage.getItem("googleToken");
+        
+        if (!googleToken) {
+            alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
         }
 
-        const auth = gapi.auth2.getAuthInstance();
-        
-        if (!auth || !auth.isSignedIn.get()) {
-            alert("⚠️ กรุณาล็อกอิน Google ก่อน");
+        // ✅ ตรวจสอบว่า gapi โหลดแล้ว
+        if (!window.gapi || !window.gapi.client) {
+            alert("⚠️ Google API ยังไม่พร้อม กรุณารอสักครู่");
             return;
         }
 
@@ -158,7 +163,10 @@ async function restoreFromGoogleDrive() {
             spaces: 'drive',
             pageSize: 10,
             fields: 'files(id, name, createdTime)',
-            orderBy: 'createdTime desc'
+            orderBy: 'createdTime desc',
+            headers: {
+                'Authorization': `Bearer ${googleToken}`
+            }
         });
 
         const files = response.result.files;
@@ -174,7 +182,10 @@ async function restoreFromGoogleDrive() {
         // ดาวน์โหลด file
         const fileContent = await gapi.client.drive.files.get({
             fileId: latestFile.id,
-            alt: 'media'
+            alt: 'media',
+            headers: {
+                'Authorization': `Bearer ${googleToken}`
+            }
         });
 
         // restore ข้อมูล
