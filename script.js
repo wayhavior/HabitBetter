@@ -93,14 +93,23 @@ function handleGoogleLogin(response) {
 }
 
 function logout() {
+
     localStorage.removeItem("googleToken");
+
     localStorage.removeItem("googleUser");
-    
-    // ออก Google session
+
+    // ลบ access token ด้วย
+    localStorage.removeItem("googleAccessToken");
+
+    accessToken = null;
+
+    // ออกจาก Google session
     if (window.google) {
         google.accounts.id.disableAutoSelect();
     }
-    
+
+    alert("ออกจากระบบแล้ว");
+
     render();
 }
 
