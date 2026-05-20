@@ -85,15 +85,9 @@ function logout() {
 // ===== BACKUP FUNCTION =====
 async function backupToGoogleDrive() {
     try {
-        // ✅ ตรวจสอบว่า gapi โหลดแล้ว
-        if (!window.gapi || !window.gapi.auth2) {
-            alert("⚠️ Google API ยังไม่พร้อม กรุณารอสักครู่");
-            return;
-        }
-
         const auth = gapi.auth2.getAuthInstance();
         
-        if (!auth || !auth.isSignedIn.get()) {
+        if (!auth.isSignedIn.get()) {
             alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
         }
@@ -118,17 +112,22 @@ async function backupToGoogleDrive() {
             mimeType: 'application/json'
         };
 
-        // ✅ ใช้ gapi.client.drive.files.create แทน fetch
-        const response = await gapi.client.drive.files.create({
-            resource: metadata,
-            media: file,
-            fields: 'id, name, createdTime'
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+        form.append('file', file);
+
+        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&key=' + GOOGLE_API_KEY, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().id_token
+            },
+            body: form
         });
 
-        if (response.status === 200) {
-            alert("✅ Backup สำเร็จ! ข้อมูลถูกบันทึกไปยัง Google Drive\nไฟล์: " + response.result.name);
+        if (response.ok) {
+            alert("✅ Backup สำเร็จ! ข้อมูลถูกบันทึกไปยัง Google Drive");
         } else {
-            alert("❌ Backup ล้มเหลว (Status: " + response.status + ")");
+            alert("❌ Backup ล้มเหลว");
         }
     } catch (error) {
         console.error("Backup error:", error);
@@ -139,26 +138,19 @@ async function backupToGoogleDrive() {
 // ===== RESTORE FUNCTION =====
 async function restoreFromGoogleDrive() {
     try {
-        // ✅ ตรวจสอบว่า gapi โหลดแล้ว
-        if (!window.gapi || !window.gapi.auth2) {
-            alert("⚠️ Google API ยังไม่พร้อม กรุณารอสักครู่");
-            return;
-        }
-
         const auth = gapi.auth2.getAuthInstance();
         
-        if (!auth || !auth.isSignedIn.get()) {
+        if (!auth.isSignedIn.get()) {
             alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
         }
 
         // ค้นหา backup files
         const response = await gapi.client.drive.files.list({
-            q: "name contains 'HabitBetter-Backup' and trashed=false",
+            q: "name contains 'HabitBetter-Backup'",
             spaces: 'drive',
             pageSize: 10,
-            fields: 'files(id, name, createdTime)',
-            orderBy: 'createdTime desc'
+            fields: 'files(id, name, createdTime)'
         });
 
         const files = response.result.files;
@@ -189,7 +181,7 @@ async function restoreFromGoogleDrive() {
         if (backupData.tasks) localStorage.setItem("tasks", backupData.tasks);
         if (backupData.routines) localStorage.setItem("routines", backupData.routines);
 
-        alert("✅ Restore สำเร็จ! ข้อมูลของคุณถูกกู้คืนแล้ว\nจาก: " + latestFile.name);
+        alert("✅ Restore สำเร็จ! ข้อมูลของคุณถูกกู้คืนแล้ว");
         
         // รีโหลดหน้า
         setTimeout(() => window.location.reload(), 1000);
@@ -201,24 +193,11 @@ async function restoreFromGoogleDrive() {
 
 /* ===== GOOGLE DRIVE API FUNCTIONS ===== */
 function initializeGoogleDriveAPI() {
-    if (!window.gapi) {
-        console.warn("Google API library not loaded yet, retrying...");
-        setTimeout(initializeGoogleDriveAPI, 500);
-        return;
-    }
-
     gapi.load('client:auth2', () => {
         gapi.client.init({
             apiKey: GOOGLE_API_KEY,
             clientId: GOOGLE_CLIENT_ID,
             scope: 'https://www.googleapis.com/auth/drive.file'
-        }).then(() => {
-            console.log("✅ Google Drive API initialized successfully");
-        }).catch((error) => {
-            console.error("❌ Google Drive API initialization failed:", error);
-        });
-    });
-}
         }).then(() => {
             console.log("Google Drive API initialized");
         }).catch(error => {
