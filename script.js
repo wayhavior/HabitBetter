@@ -46,16 +46,16 @@ function initializeGoogleLogin() {
 }
 
 function handleGoogleLogin(response) {
-    const token = response.credential;
+    const idToken = response.credential;
     
     // Decode token เพื่อดึงข้อมูล user
-    const userData = decodeJWT(token);
+    const userData = decodeJWT(idToken);
     
     if (userData) {
         console.log("Google Login Success:", userData);
         
-        // เก็บข้อมูล user ใน localStorage
-        localStorage.setItem("googleToken", token);
+        // เก็บ ID token ไว้สำหรับข้อมูลประจำตัว
+        localStorage.setItem("googleIdToken", idToken);
         localStorage.setItem("googleUser", JSON.stringify({
             email: userData.email,
             name: userData.name,
@@ -63,11 +63,78 @@ function handleGoogleLogin(response) {
             loginTime: new Date().toISOString()
         }));
         
+        // ขอ Access Token จาก Google (สำหรับ Drive API)
+        requestAccessToken(idToken);
+        
         // refresh หน้า Settings เพื่อแสดงข้อมูล user ใหม่
         render();
     } else {
         alert("ไม่สามารถประมวลผล token ได้ กรุณาลองใหม่");
     }
+}
+
+// ฟังก์ชันเพื่อขอ access token จาก Google
+async function requestAccessToken(idToken) {
+    try {
+        // ใช้ backend endpoint ของ Google เพื่อแลก ID token เป็น access token
+        // หรือใช้ gapi.auth2 ถ้ามี
+        if (window.gapi && window.gapi.auth2) {
+            const auth = gapi.auth2.getAuthInstance();
+            if (auth && auth.isSignedIn.get()) {
+                const currentUser = auth.currentUser.get();
+                const authResponse = currentUser.getAuthResponse();
+                const accessToken = authResponse.access_token;
+                
+                if (accessToken) {
+                    localStorage.setItem("googleAccessToken", accessToken);
+                    console.log("✅ Access token obtained for Drive API");
+                    return;
+                }
+            }
+        }
+        
+        // Fallback: ถ้า gapi ยังไม่พร้อม ลองใช้ implicit grant
+        console.warn("⚠️ Attempting to get access token...");
+        // สำหรับ web app ต้อง redirect ไป OAuth consent
+        requestAccessTokenViaOAuth();
+    } catch (error) {
+        console.error("Error getting access token:", error);
+    }
+}
+
+// ฟังก์ชันขอ access token ผ่าน OAuth flow
+function requestAccessTokenViaOAuth() {
+    const scope = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive';
+    const redirectUri = window.location.origin;
+    const responseType = 'token';
+    
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${GOOGLE_CLIENT_ID}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&response_type=${responseType}` +
+        `&scope=${encodeURIComponent(scope)}` +
+        `&prompt=consent`;
+    
+    // สำหรับ test ใช้ popup แทน redirect
+    const width = 500, height = 600;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+    
+    const authWindow = window.open(authUrl, 'oauth', 
+        `width=${width},height=${height},left=${left},top=${top}`);
+    
+    // ตรวจสอบ token จาก popup
+    const checkToken = setInterval(() => {
+        try {
+            if (authWindow.closed) {
+                clearInterval(checkToken);
+                const token = localStorage.getItem("googleAccessToken");
+                if (token) {
+                    console.log("✅ Access token received");
+                }
+            }
+        } catch (e) {}
+    }, 500);
 }
 
 function logout() {
@@ -85,10 +152,10 @@ function logout() {
 // ===== BACKUP FUNCTION =====
 async function backupToGoogleDrive() {
     try {
-        // ✅ ตรวจสอบว่า user ล็อกอิน Google แล้ว
-        const googleToken = localStorage.getItem("googleToken");
+        // ✅ ตรวจสอบว่า user ล็อกอิน Google และมี access token
+        const accessToken = localStorage.getItem("googleAccessToken");
         
-        if (!googleToken) {
+        if (!accessToken) {
             alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
         }
@@ -121,7 +188,7 @@ async function backupToGoogleDrive() {
         const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${googleToken}`
+                'Authorization': `Bearer ${accessToken}`
             },
             body: form
         });
@@ -144,10 +211,10 @@ async function backupToGoogleDrive() {
 // ===== RESTORE FUNCTION =====
 async function restoreFromGoogleDrive() {
     try {
-        // ✅ ตรวจสอบว่า user ล็อกอิน Google แล้ว
-        const googleToken = localStorage.getItem("googleToken");
+        // ✅ ตรวจสอบว่า user ล็อกอิน Google และมี access token
+        const accessToken = localStorage.getItem("googleAccessToken");
         
-        if (!googleToken) {
+        if (!accessToken) {
             alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
         }
@@ -157,7 +224,7 @@ async function restoreFromGoogleDrive() {
             'https://www.googleapis.com/drive/v3/files?q=name%20contains%20%27HabitBetter-Backup%27%20and%20trashed%3Dfalse&orderBy=createdTime%20desc&pageSize=10&fields=files(id,name,createdTime)',
             {
                 headers: {
-                    'Authorization': `Bearer ${googleToken}`
+                    'Authorization': `Bearer ${accessToken}`
                 }
             }
         );
@@ -183,7 +250,7 @@ async function restoreFromGoogleDrive() {
             `https://www.googleapis.com/drive/v3/files/${latestFile.id}?alt=media`,
             {
                 headers: {
-                    'Authorization': `Bearer ${googleToken}`
+                    'Authorization': `Bearer ${accessToken}`
                 }
             }
         );
