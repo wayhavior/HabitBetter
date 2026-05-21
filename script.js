@@ -48,6 +48,7 @@ function requestDriveAccess() {
         // ✅ รวม drive access เข้าไปด้วย
         scope: 'openid profile email https://www.googleapis.com/auth/drive.file',
         callback: handleGoogleLogin  // เรียก handleGoogleLogin เมื่อได้ token
+        prompt: 'consent'
     });
 
     client.requestAccessToken();
