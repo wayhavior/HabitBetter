@@ -43,15 +43,26 @@ function initializeGoogleLogin() {
 }
 
 function requestDriveAccess() {
-    const client = google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        // ✅ รวม drive access เข้าไปด้วย
-        scope: 'openid profile email https://www.googleapis.com/auth/drive.file',
-        callback: handleGoogleLogin  // เรียก handleGoogleLogin เมื่อได้ token
-        prompt: 'consent'
-    });
-
-    client.requestAccessToken();
+    try {
+        // สร้าง config object
+        const config = {
+            client_id: GOOGLE_CLIENT_ID,
+            scope: 'openid profile email https://www.googleapis.com/auth/drive.file',
+            callback: handleGoogleLogin
+        };
+        
+        // ✅ ใช้ bracket notation เพื่อหลีกเลี่ยง reserved word
+        config['prompt'] = 'consent';
+        
+        console.log("📱 Initializing Google OAuth with prompt='consent'");
+        
+        const client = google.accounts.oauth2.initTokenClient(config);
+        client.requestAccessToken({ prompt: 'consent' });
+        
+    } catch (err) {
+        console.error("❌ Error in requestDriveAccess:", err);
+        alert("เกิดข้อผิดพลาดในการร้องขอ: " + err.message);
+    }
 }
 
 function handleGoogleLogin(response) {
