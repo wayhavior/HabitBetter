@@ -2790,7 +2790,7 @@ function renderNotesPageNew() {
     
     const header = document.createElement("div");
     header.className = "notes-header";
-    header.innerHTML = `<div style="display: flex; align-items: center; gap: 12px;"><button class="back-btn" onclick="goHome()">🏠</button><h1 style="margin: 0; font-size: 28px; font-weight: 700;">My Notes</h1></div>`;
+    header.innerHTML = `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><button class="back-btn" onclick="goHome()">🏠</button><h1 style="margin: 0; font-size: 28px; font-weight: 700; flex: 1; text-align: center;">My Notes</h1><div style="width: 60px;"></div></div>`;
     app.appendChild(header);
     
     const filterContainer = document.createElement("div");
@@ -2838,22 +2838,84 @@ function renderNotesPageNew() {
     const fab = document.createElement("button");
     fab.className = "notes-fab";
     fab.innerHTML = "✏️";
-    fab.onclick = () => openNotesCreateModal();
+    fab.onclick = () => openNotesCreatePage();
     app.appendChild(fab);
 }
 
-function openNotesCreateModal() {
-    const overlay = document.createElement("div");
-    overlay.className = "notes-create-modal-overlay";
-    overlay.innerHTML = `<div class="notes-create-modal-content"><div class="modal-header"><h2>สร้าง Note ใหม่</h2><button class="close-btn" onclick="closeNotesCreateModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>หัวข้อ</label><input type="text" id="notes-new-title" placeholder="ใส่หัวข้อ..." class="form-input"></div><div class="form-group"><label>เนื้อหา</label><textarea id="notes-new-body" placeholder="เขียนเนื้อหา..." class="form-textarea"></textarea></div><div class="form-group"><label>หมวดหมู่</label><div class="category-selector"><button class="category-option active" data-category="personal" onclick="selectCategory(this, 'personal')"><span class="category-dot" style="background: #ffd93d;"></span>👤 ส่วนตัว</button><button class="category-option" data-category="work" onclick="selectCategory(this, 'work')"><span class="category-dot" style="background: #ff6b6b;"></span>💼 งาน</button><button class="category-option" data-category="other" onclick="selectCategory(this, 'other')"><span class="category-dot" style="background: #6bcf7f;"></span>✨ อื่นๆ</button></div></div><div class="form-group"><label>ล็อคด้วยรหัสผ่าน (ไม่บังคับ)</label><div style="display: flex; gap: 8px;"><input type="password" id="notes-new-password" placeholder="ใส่รหัสผ่าน..." class="form-input" style="flex: 1;"><button class="btn-secondary" onclick="togglePasswordField()">👁️</button></div></div></div><div class="modal-footer"><button class="btn-cancel" onclick="closeNotesCreateModal()">ยกเลิก</button><button class="btn-primary" onclick="saveNewNote()">💾 บันทึก</button></div></div>`;
-    document.body.appendChild(overlay);
-    document.body.style.overflow = "hidden";
+// 🆕 หน้าสร้าง Note ใหม่ (แทน modal)
+function openNotesCreatePage() {
+    app.innerHTML = "";
+    
+    const header = document.createElement("div");
+    header.className = "notes-header";
+    header.innerHTML = `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><button class="back-btn" onclick="goNotesFromCreate()">⬅️</button><h1 style="margin: 0; font-size: 28px; font-weight: 700; flex: 1; text-align: center;">สร้าง Note ใหม่</h1><div style="width: 60px;"></div></div>`;
+    app.appendChild(header);
+    
+    const formContainer = document.createElement("div");
+    formContainer.className = "notes-create-page-container";
+    formContainer.innerHTML = `
+        <div class="notes-create-form">
+            <div class="form-group">
+                <label>หัวข้อ</label>
+                <input type="text" id="notes-new-title" placeholder="ใส่หัวข้อ..." class="form-input">
+            </div>
+            
+            <div class="form-group">
+                <label>เนื้อหา</label>
+                <textarea id="notes-new-body" placeholder="เขียนเนื้อหา..." class="form-textarea" style="min-height: 300px; resize: vertical;"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>หมวดหมู่</label>
+                <div class="category-selector-large">
+                    <button class="category-option-large active" data-category="personal" onclick="selectCategoryCreate(this, 'personal')">
+                        <span class="category-dot" style="background: #ffd93d;"></span>
+                        <span>👤 ส่วนตัว</span>
+                    </button>
+                    <button class="category-option-large" data-category="work" onclick="selectCategoryCreate(this, 'work')">
+                        <span class="category-dot" style="background: #ff6b6b;"></span>
+                        <span>💼 งาน</span>
+                    </button>
+                    <button class="category-option-large" data-category="other" onclick="selectCategoryCreate(this, 'other')">
+                        <span class="category-dot" style="background: #6bcf7f;"></span>
+                        <span>✨ อื่นๆ</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>ล็อคด้วยรหัสผ่าน (ไม่บังคับ)</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="password" id="notes-new-password" placeholder="ใส่รหัสผ่าน..." class="form-input" style="flex: 1;">
+                    <button class="btn-secondary" onclick="togglePasswordFieldCreate()">👁️</button>
+                </div>
+            </div>
+            
+            <div class="notes-create-buttons">
+                <button class="btn-cancel" onclick="goNotesFromCreate()">ยกเลิก</button>
+                <button class="btn-primary" onclick="saveNewNote()">💾 บันทึก</button>
+            </div>
+        </div>
+    `;
+    app.appendChild(formContainer);
     window.notesSelectedCategory = "personal";
 }
 
-function closeNotesCreateModal() { const modal = document.querySelector('.notes-create-modal-overlay'); if (modal) modal.remove(); document.body.style.overflow = "auto"; }
-function selectCategory(el, category) { document.querySelectorAll('.category-option').forEach(btn => btn.classList.remove('active')); el.classList.add('active'); window.notesSelectedCategory = category; }
-function togglePasswordField() { const input = document.getElementById('notes-new-password'); input.type = input.type === 'password' ? 'text' : 'password'; }
+function goNotesFromCreate() { 
+    notesCurrentFilter = "all"; 
+    renderNotesPageNew(); 
+}
+
+function selectCategoryCreate(el, category) { 
+    document.querySelectorAll('.category-option-large').forEach(btn => btn.classList.remove('active')); 
+    el.classList.add('active'); 
+    window.notesSelectedCategory = category; 
+}
+
+function togglePasswordFieldCreate() { 
+    const input = document.getElementById('notes-new-password'); 
+    input.type = input.type === 'password' ? 'text' : 'password'; 
+}
 
 async function saveNewNote() {
     const title = document.getElementById('notes-new-title').value.trim();
@@ -2867,11 +2929,11 @@ async function saveNewNote() {
     myNotes.unshift(newNote);
     addExp(50);
     save();
-    closeNotesCreateModal();
+    goNotesFromCreate();
     renderNotesPageNew();
 }
 
-function handleNoteClick(noteId) { openNoteModal(noteId); }
+function handleNoteClick(noteId) { openNoteViewPage(noteId); }
 function handleNoteDelete(index) { if (confirm("ต้องการลบโน้ตนี้หรือไม่?")) { myNotes.splice(index, 1); save(); renderNotesPageNew(); } }
 function goHome() { unlockedNotes = []; settingsOpen = false; currentPage = "home"; notesCurrentFilter = "all"; render(); }
 
@@ -3246,7 +3308,7 @@ function renderSummaryPage() {
 // ฟังก์ชันเปิดหน้าต่างโน้ต
 // --- วางโค้ดนี้ท้ายสุดของไฟล์ script.js ---
 
-window.openNoteModal = async (id) => {
+window.openNoteViewPage = async (id) => {
     const note = myNotes.find(n => n.id === id);
     if (!note) return;
 
@@ -3261,9 +3323,7 @@ window.openNoteModal = async (id) => {
         unlockedNotes.push(note.id);
     }
 
-    const modal = document.createElement("div");
-    modal.className = "note-edit-modal-overlay";
-    modal.id = "note-modal";
+    app.innerHTML = "";
     
     const categoryColor = {
         personal: "#ffd93d",
@@ -3271,62 +3331,59 @@ window.openNoteModal = async (id) => {
         other: "#6bcf7f"
     }[note.category] || "#6bcf7f";
     
-    modal.innerHTML = `
-        <div class="note-edit-modal-content">
-            <div class="note-edit-header">
-                <div style="flex: 1;">
-                    <input type="text" id="modal-title" class="note-edit-title-input" value="${note.title}" placeholder="หัวข้อ...">
-                    <div class="note-edit-category-badge" style="border-left-color: ${categoryColor};">
-                        ${note.category === 'personal' ? '👤 ส่วนตัว' : note.category === 'work' ? '💼 งาน' : '✨ อื่นๆ'}
-                        ${note.password ? ' 🔒' : ''}
-                    </div>
+    const header = document.createElement("div");
+    header.className = "notes-header";
+    header.innerHTML = `<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;"><button class="back-btn" onclick="goNotesFromView()">⬅️</button><h1 style="margin: 0; font-size: 28px; font-weight: 700; flex: 1; text-align: center;">แก้ไข Note</h1><div style="width: 60px;"></div></div>`;
+    app.appendChild(header);
+    
+    const viewContainer = document.createElement("div");
+    viewContainer.className = "notes-view-page-container";
+    viewContainer.innerHTML = `
+        <div class="notes-view-form">
+            <div class="form-group">
+                <label>หัวข้อ</label>
+                <input type="text" id="note-view-title" class="form-input" value="${note.title}" placeholder="หัวข้อ...">
+                <div class="note-view-category-badge" style="border-left-color: ${categoryColor}; margin-top: 8px;">
+                    ${note.category === 'personal' ? '👤 ส่วนตัว' : note.category === 'work' ? '💼 งาน' : '✨ อื่นๆ'}
+                    ${note.password ? ' 🔒' : ''}
                 </div>
-                <button class="note-edit-close-btn" onclick="closeNoteModal()" title="ปิด">✕</button>
             </div>
             
-            <textarea id="modal-body" class="note-edit-textarea" placeholder="เขียนเนื้อหาโน้ต...">${note.body}</textarea>
+            <div class="form-group">
+                <label>เนื้อหา</label>
+                <textarea id="note-view-body" class="form-textarea" style="min-height: 400px; resize: vertical;" placeholder="เขียนเนื้อหา...">${note.body}</textarea>
+            </div>
             
-            <div class="note-edit-footer">
-                <div class="note-color-picker">
-                    <span class="note-color-label">สี:</span>
-                    <div class="note-color-dots">
-                        <div class="note-color-dot" style="background:#2d3436" onclick="updateNoteColor(${id}, '#2d3436')" title="เทา"></div>
-                        <div class="note-color-dot" style="background:#ff7675" onclick="updateNoteColor(${id}, '#ff7675')" title="แดง"></div>
-                        <div class="note-color-dot" style="background:#55efc4" onclick="updateNoteColor(${id}, '#55efc4')" title="เขียว"></div>
-                        <div class="note-color-dot" style="background:#74b9ff" onclick="updateNoteColor(${id}, '#74b9ff')" title="ฟ้า"></div>
-                        <div class="note-color-dot" style="background:#ffeaa7" onclick="updateNoteColor(${id}, '#ffeaa7')" title="เหลือง"></div>
-                        <div class="note-color-dot" style="background:#a29bfe" onclick="updateNoteColor(${id}, '#a29bfe')" title="ม่วง"></div>
-                    </div>
-                </div>
-                <div class="note-edit-actions">
-                    <button class="note-btn-delete" onclick="handleNoteDeleteFromModal(${myNotes.indexOf(note)})">🗑️ ลบ</button>
-                    <button class="note-btn-save" onclick="saveNoteFromModal(${id})">💾 บันทึก</button>
-                </div>
+            <div class="form-group">
+                <label style="font-size: 12px; color: rgba(255,255,255,0.6);">📅 แก้ไขล่าสุด: ${note.date}</label>
+            </div>
+            
+            <div class="notes-view-buttons">
+                <button class="btn-delete" onclick="handleNoteDeleteFromView(${myNotes.indexOf(note)})">🗑️ ลบโน้ต</button>
+                <button class="btn-cancel" onclick="goNotesFromView()">ยกเลิก</button>
+                <button class="btn-primary" onclick="saveNoteFromView(${id})">💾 บันทึก</button>
             </div>
         </div>
     `;
-    document.body.appendChild(modal);
-    document.body.style.overflow = "hidden";
+    app.appendChild(viewContainer);
 };
 
-window.closeNoteModal = () => {
-    const modal = document.getElementById("note-modal");
-    if (modal) modal.remove();
-    document.body.style.overflow = "auto"; 
+window.goNotesFromView = () => {
+    notesCurrentFilter = "all";
+    renderNotesPageNew();
 };
 
-window.handleNoteDeleteFromModal = (index) => {
+window.handleNoteDeleteFromView = (index) => {
     if (confirm("ต้องการลบโน้ตนี้หรือไม่?")) {
         myNotes.splice(index, 1);
         save();
-        closeNoteModal();
-        renderNotesPageNew();
+        goNotesFromView();
     }
 };
 
-window.saveNoteFromModal = (id) => {
-    const newTitle = document.getElementById("modal-title").value;
-    const newBody = document.getElementById("modal-body").value;
+window.saveNoteFromView = (id) => {
+    const newTitle = document.getElementById("note-view-title").value.trim();
+    const newBody = document.getElementById("note-view-body").value.trim();
     const idx = myNotes.findIndex(n => n.id === id);
     
     if (idx !== -1) {
@@ -3334,9 +3391,14 @@ window.saveNoteFromModal = (id) => {
         myNotes[idx].body = newBody;
         myNotes[idx].date = new Date().toLocaleString('th-TH');
         save();
-        closeNoteModal();
-        renderNotesPageNew();
+        goNotesFromView();
     }
+};
+
+// 🔴 เก่า - modal version (ลบแล้ว):
+window.openNoteModal = async (id) => {
+    // ⚠️ Function นี้ถูกแทนที่ด้วย openNoteViewPage แล้ว
+    openNoteViewPage(id);
 };
 // ฟังก์ชันสำหรับเปลี่ยนสีโน้ต
 window.updateNoteColor = (id, color) => {
