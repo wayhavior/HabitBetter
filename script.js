@@ -503,7 +503,7 @@ async function restoreFromGoogleDrive() {
         // ✅ Update UI ทันที (ไม่ reload page)
         setTimeout(() => {
             window.location.reload(); 
-        }, 2000);
+        }, 1000);
 
     } catch (error) {
 
