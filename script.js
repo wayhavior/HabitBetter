@@ -1469,7 +1469,7 @@ app.appendChild(homeContainer);
     else if (currentPage === "expense") { renderExpensePage(); }
     else if (currentPage === "tvm") { renderTVMPage(); }
     else if (currentPage === "daily" || currentPage === "longterm") { renderGoalsPage(currentPage); }
-    else if (currentPage === "notes") { renderNotesPage(); }
+    else if (currentPage === "notes") { renderNotesPageNew(); }
     else if (currentPage === "achievements") { renderAchievementsPage(); }
     else if (currentPage === "summary") { renderSummaryPage(); }
     else if (currentPage === "settings") { renderSettingsPage(); }
@@ -2766,84 +2766,119 @@ app.appendChild(drawer);
 window.delGoal = (type, i) => { if(confirm("ลบ?")){ (type === "daily" ? myDailyGoals : myLongTermGoals).splice(i, 1); save(); render(); } };
 
 /* ===== MY NOTES (PRIVATE LOCK) ===== */
-function renderNotesPage() {
-    app.innerHTML = ""; const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { unlockedNotes = []; settingsOpen = false; currentPage = "home"; render(); }; 
-    const drawer = makeDrawer();
-drawer.appendChild(themeBtn);
-drawer.appendChild(zoomBtn);
 
-app.appendChild(bBtn);
-app.appendChild(settingsBtn);
-app.appendChild(drawer);
-    const title = document.createElement("h1"); title.innerText = "My Notes"; app.appendChild(title);
-    const container = document.createElement("div"); container.className = "notes-page";
+let notesCurrentFilter = "all"; // all, personal, work, other
+
+function getLastUpdateDate(dateString) {
+    if (!dateString) return "ไม่ระบุ";
+    try {
+        const noteDate = new Date(dateString);
+        const today = new Date();
+        const isToday = noteDate.toDateString() === today.toDateString();
+        if (isToday) {
+            return noteDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        } else {
+            return noteDate.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+    } catch (e) {
+        return dateString;
+    }
+}
+
+function renderNotesPageNew() {
+    app.innerHTML = "";
     
-    const addBox = document.createElement("div"); addBox.className = "add-box";
-    const tInput = document.createElement("input"); tInput.placeholder = "หัวข้อ...";
-    const bInput = document.createElement("textarea"); bInput.placeholder = "เนื้อหา..."; bInput.rows = 3;
-    const btnRow = document.createElement("div"); btnRow.style.display = "flex"; btnRow.style.gap = "10px";
-    const saveBtn = document.createElement("button"); saveBtn.innerText = editingNoteId !== null ? "💾 Update" : "บันทึก"; saveBtn.style.flex = "1";
-    const lockBtn = document.createElement("button"); lockBtn.innerText = "🔒 ตั้งรหัส"; lockBtn.style.background = "#f1c40f"; lockBtn.style.color = "black";
+    const header = document.createElement("div");
+    header.className = "notes-header";
+    header.innerHTML = `<div style="display: flex; align-items: center; gap: 12px;"><button class="back-btn" onclick="goHome()">🏠</button><h1 style="margin: 0; font-size: 28px; font-weight: 700;">My Notes</h1></div>`;
+    app.appendChild(header);
     
-    let currentNotePass = "";
-    if (editingNoteId !== null) { 
-        const note = myNotes.find(n => n.id === editingNoteId); 
-        tInput.value = note.title; bInput.value = note.body; currentNotePass = note.password || "";
+    const filterContainer = document.createElement("div");
+    filterContainer.className = "notes-filter-container";
+    const categories = [
+        { id: "all", label: "ทั้งหมด", icon: "📚" },
+        { id: "personal", label: "ส่วนตัว", icon: "👤" },
+        { id: "work", label: "งาน", icon: "💼" },
+        { id: "other", label: "อื่นๆ", icon: "✨" }
+    ];
+    categories.forEach(cat => {
+        const btn = document.createElement("button");
+        btn.className = `notes-filter-btn ${notesCurrentFilter === cat.id ? 'active' : ''}`;
+        btn.innerHTML = `${cat.icon} ${cat.label}`;
+        btn.onclick = () => { notesCurrentFilter = cat.id; renderNotesPageNew(); };
+        filterContainer.appendChild(btn);
+    });
+    app.appendChild(filterContainer);
+    
+    const filteredNotes = notesCurrentFilter === "all" ? myNotes : myNotes.filter(n => n.category === notesCurrentFilter);
+    
+    if (filteredNotes.length === 0) {
+        const emptyState = document.createElement("div");
+        emptyState.className = "notes-empty-state";
+        emptyState.innerHTML = `<div style="text-align: center; padding: 60px 20px;"><div style="font-size: 72px; margin-bottom: 20px; opacity: 0.6;">📝</div><h2 style="margin: 0 0 10px; font-size: 24px; color: rgba(255,255,255,0.8);">ยังไม่มี Note</h2><p style="margin: 0; color: rgba(255,255,255,0.5); font-size: 14px;">กดปุ่มด้านล่างเพื่อสร้าง Note ใหม่</p></div>`;
+        app.appendChild(emptyState);
+    } else {
+        const notesGrid = document.createElement("div");
+        notesGrid.className = "notes-grid-container";
+        filteredNotes.forEach((note, index) => {
+            const card = document.createElement("div");
+            card.className = "notes-grid-card";
+            const categoryColor = { personal: "#ffd93d", work: "#ff6b6b", other: "#6bcf7f" }[note.category] || "#6bcf7f";
+            const previewLines = note.body.split('\n').slice(0, 3);
+            const previewText = previewLines.join('\n').substring(0, 120);
+            const isLocked = note.password && !unlockedNotes.includes(note.id);
+            card.style.borderLeftColor = categoryColor;
+            card.innerHTML = `<div class="notes-card-header"><h3 class="notes-card-title">${note.title || "ไม่มีชื่อ"}</h3>${note.password ? '<span class="notes-card-lock">🔒</span>' : ''}</div><div class="notes-card-preview">${isLocked ? '<span class="notes-locked-text">โน้ตนี้ถูกล็อคอยู่</span>' : `<span class="notes-preview-text">${previewText}</span>`}</div><div class="notes-card-footer"><span class="notes-card-date">📅 ${getLastUpdateDate(note.date)}</span></div><div class="notes-card-actions"><button class="notes-action-btn notes-edit-btn" onclick="handleNoteClick(${note.id})" title="เปิดโน้ต">✏️</button><button class="notes-action-btn notes-delete-btn" onclick="handleNoteDelete(${myNotes.indexOf(note)})" title="ลบโน้ต">🗑️</button></div>`;
+            card.onclick = (e) => { if (!e.target.closest('.notes-action-btn')) { handleNoteClick(note.id); } };
+            notesGrid.appendChild(card);
+        });
+        app.appendChild(notesGrid);
     }
     
-    lockBtn.onclick = async () => {
-    const raw = prompt("ใส่รหัสผ่าน (ว่างไว้เพื่อไม่ล็อค):", "") || "";
-    currentNotePass = raw ? await hashPassword(raw) : "";
-    alert(raw ? "ล็อคแล้ว ✅" : "ปลดล็อคแล้ว 🔓");
-};
-    
-    saveBtn.onclick = () => {
-        if(tInput.value || bInput.value){
-            if (editingNoteId !== null) { 
-                const idx = myNotes.findIndex(n => n.id === editingNoteId); 
-                myNotes[idx].title = tInput.value; myNotes[idx].body = bInput.value; myNotes[idx].password = currentNotePass; editingNoteId = null; 
-            } else { 
-                myNotes.unshift({ id: Date.now(), title: tInput.value || "โน้ต", body: bInput.value, date: new Date().toLocaleString(), password: currentNotePass }); 
-                addExp(50);
-            }
-            save(); render();
-        }
-    };
-    
-    btnRow.appendChild(saveBtn); btnRow.appendChild(lockBtn);
-    addBox.appendChild(tInput); addBox.appendChild(bInput); addBox.appendChild(btnRow); container.appendChild(addBox);
-    
-    myNotes.forEach((n, i) => {
-        const card = document.createElement("div");
-        card.className = "note-card";
-        card.style.background = n.bgColor || "rgba(255, 255, 255, 0.05)"; // ถ้าไม่มีสีให้ใช้สีใสพื้นฐาน
-        
-        // สั่งเปิด Modal เมื่อคลิกที่การ์ด
-        card.onclick = (e) => {
-            if (e.target.innerText === '🗑️') return;
-            openNoteModal(n.id);
-        };
-
-        const isLocked = n.password && !unlockedNotes.includes(n.id);
-        let previewText = n.body.length > 40 ? n.body.substring(0, 40) + "..." : n.body;
-
-        card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                    <div style="font-weight:bold; color:#00b894; font-size:18px;">${n.title} ${n.password ? '🔒' : ''}</div>
-                    <div style="font-size:11px; color:#999; margin-top:4px;">${n.date}</div>
-                </div>
-                <span onclick="delNote(${i})" style="cursor:pointer; font-size:18px; opacity:0.6;">🗑️</span>
-            </div>
-            <div style="margin-top:12px; color:#ffffff; font-size:14px; line-height:1.4;">
-                ${isLocked ? '<span style="font-style:italic; color:#555;">โน้ตนี้ถูกล็อคอยู่</span>' : previewText}
-            </div>
-        `;
-        container.appendChild(card);
-    });
-    app.appendChild(container);
+    const fab = document.createElement("button");
+    fab.className = "notes-fab";
+    fab.innerHTML = "✏️";
+    fab.onclick = () => openNotesCreateModal();
+    app.appendChild(fab);
 }
+
+function openNotesCreateModal() {
+    const overlay = document.createElement("div");
+    overlay.className = "notes-create-modal-overlay";
+    overlay.innerHTML = `<div class="notes-create-modal-content"><div class="modal-header"><h2>สร้าง Note ใหม่</h2><button class="close-btn" onclick="closeNotesCreateModal()">✕</button></div><div class="modal-body"><div class="form-group"><label>หัวข้อ</label><input type="text" id="notes-new-title" placeholder="ใส่หัวข้อ..." class="form-input"></div><div class="form-group"><label>เนื้อหา</label><textarea id="notes-new-body" placeholder="เขียนเนื้อหา..." class="form-textarea"></textarea></div><div class="form-group"><label>หมวดหมู่</label><div class="category-selector"><button class="category-option active" data-category="personal" onclick="selectCategory(this, 'personal')"><span class="category-dot" style="background: #ffd93d;"></span>👤 ส่วนตัว</button><button class="category-option" data-category="work" onclick="selectCategory(this, 'work')"><span class="category-dot" style="background: #ff6b6b;"></span>💼 งาน</button><button class="category-option" data-category="other" onclick="selectCategory(this, 'other')"><span class="category-dot" style="background: #6bcf7f;"></span>✨ อื่นๆ</button></div></div><div class="form-group"><label>ล็อคด้วยรหัสผ่าน (ไม่บังคับ)</label><div style="display: flex; gap: 8px;"><input type="password" id="notes-new-password" placeholder="ใส่รหัสผ่าน..." class="form-input" style="flex: 1;"><button class="btn-secondary" onclick="togglePasswordField()">👁️</button></div></div></div><div class="modal-footer"><button class="btn-cancel" onclick="closeNotesCreateModal()">ยกเลิก</button><button class="btn-primary" onclick="saveNewNote()">💾 บันทึก</button></div></div>`;
+    document.body.appendChild(overlay);
+    document.body.style.overflow = "hidden";
+    window.notesSelectedCategory = "personal";
+}
+
+function closeNotesCreateModal() { const modal = document.querySelector('.notes-create-modal-overlay'); if (modal) modal.remove(); document.body.style.overflow = "auto"; }
+function selectCategory(el, category) { document.querySelectorAll('.category-option').forEach(btn => btn.classList.remove('active')); el.classList.add('active'); window.notesSelectedCategory = category; }
+function togglePasswordField() { const input = document.getElementById('notes-new-password'); input.type = input.type === 'password' ? 'text' : 'password'; }
+
+async function saveNewNote() {
+    const title = document.getElementById('notes-new-title').value.trim();
+    const body = document.getElementById('notes-new-body').value.trim();
+    const category = window.notesSelectedCategory || 'personal';
+    const passwordRaw = document.getElementById('notes-new-password').value;
+    if (!title && !body) { alert('กรุณากรอกหัวข้อหรือเนื้อหาอย่างน้อยอันหนึ่ง'); return; }
+    let password = "";
+    if (passwordRaw) { password = await hashPassword(passwordRaw); }
+    const newNote = { id: Date.now(), title: title || "ไม่มีชื่อ", body: body, category: category, date: new Date().toLocaleString('th-TH'), password: password, bgColor: null };
+    myNotes.unshift(newNote);
+    addExp(50);
+    save();
+    closeNotesCreateModal();
+    renderNotesPageNew();
+}
+
+function handleNoteClick(noteId) { openNoteModal(noteId); }
+function handleNoteDelete(index) { if (confirm("ต้องการลบโน้ตนี้หรือไม่?")) { myNotes.splice(index, 1); save(); renderNotesPageNew(); } }
+function goHome() { unlockedNotes = []; settingsOpen = false; currentPage = "home"; notesCurrentFilter = "all"; render(); }
+
+// Override renderNotesPage with new version
+const originalRenderNotesPage = window.renderNotesPage;
+window.renderNotesPage = renderNotesPageNew;
+
 window.unlockNote = async (id, pass) => {
     const input = prompt("ใส่รหัสผ่าน:");
     if (input === null) return;
@@ -3215,7 +3250,6 @@ window.openNoteModal = async (id) => {
     const note = myNotes.find(n => n.id === id);
     if (!note) return;
 
-    // ระบบเช็ครหัสผ่าน (ถ้ามี)
     if (note.password && !unlockedNotes.includes(note.id)) {
         const input = prompt("ใส่รหัสผ่านเพื่อเข้าถึงโน้ต:");
         if (input === null) return;
@@ -3228,29 +3262,66 @@ window.openNoteModal = async (id) => {
     }
 
     const modal = document.createElement("div");
-    modal.className = "note-modal-overlay";
+    modal.className = "note-edit-modal-overlay";
     modal.id = "note-modal";
+    
+    const categoryColor = {
+        personal: "#ffd93d",
+        work: "#ff6b6b",
+        other: "#6bcf7f"
+    }[note.category] || "#6bcf7f";
+    
     modal.innerHTML = `
-        <div class="note-modal-content">
-            <div class="modal-header">
-                <input type="text" id="modal-title" value="${note.title}" placeholder="หัวข้อ...">
-                <button class="close-modal-btn" onclick="closeNoteModal()" title="ปิด">✕</button>
+        <div class="note-edit-modal-content">
+            <div class="note-edit-header">
+                <div style="flex: 1;">
+                    <input type="text" id="modal-title" class="note-edit-title-input" value="${note.title}" placeholder="หัวข้อ...">
+                    <div class="note-edit-category-badge" style="border-left-color: ${categoryColor};">
+                        ${note.category === 'personal' ? '👤 ส่วนตัว' : note.category === 'work' ? '💼 งาน' : '✨ อื่นๆ'}
+                        ${note.password ? ' 🔒' : ''}
+                    </div>
+                </div>
+                <button class="note-edit-close-btn" onclick="closeNoteModal()" title="ปิด">✕</button>
             </div>
-            <textarea id="modal-body" placeholder="เขียนเนื้อหาโน้ต...">${note.body}</textarea>
-            <div class="modal-footer">
-    <div class="color-picker">
-    <div class="color-dot" style="background:#2d3436" onclick="updateNoteColor(${id}, '#2d3436')"></div> <div class="color-dot" style="background:#ff7675" onclick="updateNoteColor(${id}, '#ff7675')"></div> <div class="color-dot" style="background:#55efc4" onclick="updateNoteColor(${id}, '#55efc4')"></div> <div class="color-dot" style="background:#74b9ff" onclick="updateNoteColor(${id}, '#74b9ff')"></div> <div class="color-dot" style="background:#ffeaa7" onclick="updateNoteColor(${id}, '#ffeaa7')"></div> <div class="color-dot" style="background:#a29bfe" onclick="updateNoteColor(${id}, '#a29bfe')"></div> </div>
-    <button class="save-modal-btn" onclick="saveNoteFromModal(${id})">💾 บันทึก</button>
-</div>
+            
+            <textarea id="modal-body" class="note-edit-textarea" placeholder="เขียนเนื้อหาโน้ต...">${note.body}</textarea>
+            
+            <div class="note-edit-footer">
+                <div class="note-color-picker">
+                    <span class="note-color-label">สี:</span>
+                    <div class="note-color-dots">
+                        <div class="note-color-dot" style="background:#2d3436" onclick="updateNoteColor(${id}, '#2d3436')" title="เทา"></div>
+                        <div class="note-color-dot" style="background:#ff7675" onclick="updateNoteColor(${id}, '#ff7675')" title="แดง"></div>
+                        <div class="note-color-dot" style="background:#55efc4" onclick="updateNoteColor(${id}, '#55efc4')" title="เขียว"></div>
+                        <div class="note-color-dot" style="background:#74b9ff" onclick="updateNoteColor(${id}, '#74b9ff')" title="ฟ้า"></div>
+                        <div class="note-color-dot" style="background:#ffeaa7" onclick="updateNoteColor(${id}, '#ffeaa7')" title="เหลือง"></div>
+                        <div class="note-color-dot" style="background:#a29bfe" onclick="updateNoteColor(${id}, '#a29bfe')" title="ม่วง"></div>
+                    </div>
+                </div>
+                <div class="note-edit-actions">
+                    <button class="note-btn-delete" onclick="handleNoteDeleteFromModal(${myNotes.indexOf(note)})">🗑️ ลบ</button>
+                    <button class="note-btn-save" onclick="saveNoteFromModal(${id})">💾 บันทึก</button>
+                </div>
+            </div>
+        </div>
     `;
     document.body.appendChild(modal);
-    document.body.style.overflow = "hidden"; // ล็อคหน้าจอไม่ให้เลื่อนไปมา
+    document.body.style.overflow = "hidden";
 };
 
 window.closeNoteModal = () => {
     const modal = document.getElementById("note-modal");
     if (modal) modal.remove();
     document.body.style.overflow = "auto"; 
+};
+
+window.handleNoteDeleteFromModal = (index) => {
+    if (confirm("ต้องการลบโน้ตนี้หรือไม่?")) {
+        myNotes.splice(index, 1);
+        save();
+        closeNoteModal();
+        renderNotesPageNew();
+    }
 };
 
 window.saveNoteFromModal = (id) => {
@@ -3261,16 +3332,16 @@ window.saveNoteFromModal = (id) => {
     if (idx !== -1) {
         myNotes[idx].title = newTitle || "ไม่มีชื่อ";
         myNotes[idx].body = newBody;
-        myNotes[idx].date = new Date().toLocaleString();
-        save();      // บันทึกลง LocalStorage
+        myNotes[idx].date = new Date().toLocaleString('th-TH');
+        save();
         closeNoteModal();
-        render();    // อัปเดตหน้าจอ
+        renderNotesPageNew();
     }
 };
 // ฟังก์ชันสำหรับเปลี่ยนสีโน้ต
 window.updateNoteColor = (id, color) => {
     // เปลี่ยนสีในหน้าต่าง Popup ทันที
-    const content = document.querySelector('.note-modal-content');
+    const content = document.querySelector('.note-edit-modal-content');
     if (content) content.style.background = color;
     
     // บันทึกสีลงในข้อมูลโน้ต
