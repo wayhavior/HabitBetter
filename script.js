@@ -32,93 +32,224 @@ function decodeJWT(token) {
     }
 }
 
+// ✅ SIMPLIFIED: ใช้ OAuth2 flow เดียว (login + drive access ทีเดียว)
 function initializeGoogleLogin() {
     if (!window.google) {
         alert("Google Sign-In library ยังไม่โหลด กรุณารอสักครู่");
         return;
     }
 
-    google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleLogin
-    });
-    initializeGoogleDriveAPI();
+    requestDriveAccess();  // ใช้ function เดิม แต่เปลี่ยนตรรมชาติ
 }
 
 function requestDriveAccess() {
-
     const client = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/drive.file',
-        callback: (response) => {
-
-            accessToken = response.access_token;
-
-            localStorage.setItem(
-                "googleAccessToken",
-                accessToken
-            );
-
-            alert("✅ เชื่อม Google Drive สำเร็จ");
-        }
+        // ✅ รวม drive access เข้าไปด้วย
+        scope: 'openid profile email https://www.googleapis.com/auth/drive.file',
+        callback: handleGoogleLogin  // เรียก handleGoogleLogin เมื่อได้ token
     });
 
     client.requestAccessToken();
 }
 
 function handleGoogleLogin(response) {
-    const token = response.credential;
-    
-    // Decode token เพื่อดึงข้อมูล user
-    const userData = decodeJWT(token);
-    
-    if (userData) {
-        console.log("Google Login Success:", userData);
+    try {
+        const token = response.access_token;
         
-        // เก็บข้อมูล user ใน localStorage
-        localStorage.setItem("googleToken", token);
-        requestDriveAccess();
-        localStorage.setItem("googleUser", JSON.stringify({
-            email: userData.email,
-            name: userData.name,
-            picture: userData.picture,
-            loginTime: new Date().toISOString()
-        }));
-        
-        // refresh หน้า Settings เพื่อแสดงข้อมูล user ใหม่
-        render();
-    } else {
-        alert("ไม่สามารถประมวลผล token ได้ กรุณาลองใหม่");
+        if (!token) {
+            alert("ไม่สามารถได้ access token");
+            return;
+        }
+
+        // ✅ ส่ง access token ไปที่ Google API เพื่อดึงข้อมูล user
+        fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(res => res.json())
+        .then(userData => {
+            if (userData && userData.email) {
+                console.log("Google Login Success:", userData);
+                
+                // เก็บข้อมูล
+                localStorage.setItem("googleToken", token);
+                localStorage.setItem("googleAccessToken", token);
+                localStorage.setItem("googleUser", JSON.stringify({
+                    email: userData.email,
+                    name: userData.name || userData.email.split('@')[0],
+                    picture: userData.picture,
+                    loginTime: new Date().toISOString()
+                }));
+                
+                // ✅ แสดง notification สำเร็จ
+                showNotification(
+                    "✅ Login สำเร็จ!",
+                    `เข้าสู่ระบบ: ${userData.email}`,
+                    "success"
+                );
+                
+                // refresh หน้า
+                render();
+            } else {
+                alert("ไม่สามารถดึงข้อมูล user ได้");
+            }
+        })
+        .catch(err => {
+            console.error("Error getting user info:", err);
+            alert("เกิดข้อผิดพลาด: " + err.message);
+        });
+
+    } catch (err) {
+        console.error("Login error:", err);
+        showNotification("❌ Login ล้มเหลว", err.message, "error");
     }
 }
 
 function logout() {
-
     const token = localStorage.getItem("googleAccessToken");
 
-    // revoke token จริง
+    // ✅ Revoke token
     if (token && window.google) {
-        google.accounts.oauth2.revoke(token);
+        try {
+            google.accounts.oauth2.revoke(token);
+        } catch (e) {
+            console.warn("Revoke token failed:", e);
+        }
     }
 
     // ลบ localStorage
     localStorage.removeItem("googleToken");
     localStorage.removeItem("googleUser");
     localStorage.removeItem("googleAccessToken");
+    localStorage.removeItem("lastBackupFileId");
+    localStorage.removeItem("lastBackupFileName");
+    localStorage.removeItem("lastBackupTimestamp");
 
     accessToken = null;
 
-    // ออกจาก Google session
-    if (window.google) {
-        google.accounts.id.disableAutoSelect();
-    }
-
-    alert("ออกจากระบบแล้ว");
+    // ✅ แสดง notification
+    showNotification("✅ Logout สำเร็จ", "ออกจากระบบแล้ว", "success");
 
     render();
 }
 
-// ===== BACKUP FUNCTION =====
+/* ===== PROGRESS BAR & NOTIFICATION SYSTEM ===== */
+function showProgressModal(title = "Loading...", initialProgress = 0) {
+    // สร้าง modal สำหรับแสดง progress
+    const modal = document.createElement("div");
+    modal.id = "progress-modal";
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+
+    const content = document.createElement("div");
+    content.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        min-width: 300px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    `;
+
+    content.innerHTML = `
+        <h3 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: #333;">${title}</h3>
+        <div style="width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-bottom: 12px;">
+            <div id="progress-bar" style="width: ${initialProgress}%; height: 100%; background: linear-gradient(90deg, #4CAF50, #45a049); transition: width 0.3s ease;"></div>
+        </div>
+        <p id="progress-text" style="margin: 0; text-align: center; font-size: 14px; color: #666;">${initialProgress}%</p>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    return {
+        modal,
+        updateProgress: (progress) => {
+            const progressBar = document.getElementById("progress-bar");
+            const progressText = document.getElementById("progress-text");
+            if (progressBar) progressBar.style.width = progress + "%";
+            if (progressText) progressText.textContent = progress + "%";
+        },
+        close: () => {
+            if (modal.parentNode) modal.parentNode.removeChild(modal);
+        }
+    };
+}
+
+function showNotification(title, message, type = "success") {
+    // สร้าง notification ที่โชว์ที่บนสุด
+    const notification = document.createElement("div");
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === "success" ? "#4CAF50" : type === "error" ? "#f44336" : "#2196F3"};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10001;
+        animation: slideInRight 0.3s ease;
+        max-width: 400px;
+    `;
+
+    notification.innerHTML = `
+        <div style="font-weight: 600; margin-bottom: 4px;">${title}</div>
+        <div style="font-size: 14px; opacity: 0.9;">${message}</div>
+    `;
+
+    // เพิ่ม animation
+    if (!document.querySelector('style[data-notification-style]')) {
+        const style = document.createElement('style');
+        style.setAttribute('data-notification-style', 'true');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    document.body.appendChild(notification);
+
+    // Auto remove หลัง 4 วินาที
+    setTimeout(() => {
+        notification.style.animation = "slideOutRight 0.3s ease";
+        setTimeout(() => {
+            if (notification.parentNode) notification.parentNode.removeChild(notification);
+        }, 300);
+    }, 4000);
+}
+
+
 async function backupToGoogleDrive() {
     try {
 
@@ -127,6 +258,45 @@ async function backupToGoogleDrive() {
         if (!token) {
             alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
+        }
+
+        // ✅ แสดง progress modal
+        const progress = showProgressModal("🔄 กำลัง Backup...", 0);
+
+        // Step 1: เตรียมข้อมูล
+        progress.updateProgress(20);
+        await new Promise(r => setTimeout(r, 300));
+
+        // ✅ DELETE OLD BACKUPS FIRST
+        // ค้นหาไฟล์ backup ที่เก่า ลบหมด
+        const oldBackupsRes = await fetch(
+            "https://www.googleapis.com/drive/v3/files?q=name contains 'HabitBetter-Backup' and trashed=false&fields=files(id,name)&pageSize=100",
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        if (oldBackupsRes.ok) {
+            const oldBackupsData = await oldBackupsRes.json();
+            if (oldBackupsData.files && oldBackupsData.files.length > 0) {
+                for (const file of oldBackupsData.files) {
+                    try {
+                        await fetch(
+                            `https://www.googleapis.com/drive/v3/files/${file.id}`,
+                            {
+                                method: "DELETE",
+                                headers: {
+                                    Authorization: `Bearer ${token}`
+                                }
+                            }
+                        );
+                    } catch (e) {
+                        console.warn(`Failed to delete old backup ${file.id}:`, e);
+                    }
+                }
+            }
         }
 
         const backupData = {
@@ -138,11 +308,15 @@ async function backupToGoogleDrive() {
             expenses: localStorage.getItem("expenses"),
             tasks: localStorage.getItem("tasks"),
             routines: localStorage.getItem("routines"),
+            // ✅ เพิ่ม Goals
+            my_daily_goals: localStorage.getItem("my_daily_goals"),
+            my_longterm_goals: localStorage.getItem("my_longterm_goals"),
             timestamp: new Date().toISOString()
         };
 
+        // ✅ ชื่อไฟล์เดียวเสมอ (ไม่มี timestamp)
         const metadata = {
-            name: `HabitBetter-Backup-${Date.now()}.json`,
+            name: `HabitBetter-Backup.json`,
             mimeType: 'application/json'
         };
 
@@ -163,6 +337,10 @@ async function backupToGoogleDrive() {
             )
         );
 
+        // Step 2: อัปโหลดไปยัง Google Drive
+        progress.updateProgress(50);
+        await new Promise(r => setTimeout(r, 300));
+
         const res = await fetch(
             "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
             {
@@ -174,22 +352,59 @@ async function backupToGoogleDrive() {
             }
         );
 
+        progress.updateProgress(80);
+
+        // ✅ FIX: เช็ค HTTP status ก่อนอ่าน JSON
+        if (!res.ok) {
+            throw new Error(`Backup failed: HTTP ${res.status} ${res.statusText}`);
+        }
+
         const data = await res.json();
 
+        progress.updateProgress(100);
+        await new Promise(r => setTimeout(r, 300));
+
         if (data.id) {
-            alert("✅ Backup สำเร็จ!");
+            // ✅ บันทึก file ID
+            localStorage.setItem("lastBackupFileId", data.id);
+            localStorage.setItem("lastBackupFileName", `HabitBetter-Backup.json`);
+            localStorage.setItem("lastBackupTimestamp", new Date().toISOString());
+            
+            progress.close();
+            
+            // ✅ แสดง notification สำเร็จ
+            showNotification(
+                "✅ Backup สำเร็จ!",
+                `บันทึกข้อมูล 8 รายการลง Google Drive\n(ไฟล์เดิมถูกเขียนทับ)`,
+                "success"
+            );
         } else {
             console.error(data);
-            alert("❌ Backup ไม่สำเร็จ");
+            progress.close();
+            showNotification("❌ Backup ไม่สำเร็จ", "เกิดข้อผิดพลาด กรุณาลองใหม่", "error");
         }
 
     } catch (err) {
         console.error(err);
-        alert("❌ " + err.message);
+        
+        // ปิด progress modal
+        const modal = document.getElementById("progress-modal");
+        if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+        
+        // ✅ แสดง notification error
+        showNotification("❌ Backup ล้มเหลว", err.message, "error");
     }
 }
 
 // ===== RESTORE FUNCTION =====
+/* 
+ * 📝 BUG FIXES:
+ * 1. เปลี่ยนจาก if statement แต่ละอัน → loop ด้วย array เพื่อให้ครบทุก key
+ * 2. เพิ่มการเช็ค !== undefined && !== null เพื่อหลีกเลี่ยงค่า falsy ที่ถูกต้อง (เช่น empty array)
+ * 3. เพิ่ม error handling สำหรับ HTTP response
+ * 4. แสดงจำนวนรายการที่ restore ได้
+ * 5. บันทึก lastBackupFileId เพื่ออ้างอิงครั้งต่อไป
+ */
 async function restoreFromGoogleDrive() {
 
     try {
@@ -201,9 +416,15 @@ async function restoreFromGoogleDrive() {
             return;
         }
 
-        // หา backup ล่าสุด
+        // ✅ แสดง progress modal
+        const progress = showProgressModal("🔄 กำลัง Restore...", 0);
+
+        // Step 1: ค้นหา backup ล่าสุด
+        progress.updateProgress(20);
+        await new Promise(r => setTimeout(r, 300));
+
         const listRes = await fetch(
-            "https://www.googleapis.com/drive/v3/files?q=name contains 'HabitBetter-Backup' and trashed=false&orderBy=createdTime desc&pageSize=1",
+            "https://www.googleapis.com/drive/v3/files?q=name='HabitBetter-Backup.json' and trashed=false&fields=files(id,name)&pageSize=1",
             {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -214,13 +435,17 @@ async function restoreFromGoogleDrive() {
         const listData = await listRes.json();
 
         if (!listData.files || listData.files.length === 0) {
-            alert("❌ ไม่พบ backup files");
+            progress.close();
+            showNotification("❌ ไม่พบ Backup", "ไม่พบไฟล์ backup ใน Google Drive", "error");
             return;
         }
 
         const latestFile = listData.files[0];
 
-        // โหลดไฟล์ backup
+        // Step 2: ดาวน์โหลดไฟล์
+        progress.updateProgress(50);
+        await new Promise(r => setTimeout(r, 300));
+
         const fileRes = await fetch(
             `https://www.googleapis.com/drive/v3/files/${latestFile.id}?alt=media`,
             {
@@ -230,71 +455,61 @@ async function restoreFromGoogleDrive() {
             }
         );
 
+        if (!fileRes.ok) {
+            throw new Error(`Failed to download backup file: ${fileRes.status}`);
+        }
+
         const backupData = await fileRes.json();
 
-        // restore data
-        if (backupData.tracker)
-            localStorage.setItem("tracker", backupData.tracker);
+        // Step 3: Restore data
+        progress.updateProgress(70);
+        await new Promise(r => setTimeout(r, 300));
 
-        if (backupData.way_piggy)
-            localStorage.setItem("way_piggy", backupData.way_piggy);
+        // ✅ FIX: restore data ด้วย array ของ keys เพื่อให้แน่ใจว่าทุก key ถูก restore
+        const keysToRestore = ['tracker', 'way_piggy', 'saving_jars', 'titanPoints', 'notes', 'expenses', 'tasks', 'routines', 'my_daily_goals', 'my_longterm_goals'];
+        
+        let restoredCount = 0;
+        keysToRestore.forEach(key => {
+            if (backupData[key] !== undefined && backupData[key] !== null) {
+                localStorage.setItem(key, backupData[key]);
+                restoredCount++;
+            }
+        });
 
-        if (backupData.saving_jars)
-            localStorage.setItem("saving_jars", backupData.saving_jars);
+        // ✅ FIX: บันทึก file ID เพื่อ restore ได้เร็วครั้งต่อไป
+        localStorage.setItem("lastBackupFileId", latestFile.id);
+        localStorage.setItem("lastBackupFileName", latestFile.name);
 
-        if (backupData.titanPoints)
-            localStorage.setItem("titanPoints", backupData.titanPoints);
+        progress.updateProgress(100);
+        await new Promise(r => setTimeout(r, 300));
+        progress.close();
 
-        if (backupData.notes)
-            localStorage.setItem("notes", backupData.notes);
-
-        if (backupData.expenses)
-            localStorage.setItem("expenses", backupData.expenses);
-
-        if (backupData.tasks)
-            localStorage.setItem("tasks", backupData.tasks);
-
-        if (backupData.routines)
-            localStorage.setItem("routines", backupData.routines);
-
-        alert(
-            "✅ Restore สำเร็จ!\nจาก: " +
-            latestFile.name
+        // ✅ แสดง notification สำเร็จ
+        showNotification(
+            "✅ Restore สำเร็จ!",
+            `กู้คืน ${restoredCount} รายการ\nจาก: ${latestFile.name}`,
+            "success"
         );
 
+        // ✅ Update UI ทันที (ไม่ reload page)
         setTimeout(() => {
-            window.location.reload();
-        }, 1000);
+            render();  // เรียก render() เพื่อ update UI เท่านั้น
+        }, 2000);
 
     } catch (error) {
 
         console.error("Restore error:", error);
 
-        alert("❌ เกิดข้อผิดพลาด: " + error.message);
+        // ปิด progress modal
+        const modal = document.getElementById("progress-modal");
+        if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+        
+        // ✅ แสดง notification error
+        showNotification("❌ Restore ล้มเหลว", error.message, "error");
     }
 }
 
 /* ===== GOOGLE DRIVE API FUNCTIONS ===== */
-function initializeGoogleDriveAPI() {
-    if (!window.gapi) {
-        console.warn("Google API library not loaded yet, retrying...");
-        setTimeout(initializeGoogleDriveAPI, 500);
-        return;
-    }
-
-    gapi.load('client:auth2', () => {
-        gapi.client.init({
-            apiKey: GOOGLE_API_KEY,
-            clientId: GOOGLE_CLIENT_ID,
-            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-            scope: 'https://www.googleapis.com/auth/drive.file'
-        }).then(() => {
-            console.log("✅ Google Drive API initialized successfully");
-        }).catch((error) => {
-            console.error("❌ Google Drive API initialization failed:", error);
-        });
-    });
-}
 /* ===== FLOATING NAVBAR FUNCTION (UPDATED - NO RECREATION) ===== */
 function renderFloatingNavbar() {
     let navbar = document.getElementById("floating-navbar");
@@ -3590,10 +3805,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.0</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.2</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.0</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.2</div>
                     </div>
                 </div>
             </div>
