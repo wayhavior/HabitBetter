@@ -43,26 +43,14 @@ function initializeGoogleLogin() {
 }
 
 function requestDriveAccess() {
-    try {
-        // สร้าง config object
-        const config = {
-            client_id: GOOGLE_CLIENT_ID,
-            scope: 'openid profile email https://www.googleapis.com/auth/drive.file',
-            callback: handleGoogleLogin
-        };
-        
-        // ✅ ใช้ bracket notation เพื่อหลีกเลี่ยง reserved word
-        config['prompt'] = 'consent';
-        
-        console.log("📱 Initializing Google OAuth with prompt='consent'");
-        
-        const client = google.accounts.oauth2.initTokenClient(config);
-        client.requestAccessToken({ prompt: 'consent' });
-        
-    } catch (err) {
-        console.error("❌ Error in requestDriveAccess:", err);
-        alert("เกิดข้อผิดพลาดในการร้องขอ: " + err.message);
-    }
+    const client = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        // ✅ รวม drive access เข้าไปด้วย
+        scope: 'openid profile email https://www.googleapis.com/auth/drive.file',
+        callback: handleGoogleLogin  // เรียก handleGoogleLogin เมื่อได้ token
+    });
+
+    client.requestAccessToken();
 }
 
 function handleGoogleLogin(response) {
@@ -3817,10 +3805,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.3</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.2</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.3</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.2</div>
                     </div>
                 </div>
             </div>
