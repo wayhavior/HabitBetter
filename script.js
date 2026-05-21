@@ -13,6 +13,12 @@ const EXP_PER_LEVEL = 1000;
 const GOOGLE_CLIENT_ID = "192099173031-arqdd6koquej0is89egvmna3bg7j552m.apps.googleusercontent.com"; // ✏️ เปลี่ยนเป็น Client ID ของคุณ
 const GOOGLE_API_KEY = "AIzaSyATr3RANcNwBMal7MSrtkwG4p4A7vCwq5E";
 let accessToken = null;
+
+// 🌟 เพิ่มบล็อกโค้ดนี้เข้าไปด้านล่าง let accessToken = null; ครับ 🌟
+if (localStorage.getItem("googleDriveToken")) {
+    accessToken = localStorage.getItem("googleDriveToken");
+}
+
 /* 1. ย้ายมาบนสุดกัน Error */
 function getToday() { return new Date().toISOString().split("T")[0]; }
 
@@ -45,14 +51,36 @@ function initializeGoogleLogin() {
 function requestDriveAccess() {
     const client = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
-        // ✅ รวม drive access เข้าไปด้วย
-        scope: 'openid profile email https://www.googleapis.com/auth/drive.file',
-        callback: handleGoogleLogin  // เรียก handleGoogleLogin เมื่อได้ token
+        scope: 'openid profile email', // เอาสิทธิ์แค่ล็อกอินพื้นฐานเท่านั้น ไม่ยุ่งกับ Drive
+        callback: handleGoogleLogin  
     });
 
     client.requestAccessToken();
 }
 
+// 🌟 ฟังก์ชันใหม่: ใช้สําหรับเปิดหน้าต่างขอสิทธิ์เซฟไฟล์ Drive โดยเฉพาะ (ปุ่มเดียวจบ ไม่มีกล่องติ๊กถูก)
+// ฟังก์ชันสำหรับเปิดหน้าต่างขอสิทธิ์ Drive
+function requestOnlyDrivePermission(onSuccessCallback) {
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+        const client = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID,
+            scope: 'https://www.googleapis.com/auth/drive.file', // ขอสิทธิ์สำหรับตัวสำรองข้อมูล
+            callback: (response) => {
+                if (response.access_token) {
+                    // เมื่อยอมรับสิทธิ์แล้ว นำรหัสไปเก็บไว้ทั้งในตัวแปร และเซฟลงความจำเครื่อง (localStorage)
+                    accessToken = response.access_token;
+                    localStorage.setItem("googleDriveAccessToken", accessToken);
+                    
+                    // สั่งให้ระบบทำงานสำรองข้อมูล หรือกู้คืนข้อมูลต่อทันที
+                    if (onSuccessCallback) onSuccessCallback(); 
+                }
+            }
+        });
+        client.requestAccessToken();
+    } else {
+        alert("ระบบ Google กำลังโหลด กรุณารอสักครู่แล้วลองกดใหม่อีกครั้งครับ");
+    }
+}
 function handleGoogleLogin(response) {
     try {
         const token = response.access_token;
@@ -61,6 +89,7 @@ function handleGoogleLogin(response) {
             alert("ไม่สามารถได้ access token");
             return;
         }
+      
 
         // ✅ ส่ง access token ไปที่ Google API เพื่อดึงข้อมูล user
         fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -108,30 +137,31 @@ function handleGoogleLogin(response) {
 }
 
 function logout() {
-    const token = localStorage.getItem("googleAccessToken");
-
-    // ✅ Revoke token
-    if (token && window.google) {
+    const token = localStorage.getItem("googleAccessToken") || accessToken;
+    
+    if (token && window.google && window.google.accounts && window.google.accounts.oauth2) {
         try {
-            google.accounts.oauth2.revoke(token);
+            google.accounts.oauth2.revoke(token, (done) => {
+                console.log("Google token revoked completely:", done);
+            });
         } catch (e) {
-            console.warn("Revoke token failed:", e);
+            console.warn("Revoke failed:", e);
         }
     }
 
-    // ลบ localStorage
+    // 🗑️ ล้างข้อมูลโปรไฟล์และการล็อกอินทั้งหมดออกจากเครื่อง
     localStorage.removeItem("googleToken");
     localStorage.removeItem("googleUser");
     localStorage.removeItem("googleAccessToken");
+    localStorage.removeItem("googleDriveAccessToken"); // 🌟 ลบสิทธิ์จำ Drive ทิ้งตรงนี้
     localStorage.removeItem("lastBackupFileId");
     localStorage.removeItem("lastBackupFileName");
     localStorage.removeItem("lastBackupTimestamp");
 
+    // 🌟 บรรทัดสำคัญ: ล้างค่าตัวแปรสิทธิ์ Drive ในระบบแอปให้เป็นว่างเปล่า
     accessToken = null;
-
-    // ✅ แสดง notification
+    
     showNotification("✅ Logout สำเร็จ", "ออกจากระบบแล้ว", "success");
-
     render();
 }
 
@@ -252,13 +282,25 @@ function showNotification(title, message, type = "success") {
 
 async function backupToGoogleDrive() {
     try {
-
-        const token = localStorage.getItem("googleAccessToken");
-
-        if (!token) {
-            alert("⚠️ กรุณาล็อกอิน Google ก่อน");
-            return;
+        // 1. ดักเช็กก่อนเลยว่า เคยผ่านการกดปุ่ม Login ด้วย Gmail มาหรือยัง
+        const isUserLoggedIn = localStorage.getItem("googleUser");
+        if (!isUserLoggedIn) {
+            showNotification("⚠️ ไม่สามารถบันทึกได้", "กรุณากดล็อกอินเข้าสู่ระบบ Gmail ก่อนครับ", "error");
+            return; 
         }
+
+        // 2. ดักเช็กสิทธิ์ Drive: ถ้าไม่มีถึงจะเปิดป๊อปอัป
+        if (!accessToken) {
+            console.log("ยังไม่มีสิทธิ์ Drive, กำลังเปิดป๊อปอัปขอสิทธิ์...");
+            
+            requestOnlyDrivePermission(() => {
+                // เมื่อผ่านแล้ว ย้อนกลับมาสั่ง Backup ใหม่รอบนี้จะมี Token แล้ว
+                backupToGoogleDrive();
+            });
+            return; // หยุดรอบแรกไว้ตรงนี้ เพื่อรอสิทธิ์จากป๊อปอัป
+        }
+
+        const token = accessToken;
 
         // ✅ แสดง progress modal
         const progress = showProgressModal("🔄 กำลัง Backup...", 0);
@@ -268,14 +310,9 @@ async function backupToGoogleDrive() {
         await new Promise(r => setTimeout(r, 300));
 
         // ✅ DELETE OLD BACKUPS FIRST
-        // ค้นหาไฟล์ backup ที่เก่า ลบหมด
         const oldBackupsRes = await fetch(
             "https://www.googleapis.com/drive/v3/files?q=name contains 'HabitBetter-Backup' and trashed=false&fields=files(id,name)&pageSize=100",
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
+            { headers: { Authorization: `Bearer ${token}` } }
         );
 
         if (oldBackupsRes.ok) {
@@ -285,12 +322,7 @@ async function backupToGoogleDrive() {
                     try {
                         await fetch(
                             `https://www.googleapis.com/drive/v3/files/${file.id}`,
-                            {
-                                method: "DELETE",
-                                headers: {
-                                    Authorization: `Bearer ${token}`
-                                }
-                            }
+                            { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
                         );
                     } catch (e) {
                         console.warn(`Failed to delete old backup ${file.id}:`, e);
@@ -308,34 +340,19 @@ async function backupToGoogleDrive() {
             expenses: localStorage.getItem("expenses"),
             tasks: localStorage.getItem("tasks"),
             routines: localStorage.getItem("routines"),
-            // ✅ เพิ่ม Goals
             my_daily_goals: localStorage.getItem("my_daily_goals"),
             my_longterm_goals: localStorage.getItem("my_longterm_goals"),
             timestamp: new Date().toISOString()
         };
 
-        // ✅ ชื่อไฟล์เดียวเสมอ (ไม่มี timestamp)
         const metadata = {
             name: `HabitBetter-Backup.json`,
             mimeType: 'application/json'
         };
 
         const form = new FormData();
-
-        form.append(
-            "metadata",
-            new Blob([JSON.stringify(metadata)], {
-                type: "application/json"
-            })
-        );
-
-        form.append(
-            "file",
-            new Blob(
-                [JSON.stringify(backupData, null, 2)],
-                { type: "application/json" }
-            )
-        );
+        form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+        form.append("file", new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" }));
 
         // Step 2: อัปโหลดไปยัง Google Drive
         progress.updateProgress(50);
@@ -343,56 +360,39 @@ async function backupToGoogleDrive() {
 
         const res = await fetch(
             "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
-            {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
-                body: form
-            }
+            { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form }
         );
 
         progress.updateProgress(80);
 
-        // ✅ FIX: เช็ค HTTP status ก่อนอ่าน JSON
         if (!res.ok) {
             throw new Error(`Backup failed: HTTP ${res.status} ${res.statusText}`);
         }
 
         const data = await res.json();
-
         progress.updateProgress(100);
         await new Promise(r => setTimeout(r, 300));
 
         if (data.id) {
-            // ✅ บันทึก file ID
             localStorage.setItem("lastBackupFileId", data.id);
             localStorage.setItem("lastBackupFileName", `HabitBetter-Backup.json`);
             localStorage.setItem("lastBackupTimestamp", new Date().toISOString());
             
             progress.close();
-            
-            // ✅ แสดง notification สำเร็จ
-            showNotification(
-                "✅ Backup สำเร็จ!",
-                `บันทึกข้อมูล 8 รายการลง Google Drive\n(ไฟล์เดิมถูกเขียนทับ)`,
-                "success"
-            );
+            showNotification("✅ Backup สำเร็จ!", `บันทึกข้อมูลลง Google Drive เรียบร้อย`, "success");
         } else {
-            console.error(data);
             progress.close();
             showNotification("❌ Backup ไม่สำเร็จ", "เกิดข้อผิดพลาด กรุณาลองใหม่", "error");
         }
 
     } catch (err) {
         console.error(err);
-        
-        // ปิด progress modal
         const modal = document.getElementById("progress-modal");
         if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
-        
-        // ✅ แสดง notification error
         showNotification("❌ Backup ล้มเหลว", err.message, "error");
+    } finally {
+        // 🌟 แก้ตรงจุดนี้: เราจะลบการเคลียร์ค่าทิ้งออกไป เพื่อให้ตัวแปร accessToken อยู่ตลอดการใช้งานจนกว่าจะล็อกเอาต์
+        console.log("บันทึกข้อมูลเสร็จสิ้นโดยคงสิทธิ์ Drive เอาไว้ในระบบ");
     }
 }
 
@@ -406,15 +406,24 @@ async function backupToGoogleDrive() {
  * 5. บันทึก lastBackupFileId เพื่ออ้างอิงครั้งต่อไป
  */
 async function restoreFromGoogleDrive() {
-
     try {
-
-        const token = localStorage.getItem("googleAccessToken");
-
-        if (!token) {
-            alert("⚠️ กรุณาล็อกอิน Google ก่อน");
+        // 🌟 1. ดักเช็กก่อนว่าล็อกอิน Gmail หรือยัง
+        const isUserLoggedIn = localStorage.getItem("googleUser");
+        if (!isUserLoggedIn) {
+            showNotification("⚠️ ไม่สามารถดึงข้อมูลได้", "กรุณากดล็อกอินเข้าสู่ระบบ Gmail ก่อนครับ", "error");
             return;
         }
+
+        // 🌟 2. ดักเช็กสิทธิ์ Drive: บังคับอ้างอิงผ่านตัวแปรหลักเท่านั้น
+        if (!accessToken) {
+            requestOnlyDrivePermission(() => {
+                restoreFromGoogleDrive();
+            });
+            return; // หยุดโค้ดรอบแรกไว้ตรงนี้
+        }
+
+        // 🌟 3. ส่งตัวแปรสิทธิ์ที่ถูกต้องให้ระบบดึงข้อมูล
+        const token = accessToken;
 
         // ✅ แสดง progress modal
         const progress = showProgressModal("🔄 กำลัง Restore...", 0);
@@ -493,7 +502,7 @@ async function restoreFromGoogleDrive() {
 
         // ✅ Update UI ทันที (ไม่ reload page)
         setTimeout(() => {
-            render();  // เรียก render() เพื่อ update UI เท่านั้น
+            window.location.reload(); 
         }, 2000);
 
     } catch (error) {
@@ -3805,10 +3814,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.2</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.4</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.2</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.4</div>
                     </div>
                 </div>
             </div>
