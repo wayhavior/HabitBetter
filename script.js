@@ -249,74 +249,26 @@ function showNotification(title, message, type = "success") {
     }, 4000);
 }
 
-async function ensureValidToken() {
-    let token = localStorage.getItem("googleAccessToken");
-    
-    if (!token) {
-        console.warn("No token found in localStorage");
-        return null;
-    }
- 
-    try {
-        // 🧪 ทดสอบ token ด้วยการเรียก API เล็กน้อย
-        const testRes = await fetch(
-            "https://www.googleapis.com/oauth2/v2/userinfo",
-            {
-                headers: { Authorization: `Bearer ${token}` }
-            }
-        );
- 
-        if (testRes.ok) {
-            console.log("✅ Token ยังใช้ได้");
-            return token;  // Token ยังใช้ได้
-        } else if (testRes.status === 401 || testRes.status === 403) {
-            console.warn("⚠️ Token หมดอายุหรือไม่มีสิทธิ์");
-        }
-    } catch (e) {
-        console.warn("Token validation error:", e);
-    }
- 
-    // 🔄 Token ไม่ใช้ได้ → ขอใหม่
-    console.log("🔄 กำลังขอ token ใหม่...");
-    
-    return new Promise((resolve) => {
-        const client = google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CLIENT_ID,
-            scope: 'openid profile email https://www.googleapis.com/auth/drive.file',
-            callback: (response) => {
-                if (response.access_token) {
-                    console.log("✅ ได้ token ใหม่");
-                    localStorage.setItem("googleAccessToken", response.access_token);
-                    resolve(response.access_token);
-                } else {
-                    console.error("❌ ไม่ได้ token");
-                    resolve(null);
-                }
-            },
-            prompt: 'consent'  // บังคับขอ consent ใหม่
-        });
-        client.requestAccessToken({ prompt: 'consent' });
-    });
-}
 
 async function backupToGoogleDrive() {
     try {
-        // 🔄 ตรวจสอบ/รีเฟรช token
-        const token = await ensureValidToken();
- 
+
+        const token = localStorage.getItem("googleAccessToken");
+
         if (!token) {
-            showNotification("❌ ล็อกอินไม่สำเร็จ", "กรุณาลองอีกครั้ง", "error");
+            alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
         }
- 
+
         // ✅ แสดง progress modal
         const progress = showProgressModal("🔄 กำลัง Backup...", 0);
- 
+
         // Step 1: เตรียมข้อมูล
         progress.updateProgress(20);
         await new Promise(r => setTimeout(r, 300));
- 
+
         // ✅ DELETE OLD BACKUPS FIRST
+        // ค้นหาไฟล์ backup ที่เก่า ลบหมด
         const oldBackupsRes = await fetch(
             "https://www.googleapis.com/drive/v3/files?q=name contains 'HabitBetter-Backup' and trashed=false&fields=files(id,name)&pageSize=100",
             {
@@ -325,7 +277,7 @@ async function backupToGoogleDrive() {
                 }
             }
         );
- 
+
         if (oldBackupsRes.ok) {
             const oldBackupsData = await oldBackupsRes.json();
             if (oldBackupsData.files && oldBackupsData.files.length > 0) {
@@ -346,7 +298,7 @@ async function backupToGoogleDrive() {
                 }
             }
         }
- 
+
         const backupData = {
             tracker: localStorage.getItem("tracker"),
             way_piggy: localStorage.getItem("way_piggy"),
@@ -356,25 +308,27 @@ async function backupToGoogleDrive() {
             expenses: localStorage.getItem("expenses"),
             tasks: localStorage.getItem("tasks"),
             routines: localStorage.getItem("routines"),
+            // ✅ เพิ่ม Goals
             my_daily_goals: localStorage.getItem("my_daily_goals"),
             my_longterm_goals: localStorage.getItem("my_longterm_goals"),
             timestamp: new Date().toISOString()
         };
- 
+
+        // ✅ ชื่อไฟล์เดียวเสมอ (ไม่มี timestamp)
         const metadata = {
             name: `HabitBetter-Backup.json`,
             mimeType: 'application/json'
         };
- 
+
         const form = new FormData();
- 
+
         form.append(
             "metadata",
             new Blob([JSON.stringify(metadata)], {
                 type: "application/json"
             })
         );
- 
+
         form.append(
             "file",
             new Blob(
@@ -382,11 +336,11 @@ async function backupToGoogleDrive() {
                 { type: "application/json" }
             )
         );
- 
+
         // Step 2: อัปโหลดไปยัง Google Drive
         progress.updateProgress(50);
         await new Promise(r => setTimeout(r, 300));
- 
+
         const res = await fetch(
             "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
             {
@@ -397,29 +351,31 @@ async function backupToGoogleDrive() {
                 body: form
             }
         );
- 
+
         progress.updateProgress(80);
- 
-        // ✅ FIX: เช็ค HTTP status
+
+        // ✅ FIX: เช็ค HTTP status ก่อนอ่าน JSON
         if (!res.ok) {
             throw new Error(`Backup failed: HTTP ${res.status} ${res.statusText}`);
         }
- 
+
         const data = await res.json();
- 
+
         progress.updateProgress(100);
         await new Promise(r => setTimeout(r, 300));
- 
+
         if (data.id) {
+            // ✅ บันทึก file ID
             localStorage.setItem("lastBackupFileId", data.id);
             localStorage.setItem("lastBackupFileName", `HabitBetter-Backup.json`);
             localStorage.setItem("lastBackupTimestamp", new Date().toISOString());
             
             progress.close();
             
+            // ✅ แสดง notification สำเร็จ
             showNotification(
                 "✅ Backup สำเร็จ!",
-                `บันทึกข้อมูล 10 รายการลง Google Drive`,
+                `บันทึกข้อมูล 8 รายการลง Google Drive\n(ไฟล์เดิมถูกเขียนทับ)`,
                 "success"
             );
         } else {
@@ -427,13 +383,15 @@ async function backupToGoogleDrive() {
             progress.close();
             showNotification("❌ Backup ไม่สำเร็จ", "เกิดข้อผิดพลาด กรุณาลองใหม่", "error");
         }
- 
+
     } catch (err) {
         console.error(err);
         
+        // ปิด progress modal
         const modal = document.getElementById("progress-modal");
         if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
         
+        // ✅ แสดง notification error
         showNotification("❌ Backup ล้มเหลว", err.message, "error");
     }
 }
@@ -448,23 +406,23 @@ async function backupToGoogleDrive() {
  * 5. บันทึก lastBackupFileId เพื่ออ้างอิงครั้งต่อไป
  */
 async function restoreFromGoogleDrive() {
- 
+
     try {
-        // 🔄 ตรวจสอบ/รีเฟรช token
-        const token = await ensureValidToken();
- 
+
+        const token = localStorage.getItem("googleAccessToken");
+
         if (!token) {
-            showNotification("❌ ล็อกอินไม่สำเร็จ", "กรุณาลองอีกครั้ง", "error");
+            alert("⚠️ กรุณาล็อกอิน Google ก่อน");
             return;
         }
- 
+
         // ✅ แสดง progress modal
         const progress = showProgressModal("🔄 กำลัง Restore...", 0);
- 
+
         // Step 1: ค้นหา backup ล่าสุด
         progress.updateProgress(20);
         await new Promise(r => setTimeout(r, 300));
- 
+
         const listRes = await fetch(
             "https://www.googleapis.com/drive/v3/files?q=name='HabitBetter-Backup.json' and trashed=false&fields=files(id,name)&pageSize=1",
             {
@@ -473,25 +431,21 @@ async function restoreFromGoogleDrive() {
                 }
             }
         );
- 
-        if (!listRes.ok) {
-            throw new Error(`Failed to list files: HTTP ${listRes.status}`);
-        }
- 
+
         const listData = await listRes.json();
- 
+
         if (!listData.files || listData.files.length === 0) {
             progress.close();
             showNotification("❌ ไม่พบ Backup", "ไม่พบไฟล์ backup ใน Google Drive", "error");
             return;
         }
- 
+
         const latestFile = listData.files[0];
- 
+
         // Step 2: ดาวน์โหลดไฟล์
         progress.updateProgress(50);
         await new Promise(r => setTimeout(r, 300));
- 
+
         const fileRes = await fetch(
             `https://www.googleapis.com/drive/v3/files/${latestFile.id}?alt=media`,
             {
@@ -500,17 +454,18 @@ async function restoreFromGoogleDrive() {
                 }
             }
         );
- 
+
         if (!fileRes.ok) {
             throw new Error(`Failed to download backup file: ${fileRes.status}`);
         }
- 
+
         const backupData = await fileRes.json();
- 
+
         // Step 3: Restore data
         progress.updateProgress(70);
         await new Promise(r => setTimeout(r, 300));
- 
+
+        // ✅ FIX: restore data ด้วย array ของ keys เพื่อให้แน่ใจว่าทุก key ถูก restore
         const keysToRestore = ['tracker', 'way_piggy', 'saving_jars', 'titanPoints', 'notes', 'expenses', 'tasks', 'routines', 'my_daily_goals', 'my_longterm_goals'];
         
         let restoredCount = 0;
@@ -520,35 +475,37 @@ async function restoreFromGoogleDrive() {
                 restoredCount++;
             }
         });
- 
+
+        // ✅ FIX: บันทึก file ID เพื่อ restore ได้เร็วครั้งต่อไป
         localStorage.setItem("lastBackupFileId", latestFile.id);
         localStorage.setItem("lastBackupFileName", latestFile.name);
- 
+
         progress.updateProgress(100);
         await new Promise(r => setTimeout(r, 300));
         progress.close();
- 
+
+        // ✅ แสดง notification สำเร็จ
         showNotification(
             "✅ Restore สำเร็จ!",
             `กู้คืน ${restoredCount} รายการ\nจาก: ${latestFile.name}`,
             "success"
         );
- 
+
+        // ✅ Update UI ทันที (ไม่ reload page)
         setTimeout(() => {
-            render();
+            render();  // เรียก render() เพื่อ update UI เท่านั้น
         }, 2000);
- 
+
     } catch (error) {
+
         console.error("Restore error:", error);
- 
+
+        // ปิด progress modal
         const modal = document.getElementById("progress-modal");
         if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
- 
-        showNotification(
-            "❌ Restore ล้มเหลว",
-            error.message || "เกิดข้อผิดพลาด",
-            "error"
-        );
+        
+        // ✅ แสดง notification error
+        showNotification("❌ Restore ล้มเหลว", error.message, "error");
     }
 }
 
@@ -3848,10 +3805,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.3</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.2</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.3</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.2</div>
                     </div>
                 </div>
             </div>
