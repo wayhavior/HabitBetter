@@ -2838,7 +2838,7 @@ function renderNotesPageNew() {
     const fab = document.createElement("button");
     fab.className = "notes-fab";
     fab.innerHTML = "✏️";
-    fab.onclick = () => openNotesCreatePage();
+    fab.onclick = () => openNoteEditor(null);
     app.appendChild(fab);
 }
 
@@ -2933,9 +2933,200 @@ async function saveNewNote() {
     renderNotesPageNew();
 }
 
-function handleNoteClick(noteId) { openNoteViewPage(noteId); }
+function handleNoteClick(noteId) { openNoteEditor(noteId); }
 function handleNoteDelete(index) { if (confirm("ต้องการลบโน้ตนี้หรือไม่?")) { myNotes.splice(index, 1); save(); renderNotesPageNew(); } }
 function goHome() { unlockedNotes = []; settingsOpen = false; currentPage = "home"; notesCurrentFilter = "all"; render(); }
+
+// ==================== NEW NOTE EDITOR ====================
+function openNoteEditor(noteId) {
+    const note = noteId ? myNotes.find(n => n.id === noteId) : null;
+    
+    // Check password
+    if (note && note.password && !unlockedNotes.includes(note.id)) {
+        const input = prompt("ใส่รหัสผ่านเพื่อเข้าถึงโน้ต:");
+        if (input === null) return;
+        hashPassword(input).then(hashed => {
+            if (hashed !== note.password) {
+                alert("รหัสไม่ถูกต้อง!");
+                return;
+            }
+            unlockedNotes.push(note.id);
+            openNoteEditor(noteId);
+        });
+        return;
+    }
+    
+    app.innerHTML = "";
+    const selectedCategory = note ? note.category : "personal";
+    
+    // Main container
+    const container = document.createElement("div");
+    container.style.cssText = `
+        background: #1a1a1a;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        color: #fff;
+    `;
+    
+    // Top header
+    const topHeader = document.createElement("div");
+    topHeader.style.cssText = `
+        padding: 16px;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    `;
+    topHeader.innerHTML = `
+        <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #fff; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;" onclick="goNotesBack()">←</button>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #888; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">♡</button>
+            <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #888; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #888; display: flex; align-items: center; justify-content: center; font-size: 16px;">⋯</div>
+            </button>
+        </div>
+    `;
+    container.appendChild(topHeader);
+    
+    // Toolbar
+    const toolbar = document.createElement("div");
+    toolbar.style.cssText = `
+        padding: 12px 16px;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    `;
+    const categoryColor = {personal: "#ffd93d", work: "#ff6b6b", other: "#6bcf7f"}[selectedCategory] || "#6bcf7f";
+    toolbar.innerHTML = `
+        <div style="font-size: 13px; color: #888;">${note ? note.date : new Date().toLocaleString('th-TH')}</div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 14px; height: 14px; border-radius: 50%; background: ${categoryColor};"></div>
+            <select id="note-category" style="background: transparent; border: none; color: #fff; font-size: 13px; cursor: pointer; outline: none;">
+                <option value="personal" ${selectedCategory === 'personal' ? 'selected' : ''}>ส่วนตัว</option>
+                <option value="work" ${selectedCategory === 'work' ? 'selected' : ''}>งาน</option>
+                <option value="other" ${selectedCategory === 'other' ? 'selected' : ''}>อื่นๆ</option>
+            </select>
+        </div>
+        <div style="display: flex; gap: 8px; margin-left: auto; align-items: center;">
+            <button style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px;">←</button>
+            <button style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px;">→</button>
+            <button id="note-edit-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px;" onclick="toggleEditMode()">✏️</button>
+            <button id="note-save-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #4CAF50; padding: 4px 8px; display: none;" onclick="saveNoteEditor()">✓</button>
+            <button style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px;">🎨</button>
+        </div>
+    `;
+    container.appendChild(toolbar);
+    
+    // Title section
+    const titleSection = document.createElement("div");
+    titleSection.style.cssText = `
+        padding: 20px 16px 12px;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    `;
+    titleSection.innerHTML = `
+        <div style="flex: 1;">
+            <input type="text" id="note-title" placeholder="หัวข้อ" value="${note ? note.title : ''}" readonly style="background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 28px; font-weight: 500; line-height: 1.3; width: 100%;">
+        </div>
+        <button style="background: none; border: none; font-size: 22px; cursor: pointer; color: #666; padding: 4px 8px; margin-left: 12px;">📅</button>
+    `;
+    container.appendChild(titleSection);
+    
+    // Content area
+    const contentArea = document.createElement("div");
+    contentArea.style.cssText = `
+        flex: 1;
+        padding: 20px 16px;
+        overflow-y: auto;
+        background: #242424;
+    `;
+    contentArea.innerHTML = `<textarea id="note-content" placeholder="ธรรมชาติสไนอาทีที่นี่..." readonly style="width: 100%; background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 15px; resize: none; line-height: 1.7; min-height: 400px; padding: 0;">${note ? note.body : ''}</textarea>`;
+    container.appendChild(contentArea);
+    
+    app.appendChild(container);
+    
+    // Store editing state
+    window.noteEditing = {
+        id: noteId,
+        note: note,
+        category: selectedCategory,
+        isEditMode: false
+    };
+}
+
+function goNotesBack() {
+    notesCurrentFilter = "all";
+    unlockedNotes = [];
+    renderNotesPageNew();
+}
+
+function toggleEditMode() {
+    const titleInput = document.getElementById('note-title');
+    const contentInput = document.getElementById('note-content');
+    const editBtn = document.getElementById('note-edit-btn');
+    const saveBtn = document.getElementById('note-save-btn');
+    
+    window.noteEditing.isEditMode = !window.noteEditing.isEditMode;
+    
+    if (window.noteEditing.isEditMode) {
+        titleInput.removeAttribute('readonly');
+        contentInput.removeAttribute('readonly');
+        editBtn.style.display = 'none';
+        saveBtn.style.display = 'flex';
+        titleInput.focus();
+    } else {
+        titleInput.setAttribute('readonly', '');
+        contentInput.setAttribute('readonly', '');
+        editBtn.style.display = 'flex';
+        saveBtn.style.display = 'none';
+    }
+}
+
+function saveNoteEditor() {
+    const title = document.getElementById('note-title').value.trim() || "ไม่มีชื่อ";
+    const body = document.getElementById('note-content').value.trim();
+    const category = document.getElementById('note-category').value;
+    
+    if (!title && !body) {
+        alert('กรุณากรอกหัวข้อหรือเนื้อหา');
+        return;
+    }
+    
+    if (window.noteEditing.id === null) {
+        // Create new
+        const newNote = {
+            id: Date.now(),
+            title: title,
+            body: body,
+            category: category,
+            date: new Date().toLocaleString('th-TH'),
+            password: "",
+            bgColor: null
+        };
+        myNotes.unshift(newNote);
+        addExp(50);
+    } else {
+        // Edit existing
+        const note = myNotes.find(n => n.id === window.noteEditing.id);
+        if (note) {
+            note.title = title;
+            note.body = body;
+            note.category = category;
+            note.date = new Date().toLocaleString('th-TH');
+        }
+    }
+    
+    save();
+    toggleEditMode();
+    goNotesBack();
+}
+// ======================================================
 
 // Override renderNotesPage with new version
 const originalRenderNotesPage = window.renderNotesPage;

@@ -4118,4 +4118,52 @@ body .notes-fab {
     .notes-view-buttons button {
         width: 100%;
     }
+}/* ==================== NOTE EDITOR STYLES (DARK MODE) ==================== */
+
+.note-editor-container {
+    background: #1a1a1a !important;
+    color: #fff !important;
+}
+
+.note-editor-container input,
+.note-editor-container textarea,
+.note-editor-container select {
+    background: transparent !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+.note-editor-container input::placeholder,
+.note-editor-container textarea::placeholder {
+    color: #666 !important;
+}
+
+/* Scrollbar styling for textarea */
+.note-editor-container textarea::-webkit-scrollbar {
+    width: 6px;
+}
+
+.note-editor-container textarea::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
+.note-editor-container textarea::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+}
+
+.note-editor-container textarea {
+    scrollbar-width: thin;
+    scrollbar-color: #444 #2a2a2a;
+}
+
+/* Option styling for select dropdown */
+.note-editor-container select option {
+    background: #1a1a1a;
+    color: #fff;
+}
+
+/* Buttons hover effect */
+.note-editor-container button:hover {
+    opacity: 0.8;
 }
