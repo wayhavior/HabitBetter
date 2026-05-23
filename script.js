@@ -2812,6 +2812,14 @@ function renderNotesPageNew() {
     
     const filteredNotes = notesCurrentFilter === "all" ? myNotes : myNotes.filter(n => n.category === notesCurrentFilter);
     
+    // Sort pinned notes to top
+    const sortedNotes = [...filteredNotes].sort((a, b) => {
+        if (a.pinned && b.pinned) return (b.pinOrder || 0) - (a.pinOrder || 0);
+        if (a.pinned) return -1;
+        if (b.pinned) return 1;
+        return 0;
+    });
+    
     if (filteredNotes.length === 0) {
         const emptyState = document.createElement("div");
         emptyState.className = "notes-empty-state";
@@ -2820,16 +2828,57 @@ function renderNotesPageNew() {
     } else {
         const notesGrid = document.createElement("div");
         notesGrid.className = "notes-grid-container";
-        filteredNotes.forEach((note, index) => {
+        sortedNotes.forEach((note, index) => {
             const card = document.createElement("div");
             card.className = "notes-grid-card";
             const categoryColor = { personal: "#ffd93d", work: "#ff6b6b", other: "#6bcf7f" }[note.category] || "#6bcf7f";
-            const previewLines = note.body.split('\n').slice(0, 3);
-            const previewText = previewLines.join('\n').substring(0, 120);
+            
+            // Get preview text - show only 2-3 lines
+            let previewText = "(ไม่มีเนื้อหา)";
+            if (note.body && note.body.trim()) {
+                const lines = note.body.split('\n').filter(line => line.trim()).slice(0, 2);
+                previewText = lines.join('\n').substring(0, 100);
+            }
+            
             const isLocked = note.password && !unlockedNotes.includes(note.id);
             card.style.borderLeftColor = categoryColor;
-            card.innerHTML = `<div class="notes-card-header"><h3 class="notes-card-title">${note.title || "ไม่มีชื่อ"}</h3>${note.password ? '<span class="notes-card-lock">🔒</span>' : ''}</div><div class="notes-card-preview">${isLocked ? '<span class="notes-locked-text">โน้ตนี้ถูกล็อคอยู่</span>' : `<span class="notes-preview-text">${previewText}</span>`}</div><div class="notes-card-footer"><span class="notes-card-date">📅 ${getLastUpdateDate(note.date)}</span></div><div class="notes-card-actions"><button class="notes-action-btn notes-edit-btn" onclick="handleNoteClick(${note.id})" title="เปิดโน้ต">✏️</button><button class="notes-action-btn notes-delete-btn" onclick="handleNoteDelete(${myNotes.indexOf(note)})" title="ลบโน้ต">🗑️</button></div>`;
-            card.onclick = (e) => { if (!e.target.closest('.notes-action-btn')) { handleNoteClick(note.id); } };
+            
+            // Format date properly - handle various date formats
+            let dateStr = new Date().toLocaleString('th-TH');
+            if (note.date) {
+                try {
+                    // Check if it's already formatted Thai date
+                    if (typeof note.date === 'string' && note.date.includes('/')) {
+                        dateStr = note.date;
+                    } else {
+                        const dateObj = new Date(note.date);
+                        if (!isNaN(dateObj.getTime())) {
+                            dateStr = note.date;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Date parse error:', note.date);
+                    dateStr = new Date().toLocaleString('th-TH');
+                }
+            }
+            
+            card.innerHTML = `
+                <div class="notes-card-header">
+                    <h3 class="notes-card-title">${note.pinned ? '📌 ' : ''}${note.title || "ไม่มีชื่อ"}</h3>
+                    ${note.password ? '<span class="notes-card-lock">🔒</span>' : ''}
+                </div>
+                <div class="notes-card-preview">
+                    ${isLocked ? '<span class="notes-locked-text">โน้ตนี้ถูกล็อคอยู่</span>' : `<span class="notes-preview-text">${previewText}</span>`}
+                </div>
+                <div class="notes-card-footer">
+                    <span class="notes-card-date">📅 ${dateStr}</span>
+                </div>
+                <div class="notes-card-actions">
+                    <button class="notes-action-btn notes-edit-btn" onclick="openNoteEditor(${note.id})" title="เปิดโน้ต">✏️</button>
+                    <button class="notes-action-btn notes-delete-btn" onclick="handleNoteDelete(${myNotes.indexOf(note)})" title="ลบโน้ต">🗑️</button>
+                </div>
+            `;
+            card.onclick = (e) => { if (!e.target.closest('.notes-action-btn')) { openNoteEditor(note.id); } };
             notesGrid.appendChild(card);
         });
         app.appendChild(notesGrid);
@@ -2938,8 +2987,11 @@ function handleNoteDelete(index) { if (confirm("ต้องการลบโ�
 function goHome() { unlockedNotes = []; settingsOpen = false; currentPage = "home"; notesCurrentFilter = "all"; render(); }
 
 // ==================== NEW NOTE EDITOR ====================
+
+// ==================== NEW NOTE EDITOR (IMPROVED) ====================
 function openNoteEditor(noteId) {
     const note = noteId ? myNotes.find(n => n.id === noteId) : null;
+    const isNewNote = noteId === null;
     
     // Check password
     if (note && note.password && !unlockedNotes.includes(note.id)) {
@@ -2958,11 +3010,12 @@ function openNoteEditor(noteId) {
     
     app.innerHTML = "";
     const selectedCategory = note ? note.category : "personal";
+    const selectedColor = note ? (note.bgColor || "#1a1a1a") : "#1a1a1a";
     
-    // Main container
+    // Main container with background color
     const container = document.createElement("div");
     container.style.cssText = `
-        background: #1a1a1a;
+        background: ${selectedColor};
         min-height: 100vh;
         display: flex;
         flex-direction: column;
@@ -2981,10 +3034,16 @@ function openNoteEditor(noteId) {
     topHeader.innerHTML = `
         <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #fff; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;" onclick="goNotesBack()">←</button>
         <div style="display: flex; gap: 12px; align-items: center;">
-            <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #888; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">♡</button>
-            <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #888; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #888; display: flex; align-items: center; justify-content: center; font-size: 16px;">⋯</div>
-            </button>
+            <button id="note-pin-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: ${note && note.pinned ? '#FFD700' : '#888'}; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: color 0.2s;" onclick="togglePinNote(${noteId})">📌</button>
+            <div style="position: relative;">
+                <button id="note-menu-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #888; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="toggleNoteMenu()">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #888; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s;">⋯</div>
+                </button>
+                <div id="note-menu-dropdown" style="position: absolute; top: 100%; right: 0; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; min-width: 180px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.5); margin-top: 8px;">
+                    <button onclick="toggleLockNote(${noteId})" style="width: 100%; padding: 12px 16px; text-align: left; background: none; border: none; color: #fff; cursor: pointer; font-size: 14px; border-bottom: 1px solid #444; transition: background 0.2s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='transparent'">🔒 ${note && note.password ? 'ปลดล็อก' : 'ล็อค'}โน้ต</button>
+                    <button onclick="deleteNoteFromEditor(${noteId})" style="width: 100%; padding: 12px 16px; text-align: left; background: none; border: none; color: #ff6b6b; cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='transparent'">🗑️ ลบโน้ต</button>
+                </div>
+            </div>
         </div>
     `;
     container.appendChild(topHeader);
@@ -3000,23 +3059,31 @@ function openNoteEditor(noteId) {
         gap: 12px;
         flex-wrap: wrap;
     `;
-    const categoryColor = {personal: "#ffd93d", work: "#ff6b6b", other: "#6bcf7f"}[selectedCategory] || "#6bcf7f";
+    const getCatColor = (cat) => ({personal: "#ffd93d", work: "#ff6b6b", other: "#6bcf7f"}[cat] || "#6bcf7f");
     toolbar.innerHTML = `
         <div style="font-size: 13px; color: #888;">${note ? note.date : new Date().toLocaleString('th-TH')}</div>
         <div style="display: flex; align-items: center; gap: 8px;">
-            <div style="width: 14px; height: 14px; border-radius: 50%; background: ${categoryColor};"></div>
-            <select id="note-category" style="background: transparent; border: none; color: #fff; font-size: 13px; cursor: pointer; outline: none;">
+            <div id="note-category-dot" style="width: 14px; height: 14px; border-radius: 50%; background: ${getCatColor(selectedCategory)}; transition: background 0.2s;"></div>
+            <select id="note-category" onchange="changeNoteCategoryEditor(this.value)" style="background: transparent; border: none; color: #fff; font-size: 13px; cursor: pointer; outline: none;">
                 <option value="personal" ${selectedCategory === 'personal' ? 'selected' : ''}>ส่วนตัว</option>
                 <option value="work" ${selectedCategory === 'work' ? 'selected' : ''}>งาน</option>
                 <option value="other" ${selectedCategory === 'other' ? 'selected' : ''}>อื่นๆ</option>
             </select>
         </div>
         <div style="display: flex; gap: 8px; margin-left: auto; align-items: center;">
-            <button style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px;">←</button>
-            <button style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px;">→</button>
-            <button id="note-edit-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px;" onclick="toggleEditMode()">✏️</button>
-            <button id="note-save-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #4CAF50; padding: 4px 8px; display: none;" onclick="saveNoteEditor()">✓</button>
-            <button style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px;">🎨</button>
+            ${!isNewNote ? `<button id="note-edit-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'" onclick="toggleEditModeNote()">✏️</button>` : ''}
+            <button id="note-save-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #4CAF50; padding: 4px 8px; ${isNewNote ? 'display: flex;' : 'display: none;'} transition: color 0.2s;" onmouseover="this.style.color='#66BB6A'" onmouseout="this.style.color='#4CAF50'" onclick="saveNoteEditor()">✓</button>
+            <div style="position: relative; display: inline-block;">
+                <button id="note-color-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'" onclick="toggleColorPicker()">🎨</button>
+                <div id="note-color-picker" style="position: absolute; top: 100%; right: 0; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 12px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; grid-template-columns: repeat(3, 40px); gap: 8px; margin-top: 8px;">
+                    <div onclick="changeNoteColor('#1a1a1a')" style="width: 32px; height: 32px; border-radius: 4px; background: #1a1a1a; border: 2px solid #555; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="ดำ"></div>
+                    <div onclick="changeNoteColor('#ff6b6b')" style="width: 32px; height: 32px; border-radius: 4px; background: #ff6b6b; border: 2px solid #555; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="แดง"></div>
+                    <div onclick="changeNoteColor('#4ecdc4')" style="width: 32px; height: 32px; border-radius: 4px; background: #4ecdc4; border: 2px solid #555; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="สีเขียวน้ำ"></div>
+                    <div onclick="changeNoteColor('#9b59b6')" style="width: 32px; height: 32px; border-radius: 4px; background: #9b59b6; border: 2px solid #555; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="ม่วง"></div>
+                    <div onclick="changeNoteColor('#f1c40f')" style="width: 32px; height: 32px; border-radius: 4px; background: #f1c40f; border: 2px solid #555; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="เหลือง"></div>
+                    <div onclick="changeNoteColor('#3498db')" style="width: 32px; height: 32px; border-radius: 4px; background: #3498db; border: 2px solid #555; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="น้ำเงิน"></div>
+                </div>
+            </div>
         </div>
     `;
     container.appendChild(toolbar);
@@ -3032,7 +3099,7 @@ function openNoteEditor(noteId) {
     `;
     titleSection.innerHTML = `
         <div style="flex: 1;">
-            <input type="text" id="note-title" placeholder="หัวข้อ" value="${note ? note.title : ''}" readonly style="background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 28px; font-weight: 500; line-height: 1.3; width: 100%;">
+            <input type="text" id="note-title" placeholder="หัวข้อ" value="${note ? note.title : ''}" ${isNewNote ? '' : 'readonly'} style="background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 28px; font-weight: 500; line-height: 1.3; width: 100%;">
         </div>
         <button style="background: none; border: none; font-size: 22px; cursor: pointer; color: #666; padding: 4px 8px; margin-left: 12px;">📅</button>
     `;
@@ -3044,9 +3111,9 @@ function openNoteEditor(noteId) {
         flex: 1;
         padding: 20px 16px;
         overflow-y: auto;
-        background: #242424;
+        background: rgba(0, 0, 0, 0.2);
     `;
-    contentArea.innerHTML = `<textarea id="note-content" placeholder="ธรรมชาติสไนอาทีที่นี่..." readonly style="width: 100%; background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 15px; resize: none; line-height: 1.7; min-height: 400px; padding: 0;">${note ? note.body : ''}</textarea>`;
+    contentArea.innerHTML = `<textarea id="note-content" placeholder="ธรรมชาติสไนอาทีที่นี่..." ${isNewNote ? '' : 'readonly'} style="width: 100%; background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 15px; resize: none; line-height: 1.7; min-height: 400px; padding: 0;">${note ? note.body : ''}</textarea>`;
     container.appendChild(contentArea);
     
     app.appendChild(container);
@@ -3056,17 +3123,41 @@ function openNoteEditor(noteId) {
         id: noteId,
         note: note,
         category: selectedCategory,
-        isEditMode: false
+        isEditMode: isNewNote,
+        isNewNote: isNewNote,
+        color: selectedColor
     };
 }
 
-function goNotesBack() {
-    notesCurrentFilter = "all";
-    unlockedNotes = [];
-    renderNotesPageNew();
+function changeNoteCategoryEditor(category) {
+    window.noteEditing.category = category;
+    const dot = document.getElementById('note-category-dot');
+    const colors = {personal: "#ffd93d", work: "#ff6b6b", other: "#6bcf7f"};
+    if (dot) dot.style.background = colors[category];
 }
 
-function toggleEditMode() {
+function toggleColorPicker() {
+    const picker = document.getElementById('note-color-picker');
+    if (picker) {
+        picker.style.display = picker.style.display === 'none' ? 'grid' : 'none';
+    }
+}
+
+function changeNoteColor(color) {
+    const container = document.querySelector('[style*="background:"]');
+    if (container) container.style.background = color;
+    window.noteEditing.color = color;
+    document.getElementById('note-color-picker').style.display = 'none';
+}
+
+function toggleNoteMenu() {
+    const dropdown = document.getElementById('note-menu-dropdown');
+    if (dropdown) {
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function toggleEditModeNote() {
     const titleInput = document.getElementById('note-title');
     const contentInput = document.getElementById('note-content');
     const editBtn = document.getElementById('note-edit-btn');
@@ -3092,14 +3183,15 @@ function saveNoteEditor() {
     const title = document.getElementById('note-title').value.trim() || "ไม่มีชื่อ";
     const body = document.getElementById('note-content').value.trim();
     const category = document.getElementById('note-category').value;
+    const color = window.noteEditing.color || "#1a1a1a";
     
     if (!title && !body) {
         alert('กรุณากรอกหัวข้อหรือเนื้อหา');
         return;
     }
     
-    if (window.noteEditing.id === null) {
-        // Create new
+    if (window.noteEditing.isNewNote) {
+        // Create new - directly save and go back
         const newNote = {
             id: Date.now(),
             title: title,
@@ -3107,25 +3199,94 @@ function saveNoteEditor() {
             category: category,
             date: new Date().toLocaleString('th-TH'),
             password: "",
-            bgColor: null
+            bgColor: color,
+            pinned: false,
+            pinOrder: 0
         };
         myNotes.unshift(newNote);
         addExp(50);
+        save();
+        goNotesBack();
     } else {
-        // Edit existing
+        // Edit existing - stay in edit mode
         const note = myNotes.find(n => n.id === window.noteEditing.id);
         if (note) {
             note.title = title;
             note.body = body;
             note.category = category;
             note.date = new Date().toLocaleString('th-TH');
+            note.bgColor = color;
+        }
+        save();
+        toggleEditModeNote();
+    }
+}
+
+function togglePinNote(noteId) {
+    if (!noteId) return;
+    const note = myNotes.find(n => n.id === noteId);
+    if (note) {
+        note.pinned = !note.pinned;
+        if (note.pinned) {
+            // ให้อันแรกที่ปักหมุดเป็นอันบนสุด
+            const pinnedNotes = myNotes.filter(n => n.pinned);
+            pinnedNotes.forEach((n, idx) => {
+                n.pinOrder = pinnedNotes.length - idx;
+            });
+        }
+        save();
+        // Update UI
+        const pinBtn = document.getElementById('note-pin-btn');
+        if (pinBtn) {
+            pinBtn.style.color = note.pinned ? '#FFD700' : '#888';
         }
     }
-    
-    save();
-    toggleEditMode();
-    goNotesBack();
 }
+
+function toggleLockNote(noteId) {
+    if (!noteId) return;
+    const note = myNotes.find(n => n.id === noteId);
+    if (!note) return;
+    
+    if (note.password) {
+        if (confirm("ปลดล็อคโน้ตนี้?")) {
+            note.password = "";
+            save();
+            alert("ปลดล็อคแล้ว");
+            openNoteEditor(noteId);
+        }
+    } else {
+        const pass = prompt("ตั้งรหัสผ่าน:");
+        if (pass && pass.trim()) {
+            hashPassword(pass).then(hashed => {
+                note.password = hashed;
+                save();
+                alert("ล็อคแล้ว");
+                openNoteEditor(noteId);
+            });
+        }
+    }
+}
+
+function deleteNoteFromEditor(noteId) {
+    if (!noteId) return;
+    if (confirm("ต้องการลบโน้ตนี้หรือไม่?")) {
+        const idx = myNotes.findIndex(n => n.id === noteId);
+        if (idx !== -1) {
+            myNotes.splice(idx, 1);
+            save();
+            goNotesBack();
+        }
+    }
+}
+
+function goNotesBack() {
+    notesCurrentFilter = "all";
+    unlockedNotes = [];
+    renderNotesPageNew();
+}
+
+// ======================================================
 // ======================================================
 
 // Override renderNotesPage with new version
@@ -4138,10 +4299,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.4</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.5</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.4</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.5</div>
                     </div>
                 </div>
             </div>
