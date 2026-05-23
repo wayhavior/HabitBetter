@@ -2873,12 +2873,29 @@ function renderNotesPageNew() {
                 <div class="notes-card-footer">
                     <span class="notes-card-date">📅 ${dateStr}</span>
                 </div>
-                <div class="notes-card-actions">
-                    <button class="notes-action-btn notes-edit-btn" onclick="openNoteEditor(${note.id})" title="เปิดโน้ต">✏️</button>
-                    <button class="notes-action-btn notes-delete-btn" onclick="handleNoteDelete(${myNotes.indexOf(note)})" title="ลบโน้ต">🗑️</button>
-                </div>
             `;
-            card.onclick = (e) => { if (!e.target.closest('.notes-action-btn')) { openNoteEditor(note.id); } };
+            
+            // Click to edit
+            card.onclick = () => { openNoteEditor(note.id); };
+            
+            // Long press (500ms) to delete with confirmation
+            let pressTimer;
+            card.onmousedown = () => {
+                pressTimer = setTimeout(() => {
+                    showDeleteConfirmModal(note, myNotes.indexOf(note));
+                }, 500);
+            };
+            card.onmouseup = () => clearTimeout(pressTimer);
+            card.onmouseleave = () => clearTimeout(pressTimer);
+            
+            // Touch long press
+            card.ontouchstart = () => {
+                pressTimer = setTimeout(() => {
+                    showDeleteConfirmModal(note, myNotes.indexOf(note));
+                }, 500);
+            };
+            card.ontouchend = () => clearTimeout(pressTimer);
+            
             notesGrid.appendChild(card);
         });
         app.appendChild(notesGrid);
@@ -2980,6 +2997,90 @@ async function saveNewNote() {
     save();
     goNotesFromCreate();
     renderNotesPageNew();
+}
+
+function showDeleteConfirmModal(note, index) {
+    // สร้าง overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
+    // สร้าง modal
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 32px 24px;
+        max-width: 300px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    // เพิ่ม animation
+    const style = document.createElement("style");
+    style.textContent = `
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    if (!document.querySelector("style[data-modal-anim]")) {
+        style.setAttribute("data-modal-anim", "true");
+        document.head.appendChild(style);
+    }
+    
+    modal.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">ลบโน้ต?</h3>
+            <p style="margin: 0 0 24px; color: rgba(255, 255, 255, 0.6); font-size: 13px;">คุณแน่ใจว่าต้องการลบ "<span style="font-weight: 600; color: rgba(255, 255, 255, 0.8);">${note.title || "โน้ต"}</span>" หรือไม่</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="cancel-delete" style="flex: 1; padding: 12px 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">ยกเลิก</button>
+                <button id="confirm-delete" style="flex: 1; padding: 12px 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);">ลบ</button>
+            </div>
+        </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Event listeners
+    document.getElementById("cancel-delete").onclick = () => {
+        overlay.remove();
+    };
+    
+    document.getElementById("confirm-delete").onclick = () => {
+        myNotes.splice(index, 1);
+        save();
+        overlay.remove();
+        renderNotesPageNew();
+        showNotification("✅ ลบโน้ตสำเร็จ", `"${note.title || "โน้ต"}" ถูกลบออก`, "success");
+    };
+    
+    // Close on overlay click
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
 }
 
 function handleNoteClick(noteId) { openNoteEditor(noteId); }
