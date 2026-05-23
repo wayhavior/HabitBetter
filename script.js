@@ -2833,6 +2833,11 @@ function renderNotesPageNew() {
             card.className = "notes-grid-card";
             const categoryColor = { personal: "#ffd93d", work: "#ff6b6b", other: "#6bcf7f" }[note.category] || "#6bcf7f";
             
+            // Apply bgColor if exists
+            if (note.bgColor) {
+                card.style.background = note.bgColor;
+            }
+            
             // Get preview text - show only 2-3 lines
             let previewText = "(ไม่มีเนื้อหา)";
             if (note.body && note.body.trim()) {
@@ -3096,16 +3101,7 @@ function openNoteEditor(noteId) {
     
     // Check password
     if (note && note.password && !unlockedNotes.includes(note.id)) {
-        const input = prompt("ใส่รหัสผ่านเพื่อเข้าถึงโน้ต:");
-        if (input === null) return;
-        hashPassword(input).then(hashed => {
-            if (hashed !== note.password) {
-                alert("รหัสไม่ถูกต้อง!");
-                return;
-            }
-            unlockedNotes.push(note.id);
-            openNoteEditor(noteId);
-        });
+        showUnlockPasswordModal(noteId, note);
         return;
     }
     
@@ -3135,7 +3131,7 @@ function openNoteEditor(noteId) {
     topHeader.innerHTML = `
         <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #fff; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;" onclick="goNotesBack()">←</button>
         <div style="display: flex; gap: 12px; align-items: center;">
-            <button id="note-pin-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: ${note && note.pinned ? '#FFD700' : '#888'}; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: color 0.2s;" onclick="togglePinNote(${noteId})">📌</button>
+            <button id="note-pin-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: ${note && note.pinned ? '#FFD700' : '#888'}; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; ${note && note.pinned ? 'text-shadow: 0 0 12px rgba(255, 215, 0, 0.8), 0 0 24px rgba(255, 215, 0, 0.4);' : ''}" onclick="togglePinNote(${noteId})">📌</button>
             <div style="position: relative;">
                 <button id="note-menu-btn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #888; padding: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="toggleNoteMenu()">
                     <div style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #888; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s;">⋯</div>
@@ -3165,11 +3161,16 @@ function openNoteEditor(noteId) {
         <div style="font-size: 13px; color: #888;">${note ? note.date : new Date().toLocaleString('th-TH')}</div>
         <div style="display: flex; align-items: center; gap: 8px;">
             <div id="note-category-dot" style="width: 14px; height: 14px; border-radius: 50%; background: ${getCatColor(selectedCategory)}; transition: background 0.2s;"></div>
-            <select id="note-category" onchange="changeNoteCategoryEditor(this.value)" style="background: transparent; border: none; color: #fff; font-size: 13px; cursor: pointer; outline: none;">
-                <option value="personal" ${selectedCategory === 'personal' ? 'selected' : ''}>ส่วนตัว</option>
-                <option value="work" ${selectedCategory === 'work' ? 'selected' : ''}>งาน</option>
-                <option value="other" ${selectedCategory === 'other' ? 'selected' : ''}>อื่นๆ</option>
-            </select>
+            <div style="position: relative; display: inline-block;">
+                <button id="note-category-btn" style="background: transparent; border: none; color: #fff; font-size: 13px; cursor: pointer; outline: none; padding: 4px 8px; transition: color 0.2s;" onmouseover="this.style.color='#ffd700'" onmouseout="this.style.color='#fff'" onclick="toggleCategoryDropdown()">
+                    ${selectedCategory === 'personal' ? 'ส่วนตัว' : selectedCategory === 'work' ? 'งาน' : 'อื่นๆ'}
+                </button>
+                <div id="note-category-dropdown" style="position: absolute; top: 100%; left: 0; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; min-width: 140px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.5); margin-top: 8px;">
+                    <button onclick="selectCategoryDropdown('personal')" style="width: 100%; padding: 12px 16px; text-align: left; background: none; border: none; color: #fff; cursor: pointer; font-size: 13px; border-bottom: 1px solid #444; transition: background 0.2s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='transparent'">👤 ส่วนตัว</button>
+                    <button onclick="selectCategoryDropdown('work')" style="width: 100%; padding: 12px 16px; text-align: left; background: none; border: none; color: #fff; cursor: pointer; font-size: 13px; border-bottom: 1px solid #444; transition: background 0.2s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='transparent'">💼 งาน</button>
+                    <button onclick="selectCategoryDropdown('other')" style="width: 100%; padding: 12px 16px; text-align: left; background: none; border: none; color: #fff; cursor: pointer; font-size: 13px; transition: background 0.2s;" onmouseover="this.style.background='#333'" onmouseout="this.style.background='transparent'">✨ อื่นๆ</button>
+                </div>
+            </div>
         </div>
         <div style="display: flex; gap: 8px; margin-left: auto; align-items: center;">
             ${!isNewNote ? `<button id="note-edit-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'" onclick="toggleEditModeNote()">✏️</button>` : ''}
@@ -3237,6 +3238,24 @@ function changeNoteCategoryEditor(category) {
     if (dot) dot.style.background = colors[category];
 }
 
+function toggleCategoryDropdown() {
+    const dropdown = document.getElementById('note-category-dropdown');
+    if (dropdown) {
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+function selectCategoryDropdown(category) {
+    changeNoteCategoryEditor(category);
+    const btn = document.getElementById('note-category-btn');
+    const dropdown = document.getElementById('note-category-dropdown');
+    const colors = {personal: "#ffd93d", work: "#ff6b6b", other: "#6bcf7f"};
+    const labels = {personal: "ส่วนตัว", work: "งาน", other: "อื่นๆ"};
+    
+    if (btn) btn.textContent = labels[category];
+    if (dropdown) dropdown.style.display = 'none';
+}
+
 function toggleColorPicker() {
     const picker = document.getElementById('note-color-picker');
     if (picker) {
@@ -3264,26 +3283,28 @@ function toggleEditModeNote() {
     const editBtn = document.getElementById('note-edit-btn');
     const saveBtn = document.getElementById('note-save-btn');
     
+    if (!titleInput || !contentInput) return;
+    
     window.noteEditing.isEditMode = !window.noteEditing.isEditMode;
     
     if (window.noteEditing.isEditMode) {
         titleInput.removeAttribute('readonly');
         contentInput.removeAttribute('readonly');
-        editBtn.style.display = 'none';
-        saveBtn.style.display = 'flex';
+        if (editBtn) editBtn.style.display = 'none';
+        if (saveBtn) saveBtn.style.display = 'flex';
         titleInput.focus();
     } else {
         titleInput.setAttribute('readonly', '');
         contentInput.setAttribute('readonly', '');
-        editBtn.style.display = 'flex';
-        saveBtn.style.display = 'none';
+        if (editBtn) editBtn.style.display = 'flex';
+        if (saveBtn) saveBtn.style.display = 'none';
     }
 }
 
 function saveNoteEditor() {
     const title = document.getElementById('note-title').value.trim() || "ไม่มีชื่อ";
     const body = document.getElementById('note-content').value.trim();
-    const category = document.getElementById('note-category').value;
+    const category = window.noteEditing.category || "personal";
     const color = window.noteEditing.color || "#1a1a1a";
     
     if (!title && !body) {
@@ -3307,6 +3328,7 @@ function saveNoteEditor() {
         myNotes.unshift(newNote);
         addExp(50);
         save();
+        renderNotesPageNew();
         goNotesBack();
     } else {
         // Edit existing - stay in edit mode
@@ -3319,6 +3341,7 @@ function saveNoteEditor() {
             note.bgColor = color;
         }
         save();
+        renderNotesPageNew();
         toggleEditModeNote();
     }
 }
@@ -3336,49 +3359,251 @@ function togglePinNote(noteId) {
             });
         }
         save();
-        // Update UI
+        // Update UI instantly
         const pinBtn = document.getElementById('note-pin-btn');
         if (pinBtn) {
             pinBtn.style.color = note.pinned ? '#FFD700' : '#888';
+            pinBtn.style.textShadow = note.pinned ? '0 0 12px rgba(255, 215, 0, 0.8), 0 0 24px rgba(255, 215, 0, 0.4)' : 'none';
+            pinBtn.style.transition = 'all 0.3s ease';
         }
     }
 }
 
+// ===== PASSWORD INPUT POPUP FOR UNLOCK =====
+function showUnlockPasswordModal(noteId, note) {
+    // สร้าง overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
+    // สร้าง modal
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 32px 24px;
+        max-width: 300px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    // เพิ่ม animation
+    const style = document.createElement("style");
+    style.textContent = `
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    if (!document.querySelector("style[data-modal-anim]")) {
+        style.setAttribute("data-modal-anim", "true");
+        document.head.appendChild(style);
+    }
+    
+    modal.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
+            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">โน้ตถูกล็อค</h3>
+            <p style="margin: 0 0 24px; color: rgba(255, 255, 255, 0.6); font-size: 13px;">โปรดใส่รหัสผ่านเพื่อเข้าถึง</p>
+            <input type="password" id="unlock-password" placeholder="ใส่รหัสผ่าน..." style="width: 100%; padding: 12px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; font-size: 14px; margin-bottom: 16px; box-sizing: border-box; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(255, 255, 255, 0.4)'" onblur="this.style.borderColor='rgba(255, 255, 255, 0.2)'">
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="cancel-unlock" style="flex: 1; padding: 12px 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">ยกเลิก</button>
+                <button id="confirm-unlock" style="flex: 1; padding: 12px 20px; background: linear-gradient(135deg, #00b894 0%, #00a085 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0, 184, 148, 0.4);">ปลดล็อค</button>
+            </div>
+        </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const passwordInput = document.getElementById("unlock-password");
+    
+    // Focus input
+    setTimeout(() => passwordInput.focus(), 100);
+    
+    // Event listeners
+    document.getElementById("cancel-unlock").onclick = () => {
+        overlay.remove();
+    };
+    
+    document.getElementById("confirm-unlock").onclick = async () => {
+        const inputPassword = passwordInput.value;
+        if (!inputPassword) return;
+        
+        const hashed = await hashPassword(inputPassword);
+        if (hashed === note.password) {
+            unlockedNotes.push(note.id);
+            overlay.remove();
+            openNoteEditor(noteId);
+        } else {
+            passwordInput.style.borderColor = '#ff6b6b';
+            passwordInput.style.background = 'rgba(255, 107, 107, 0.1)';
+            passwordInput.value = '';
+            passwordInput.placeholder = '❌ รหัสไม่ถูกต้อง';
+            setTimeout(() => {
+                passwordInput.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                passwordInput.style.background = 'rgba(255, 255, 255, 0.05)';
+                passwordInput.placeholder = 'ใส่รหัสผ่าน...';
+            }, 1000);
+        }
+    };
+    
+    // Enter key
+    passwordInput.onkeypress = (e) => {
+        if (e.key === 'Enter') document.getElementById("confirm-unlock").click();
+    };
+    
+    // Close on overlay click
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
+}
+
+// ===== UPDATED FUNCTIONS =====
 function toggleLockNote(noteId) {
     if (!noteId) return;
     const note = myNotes.find(n => n.id === noteId);
     if (!note) return;
     
     if (note.password) {
-        if (confirm("ปลดล็อคโน้ตนี้?")) {
-            note.password = "";
-            save();
-            alert("ปลดล็อคแล้ว");
-            openNoteEditor(noteId);
-        }
+        // ถ้ามี password = ปลดล็อค
+        note.password = '';
+        save();
+        openNoteEditor(noteId);
     } else {
-        const pass = prompt("ตั้งรหัสผ่าน:");
-        if (pass && pass.trim()) {
-            hashPassword(pass).then(hashed => {
-                note.password = hashed;
-                save();
-                alert("ล็อคแล้ว");
-                openNoteEditor(noteId);
-            });
-        }
+        // ถ้าไม่มี password = ล็อค (ตั้งรหัส)
+        showSetPasswordModal(noteId, note);
     }
+}
+
+function showSetPasswordModal(noteId, note) {
+    // สร้าง overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
+    // สร้าง modal
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 32px 24px;
+        max-width: 300px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    // เพิ่ม animation
+    const style = document.createElement("style");
+    style.textContent = `
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    if (!document.querySelector("style[data-modal-anim]")) {
+        style.setAttribute("data-modal-anim", "true");
+        document.head.appendChild(style);
+    }
+    
+    modal.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🔐</div>
+            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">ตั้งรหัสผ่าน</h3>
+            <p style="margin: 0 0 24px; color: rgba(255, 255, 255, 0.6); font-size: 13px;">สร้างรหัสผ่านเพื่อปกป้องโน้ต</p>
+            <input type="password" id="set-password" placeholder="ใส่รหัสผ่าน..." style="width: 100%; padding: 12px 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; font-size: 14px; margin-bottom: 16px; box-sizing: border-box; outline: none; transition: all 0.2s;" onfocus="this.style.borderColor='rgba(255, 255, 255, 0.4)'" onblur="this.style.borderColor='rgba(255, 255, 255, 0.2)'">
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="cancel-set-password" style="flex: 1; padding: 12px 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">ยกเลิก</button>
+                <button id="confirm-set-password" style="flex: 1; padding: 12px 20px; background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);">ล็อค</button>
+            </div>
+        </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const passwordInput = document.getElementById("set-password");
+    
+    // Focus input
+    setTimeout(() => passwordInput.focus(), 100);
+    
+    // Event listeners
+    document.getElementById("cancel-set-password").onclick = () => {
+        overlay.remove();
+    };
+    
+    document.getElementById("confirm-set-password").onclick = async () => {
+        const inputPassword = passwordInput.value;
+        if (!inputPassword || !inputPassword.trim()) {
+            passwordInput.style.borderColor = '#ff6b6b';
+            passwordInput.style.background = 'rgba(255, 107, 107, 0.1)';
+            return;
+        }
+        
+        const hashed = await hashPassword(inputPassword);
+        note.password = hashed;
+        save();
+        overlay.remove();
+        openNoteEditor(noteId);
+    };
+    
+    // Enter key
+    passwordInput.onkeypress = (e) => {
+        if (e.key === 'Enter') document.getElementById("confirm-set-password").click();
+    };
+    
+    // Close on overlay click
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
 }
 
 function deleteNoteFromEditor(noteId) {
     if (!noteId) return;
-    if (confirm("ต้องการลบโน้ตนี้หรือไม่?")) {
-        const idx = myNotes.findIndex(n => n.id === noteId);
-        if (idx !== -1) {
-            myNotes.splice(idx, 1);
-            save();
-            goNotesBack();
-        }
-    }
+    const note = myNotes.find(n => n.id === noteId);
+    if (!note) return;
+    
+    showDeleteConfirmModal(note, myNotes.indexOf(note));
 }
 
 function goNotesBack() {
