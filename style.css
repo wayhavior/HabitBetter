@@ -23,7 +23,7 @@ html, body {
 body {
     font-family: sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 0;
     transition: 0.3s;
     min-height: 100vh;
     /* แก้ไขตรงนี้: ล็อคพื้นหลังให้นิ่ง */
@@ -160,6 +160,13 @@ body.dark-mode .level-0 { background: #1f1f1f; } body.dark-mode .level-1 { backg
 body.dark-mode .custom-quote { color: #bbb; }
 
 .goals-page, .notes-page { display: flex; flex-direction: column; align-items: center; padding: 20px; padding-bottom: 100px; }
+
+/* Override .notes-page เฉพาะ */
+.notes-page {
+    align-items: stretch !important;
+    padding: 0 !important;
+    padding-bottom: 100px !important;
+}
 .timer-box { background: #ff7675; color: white; padding: 10px 20px; border-radius: 50px; font-weight: bold; margin-bottom: 20px; font-size: 14px; }
 .add-box { width: 90%; max-width: 350px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 .add-box input, .add-box textarea { padding: 15px; border-radius: 12px; border: 1px solid #ccc; font-size: 16px; outline: none; font-family: inherit; }
@@ -1719,6 +1726,14 @@ body.dark-mode .badge-desc {
     margin: 0 auto !important;
     padding: 12px !important; 
     box-sizing: border-box !important;
+}
+
+/* ลบ padding สำหรับ notes pages เท่านั้น */
+#app:has(.notes-header),
+#app:has(.notes-grid-container),
+#app:has(.notes-create-page-container),
+#app:has(.notes-view-page-container) {
+    padding: 0 !important;
 }
 
 /* 2. หน้า Home: ขยายปุ่มเมนูให้กดง่าย */
@@ -3979,7 +3994,7 @@ body.dark-mode .settings-page {
    ============================================ */
 .notes-create-page-container {
     padding: 20px;
-    max-width: 800px;
+    width: 100%;
     margin: 0 auto 150px;
 }
 
@@ -4040,7 +4055,7 @@ body.dark-mode .settings-page {
    ============================================ */
 .notes-view-page-container {
     padding: 20px;
-    max-width: 900px;
+    width: 100%;
     margin: 0 auto 150px;
 }
 
@@ -4273,4 +4288,34 @@ button[style*="color: #888"]:hover {
 /* Pin button active state */
 #note-pin-btn[style*="color: #FFD700"] {
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+/* ===== CUSTOM POPUP ANIMATIONS ===== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Custom Popup Modal Styles */
+#custom-popup-modal {
+    animation: fadeIn 0.3s ease !important;
+}
+
+#custom-popup-modal > div {
+    animation: slideUp 0.3s ease !important;
 }
