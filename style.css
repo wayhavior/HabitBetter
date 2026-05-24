@@ -2717,7 +2717,7 @@ body.dark-mode .settings-page {
 .notes-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center; !important;
     padding: 16px 20px;
     background: linear-gradient(135deg, rgba(100, 200, 255, 0.1) 0%, rgba(100, 150, 255, 0.05) 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -2733,6 +2733,7 @@ body.dark-mode .settings-page {
     font-weight: 700;
     letter-spacing: -0.5px;
     margin: 0;
+    flex: none !important;
 }
 
 /* Filter Tabs */
@@ -3225,7 +3226,7 @@ body.dark-mode .settings-page {
 .notes-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center; !important;
     padding: 16px 20px;
     background: linear-gradient(135deg, rgba(100, 200, 255, 0.1) 0%, rgba(100, 150, 255, 0.05) 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);

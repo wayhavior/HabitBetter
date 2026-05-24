@@ -2834,9 +2834,32 @@ function renderNotesPageNew() {
             const categoryColor = { personal: "#ffd93d", work: "#ff6b6b", other: "#6bcf7f" }[note.category] || "#6bcf7f";
             
             // Apply bgColor if exists
-            if (note.bgColor) {
-                card.style.background = note.bgColor;
-            }
+            // Apply bgColor if exists
+if (note.bgColor) {
+    card.style.background = note.bgColor;
+    
+    // เพิ่มส่วนนี้ ▼▼▼
+    // คำนวณสีตัวอักษรจากความสว่างของ background
+    const brightness = getBrightness(note.bgColor);
+    const textColor = brightness > 128 ? '#000000' : '#ffffff';
+    
+    // บังคับให้เปลี่ยนสีทั้ง card
+    card.style.color = `${textColor} !important`;
+    
+    // ปรับสี child elements
+    setTimeout(() => {
+        const title = card.querySelector('.notes-card-title');
+        const preview = card.querySelector('.notes-preview-text');
+        const date = card.querySelector('.notes-card-date');
+        const locked = card.querySelector('.notes-locked-text');
+        
+        if (title) title.style.color = `${textColor} !important`;
+        if (preview) preview.style.color = `${textColor} !important`;
+        if (date) date.style.color = `${textColor} !important`;
+        if (locked) locked.style.color = `${textColor} !important`;
+    }, 10);
+    // ▲▲▲ เพิ่มจบ
+}
             
             // Get preview text - show only 2-3 lines
             let previewText = "(ไม่มีเนื้อหา)";
@@ -2867,18 +2890,25 @@ function renderNotesPageNew() {
                 }
             }
             
-            card.innerHTML = `
-                <div class="notes-card-header">
-                    <h3 class="notes-card-title">${note.pinned ? '📌 ' : ''}${note.title || "ไม่มีชื่อ"}</h3>
-                    ${note.password ? '<span class="notes-card-lock">🔒</span>' : ''}
-                </div>
-                <div class="notes-card-preview">
-                    ${isLocked ? '<span class="notes-locked-text">โน้ตนี้ถูกล็อคอยู่</span>' : `<span class="notes-preview-text">${previewText}</span>`}
-                </div>
-                <div class="notes-card-footer">
-                    <span class="notes-card-date">📅 ${dateStr}</span>
-                </div>
-            `;
+            // คำนวณสีตัวอักษรจากสี background
+let textColor = '#ffffff';
+if (note.bgColor) {
+    const brightness = getBrightness(note.bgColor);
+    textColor = brightness > 128 ? '#000000' : '#ffffff';
+}
+
+card.innerHTML = `
+    <div class="notes-card-header">
+        <h3 class="notes-card-title" style="color: ${textColor} !important;">${note.pinned ? '📌 ' : ''}${note.title || "ไม่มีชื่อ"}</h3>
+        ${note.password ? '<span class="notes-card-lock">🔒</span>' : ''}
+    </div>
+    <div class="notes-card-preview">
+        ${isLocked ? `<span class="notes-locked-text" style="color: ${textColor} !important;">โน้ตนี้ถูกล็อคอยู่</span>` : `<span class="notes-preview-text" style="color: ${textColor} !important;">${previewText}</span>`}
+    </div>
+    <div class="notes-card-footer">
+        <span class="notes-card-date" style="color: ${textColor} !important;">📅 ${dateStr}</span>
+    </div>
+`;
             
             // Click to edit
             card.onclick = () => { openNoteEditor(note.id); };
@@ -3088,6 +3118,71 @@ function showDeleteConfirmModal(note, index) {
     };
 }
 
+// Function เตือนเวลายังไม่บันทึก
+function showUnsavedChangesModal() {
+    // สร้าง overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
+    // สร้าง modal
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 32px 24px;
+        max-width: 300px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    modal.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">มีการเปลี่ยนแปลง</h3>
+            <p style="margin: 0 0 24px; color: rgba(255, 255, 255, 0.6); font-size: 13px;">คุณยังไม่ได้บันทึกการเปลี่ยนแปลง ต้องการออกจากหรือไม่?</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="cancel-unsaved" style="flex: 1; padding: 12px 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">ยกเลิก</button>
+                <button id="confirm-unsaved" style="flex: 1; padding: 12px 20px; background: linear-gradient(135deg, #FFB74D, #FF9800); border: none; border-radius: 10px; color: #000000; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);">ออก</button>
+            </div>
+        </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Event listeners
+    document.getElementById("cancel-unsaved").onclick = () => {
+        overlay.remove();
+    };
+    
+    document.getElementById("confirm-unsaved").onclick = () => {
+    overlay.remove();
+    notesCurrentFilter = "all";
+    unlockedNotes = [];
+    renderNotesPageNew();
+};
+    
+    // Close on overlay click
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
+}
+
 function handleNoteClick(noteId) { openNoteEditor(noteId); }
 function handleNoteDelete(index) { if (confirm("ต้องการลบโน้ตนี้หรือไม่?")) { myNotes.splice(index, 1); save(); renderNotesPageNew(); } }
 function goHome() { unlockedNotes = []; settingsOpen = false; currentPage = "home"; notesCurrentFilter = "all"; render(); }
@@ -3110,14 +3205,23 @@ function openNoteEditor(noteId) {
     const selectedColor = note ? (note.bgColor || "#1a1a1a") : "#1a1a1a";
     
     // Main container with background color
+    const brightness = getBrightness(selectedColor);
+const computedTextColor = brightness > 128 ? '#000000' : '#ffffff';
     const container = document.createElement("div");
     container.style.cssText = `
-        background: ${selectedColor};
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        color: #fff;
-    `;
+    background: ${selectedColor};
+    min-height: 100vh;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: ${computedTextColor};
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+`;
     
     // Top header
     const topHeader = document.createElement("div");
@@ -3158,7 +3262,7 @@ function openNoteEditor(noteId) {
     `;
     const getCatColor = (cat) => ({personal: "#ffd93d", work: "#ff6b6b", other: "#6bcf7f"}[cat] || "#6bcf7f");
     toolbar.innerHTML = `
-        <div style="font-size: 13px; color: #888;">${note ? note.date : new Date().toLocaleString('th-TH')}</div>
+        <div style="font-size: 13px; color: ${computedTextColor};">${note ? note.date : new Date().toLocaleString('th-TH')}</div>
         <div style="display: flex; align-items: center; gap: 8px;">
             <div id="note-category-dot" style="width: 14px; height: 14px; border-radius: 50%; background: ${getCatColor(selectedCategory)}; transition: background 0.2s;"></div>
             <div style="position: relative; display: inline-block;">
@@ -3173,8 +3277,8 @@ function openNoteEditor(noteId) {
             </div>
         </div>
         <div style="display: flex; gap: 8px; margin-left: auto; align-items: center;">
-            ${!isNewNote ? `<button id="note-edit-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'" onclick="toggleEditModeNote()">✏️</button>` : ''}
-            <button id="note-save-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #4CAF50; padding: 4px 8px; ${isNewNote ? 'display: flex;' : 'display: none;'} transition: color 0.2s;" onmouseover="this.style.color='#66BB6A'" onmouseout="this.style.color='#4CAF50'" onclick="saveNoteEditor()">✓</button>
+            ${!isNewNote ? `<button id="note-edit-btn" style="background: linear-gradient(135deg, #FFD54F, #FBC02D); border: none; font-size: 14px; cursor: pointer; color: #000000; padding: 6px 12px; transition: all 0.3s; border-radius: 6px; font-weight: 600; box-shadow: 0 2px 8px rgba(0, 153, 204, 0.3); display: flex; align-items: center; gap: 4px;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0, 153, 204, 0.5)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0, 153, 204, 0.3)'; this.style.transform='translateY(0)'" onclick="toggleEditModeNote()">✏️ แก้ไข</button>` : ''}
+            <button id="note-save-btn" style="background: linear-gradient(135deg, #4CAF50, #388E3C); border: none; font-size: 14px; cursor: pointer; color: #000000; padding: 6px 12px; ${isNewNote ? 'display: flex;' : 'display: none;'} transition: all 0.3s; border-radius: 6px; font-weight: 600; box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3); align-items: center; gap: 4px;" onmouseover="this.style.boxShadow='0 4px 12px rgba(76, 175, 80, 0.5)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='linear-gradient(135deg, #4CAF50, #388E3C)'; this.style.boxShadow='0 2px 8px rgba(76, 175, 80, 0.3)'; this.style.transform='translateY(0)'" onclick="saveNoteEditor()">✓ บันทึก</button>
             <div style="position: relative; display: inline-block;">
                 <button id="note-color-btn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #888; padding: 4px 8px; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#888'" onclick="toggleColorPicker()">🎨</button>
                 <div id="note-color-picker" style="position: absolute; top: 100%; right: 0; background: #2a2a2a; border: 1px solid #444; border-radius: 8px; padding: 12px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; grid-template-columns: repeat(3, 40px); gap: 8px; margin-top: 8px;">
@@ -3203,7 +3307,7 @@ function openNoteEditor(noteId) {
         <div style="flex: 1;">
             <input type="text" id="note-title" placeholder="หัวข้อ" value="${note ? note.title : ''}" ${isNewNote ? '' : 'readonly'} style="background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 28px; font-weight: 500; line-height: 1.3; width: 100%;">
         </div>
-        <button style="background: none; border: none; font-size: 22px; cursor: pointer; color: #666; padding: 4px 8px; margin-left: 12px;">📅</button>
+        <button style="background: none; border: none; font-size: 22px; cursor: pointer; color: #666; padding: 4px 8px; margin-left: 12px;">📝</button>
     `;
     container.appendChild(titleSection);
     
@@ -3219,7 +3323,15 @@ function openNoteEditor(noteId) {
     container.appendChild(contentArea);
     
     app.appendChild(container);
-    
+  // เพิ่มส่วนนี้ ▼▼▼
+setTimeout(() => {
+    const titleInput = document.getElementById('note-title');
+    const contentInput = document.getElementById('note-content');
+    if (titleInput) titleInput.style.color = computedTextColor;
+    if (contentInput) contentInput.style.color = computedTextColor;
+}, 50);
+// ▲▲▲ เพิ่มจบ  
+  
     // Store editing state
     window.noteEditing = {
         id: noteId,
@@ -3265,9 +3377,40 @@ function toggleColorPicker() {
 
 function changeNoteColor(color) {
     const container = document.querySelector('[style*="background:"]');
-    if (container) container.style.background = color;
+    if (container) {
+        container.style.background = color;
+        
+        // ตรวจสอบว่าสีเข้ม หรือ สีอ่อน แล้วเปลี่ยนสีตัวอักษร
+        const brightness = getBrightness(color);
+        const textColor = brightness > 128 ? '#000000' : '#ffffff';
+        
+        container.style.color = textColor;
+        
+        // เปลี่ยนสี input, textarea, h1 ด้วย
+        const titleInput = document.getElementById('note-title');
+        const contentInput = document.getElementById('note-content');
+        if (titleInput) titleInput.style.color = textColor;
+        if (contentInput) contentInput.style.color = textColor;
+    }
     window.noteEditing.color = color;
     document.getElementById('note-color-picker').style.display = 'none';
+}
+
+// ฟังก์ชันช่วยหาความสว่างของสี (Brightness calculation)
+function getBrightness(color) {
+    // แปลง hex เป็น RGB
+    let r, g, b;
+    
+    if (color.startsWith('#')) {
+        const hex = color.replace('#', '');
+        r = parseInt(hex.substring(0, 2), 16);
+        g = parseInt(hex.substring(2, 4), 16);
+        b = parseInt(hex.substring(4, 6), 16);
+    }
+    
+    // คำนวณ brightness (0-255)
+    // สูตร: (R * 299 + G * 587 + B * 114) / 1000
+    return (r * 299 + g * 587 + b * 114) / 1000;
 }
 
 function toggleNoteMenu() {
@@ -3306,6 +3449,8 @@ function saveNoteEditor() {
     const body = document.getElementById('note-content').value.trim();
     const category = window.noteEditing.category || "personal";
     const color = window.noteEditing.color || "#1a1a1a";
+    const brightness = getBrightness(color);
+const textColor = brightness > 128 ? '#000000' : '#ffffff';
     
     if (!title && !body) {
         alert('กรุณากรอกหัวข้อหรือเนื้อหา');
@@ -3322,6 +3467,7 @@ function saveNoteEditor() {
             date: new Date().toLocaleString('th-TH'),
             password: "",
             bgColor: color,
+            textColor: textColor,
             pinned: false,
             pinOrder: 0
         };
@@ -3339,6 +3485,7 @@ function saveNoteEditor() {
             note.category = category;
             note.date = new Date().toLocaleString('th-TH');
             note.bgColor = color;
+            note.textColor = textColor;
         }
         save();
         renderNotesPageNew();
@@ -3607,7 +3754,24 @@ function deleteNoteFromEditor(noteId) {
 }
 
 function goNotesBack() {
-    notesCurrentFilter = "all";
+    // ตรวจสอบว่ามีการเปลี่ยนแปลงและยังไม่บันทึก
+    const titleInput = document.getElementById('note-title');
+    const contentInput = document.getElementById('note-content');
+    
+    if (window.noteEditing && window.noteEditing.isEditMode) {
+        const currentTitle = titleInput ? titleInput.value : '';
+        const currentContent = contentInput ? contentInput.value : '';
+        const originalTitle = window.noteEditing.note ? window.noteEditing.note.title : '';
+        const originalContent = window.noteEditing.note ? window.noteEditing.note.body : '';
+        
+        // ถ้ามีการเปลี่ยนแปลง ให้เตือน
+        if (currentTitle !== originalTitle || currentContent !== originalContent) {
+            showUnsavedChangesModal();
+            return;
+        }
+    }
+    
+    notesCurrentFilter = "all";  
     unlockedNotes = [];
     renderNotesPageNew();
 }
