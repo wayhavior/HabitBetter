@@ -8,7 +8,7 @@ const app = document.getElementById("app");
 
 /* ===== CONFIGURATION ===== */
 // ✅ ลบ CLOUD_API_URL - ไม่ส่งข้อมูลขึ้น Google Sheets อีกต่อไป
-const EXP_PER_LEVEL = 1000;
+// 🗑️ ลบ EXP_PER_LEVEL - ระบบ EXP ถูกลบแล้ว
 // Google OAuth Configuration
 const GOOGLE_CLIENT_ID = "192099173031-arqdd6koquej0is89egvmna3bg7j552m.apps.googleusercontent.com"; // ✏️ เปลี่ยนเป็น Client ID ของคุณ
 const GOOGLE_API_KEY = "AIzaSyATr3RANcNwBMal7MSrtkwG4p4A7vCwq5E";
@@ -475,7 +475,7 @@ async function restoreFromGoogleDrive() {
         await new Promise(r => setTimeout(r, 300));
 
         // ✅ FIX: restore data ด้วย array ของ keys เพื่อให้แน่ใจว่าทุก key ถูก restore
-        const keysToRestore = ['tracker', 'way_piggy', 'saving_jars', 'titanPoints', 'notes', 'expenses', 'tasks', 'routines', 'my_daily_goals', 'my_longterm_goals'];
+        const keysToRestore = ['tracker', 'way_piggy', 'saving_jars', 'notes', 'expenses', 'tasks', 'routines', 'my_daily_goals', 'my_longterm_goals'];
         
         let restoredCount = 0;
         keysToRestore.forEach(key => {
@@ -581,7 +581,7 @@ let savingJars = JSON.parse(localStorage.getItem("saving_jars")) || [];
 let activeJarId = localStorage.getItem("active_jar_id") || null;
 let jarPendingDeposit = 0;
 // --- เพิ่มบรรทัดนี้เพื่อเก็บคะแนนสะสม ---
-let titanPoints = parseInt(localStorage.getItem("titanPoints")) || 0;
+// 🗑️ ลบ titanPoints - ระบบ shop ถูกลบแล้ว
 /* --- [แทรกเพิ่ม] ระบบ Zoom แยกหน้า --- */
 let pageZooms = JSON.parse(localStorage.getItem("pageZooms")) || {
     home: 1.0, daily: 1.0, pomodoro: 1.0, expense: 1.0, longterm: 1.0, notes: 1.0, tvm: 1.0, routine: 1.0
@@ -625,8 +625,7 @@ if (menuOrder.includes("saving")) {
     localStorage.setItem("menuOrder", JSON.stringify(menuOrder));
 }
 
-/* EXP & LEVEL STATE (ใหม่) */
-let totalExp = parseInt(localStorage.getItem("totalExp")) || 0;
+// 🗑️ ลบ totalExp และ EXP system - ระบบ EXP ถูกลบแล้ว
 
 /* --- [เพิ่ม] ฟังก์ชันคำนวณยอดรวมออมทุกกระปุก --- */
 function getTotalSavingsFromAllJars() {
@@ -647,35 +646,10 @@ let badgeLastCheckDate = localStorage.getItem("badgeLastCheckDate") || "";
    TITAN SHOP DATA (รายการสินค้าในร้านค้า)
 ========================================= */
 // แก้ไขส่วนนี้ในไฟล์ script.js
-const SHOP_ITEMS = [
-    { id: "s1", name: "s1", price: 150, category: "body", image: "https://i.postimg.cc/3w2gyk8J/s1.png" },
-    { id: "s2", name: "s2", price: 100, category: "body", image: "https://i.postimg.cc/0N7B85hv/s2.png" },
-    { id: "s3", name: "s3", price: 400, category: "body", image: "https://i.postimg.cc/MZ9rZF3r/s3.png" },
-    { id: "s4", name: "s4", price: 300, category: "body", image: "https://i.postimg.cc/66M16mbb/s4.png" },
-    { id: "s5", name: "s5", price: 300, category: "body", image: "https://i.postimg.cc/KzJQz1fY/s5.png" },
-    { id: "s6", name: "s6", price: 150, category: "body", image: "https://i.postimg.cc/qRjQRNwz/s6.png" },
-    { id: "s7", name: "s7", price: 200, category: "body", image: "https://i.postimg.cc/HxB3xrzj/s7.png" },
-    { id: "s8", name: "s8", price: 300, category: "body", image: "https://i.postimg.cc/tT2DTskT/s8.png" },
-    { id: "s9", name: "s9", price: 100, category: "body", image: "https://i.postimg.cc/yxxjS7p8/s9.png" },
-    { id: "s10", name: "s10", price: 0, category: "body", image: "https://i.postimg.cc/Wzz8JsY4/s10.png" },
-    { id: "s11", name: "s11", price: 0, category: "body", image: "https://i.postimg.cc/Wp8DzQZZ/s11.png" },
-    { id: "s12", name: "s12", price: 300, category: "body", image: "https://i.postimg.cc/fTbV9B7R/s12.png" },
-    { id: "s13", name: "s13", price: 600, category: "body", image: "https://i.postimg.cc/Wp8DzQZr/s13.png" },
-    { id: "s14", name: "s14", price: 200, category: "body", image: "https://i.postimg.cc/kX52bfN5/s14.png" },
-    { id: "s15", name: "s15", price: 200, category: "body", image: "https://i.postimg.cc/MKRcJnfW/s15.png" },
-    { id: "s16", name: "s16", price: 300, category: "body", image: "https://i.postimg.cc/v81Bs4xX/s16.png" },
-    { id: "s17", name: "s17", price: 100, category: "body", image: "https://i.postimg.cc/3ryRTk0X/s17.png" },
-    { id: "s18", name: "s18", price: 0, category: "body", image: "https://i.postimg.cc/zDLBryH7/s18.png" },
-    { id: "s19", name: "s19", price: 0, category: "body", image: "https://i.postimg.cc/kMV4m2Ry/s19.png" },
-    { id: "s20", name: "s20", price: 300, category: "body", image: "https://i.postimg.cc/XNZJbrBs/s20.png" },
-    { id: "s21", name: "s21", price: 600, category: "body", image: "https://i.postimg.cc/59H0VXQ7/s21.png" },
-    { id: "s22", name: "s22", price: 200, category: "body", image: "https://i.postimg.cc/L4qXpJgQ/s22.png" }
-];
+// 🗑️ ลบ SHOP_ITEMS - ระบบสกินถูกลบแล้ว
+const SHOP_ITEMS = [];
 
-// ดึงข้อมูลของที่ซื้อแล้วจากความจำเครื่อง (ถ้าไม่มีให้เป็นอาเรย์ว่าง)
-let ownedItems = JSON.parse(localStorage.getItem("ownedItems")) || [];
-let equippedItems = JSON.parse(localStorage.getItem("equippedItems")) || {};
-// =========================================
+// 🗑️ ลบ ownedItems และ equippedItems - ระบบสกินถูกลบแล้ว
 const BADGE_LIST = [
     // 📅 Tracker Badges (720 Day Tracker ถูกลบแล้ว)
     
@@ -770,10 +744,8 @@ const BADGE_LIST = [
     },
     { id: "perfect_day", emoji: "💯", name: "Perfect Day", desc: "เช็คครบทุก daily goal ใน 1 วัน", condition: () => checkPerfectDay(), category: "goals" },
     
-    // ⭐ Level Badges
-    { id: "level_2", emoji: "📈", name: "Rising Star", desc: "ถึง Level 2", condition: () => Math.floor(totalExp / EXP_PER_LEVEL) >= 1, category: "level" },
-    { id: "level_5", emoji: "✨", name: "Shining Star", desc: "ถึง Level 5", condition: () => Math.floor(totalExp / EXP_PER_LEVEL) >= 4, category: "level" },
-    { id: "level_10", emoji: "👑", name: "Master Rank", desc: "ถึง Level 10", condition: () => Math.floor(totalExp / EXP_PER_LEVEL) >= 9, category: "level" },
+    
+    // ⭐ Level Badges (ถูกลบแล้ว - ไม่มีระบบ level)
     
     // 📝 Notes Badges
     { id: "first_note", emoji: "📝", name: "Note Writer", desc: "เขียน Note ครั้งแรก", condition: () => myNotes.length > 0, category: "notes" },
@@ -979,14 +951,13 @@ function updateAchievements() {
     BADGE_LIST.forEach(badge => {
         if (!unlockedBadges.includes(badge.id) && badge.condition()) {
             unlockedBadges.push(badge.id);
-            titanPoints += 100; // ปลดล็อค 1 Badge ได้ 100 แต้มเท่ากันทั้งหมด
-            localStorage.setItem("titanPoints", titanPoints);
+            // 🗑️ ลบ titanPoints - ไม่มีระบบ points อีกต่อไป
             localStorage.setItem("unlockedBadges", JSON.stringify(unlockedBadges));
             
             // เล่น animation เมื่อปลดล็อค badge
             showBadgeNotification(badge);
             playUnlockSound();
-            console.log(`🎉 Badge Unlocked: ${badge.name} (+100 Titan Points)`);
+            console.log(`🎉 Badge Unlocked: ${badge.name}`);
         }
     });
 }
@@ -1036,42 +1007,25 @@ function save() {
     localStorage.setItem("lastGoalResetDate", lastGoalResetDate);
     localStorage.setItem("lastTrackerResetDate", lastTrackerResetDate);
     localStorage.setItem("zoomLevel", zoomLevel);
-    localStorage.setItem("totalExp", totalExp);
+    // 🗑️ ลบ totalExp และ titanPoints - ระบบลบแล้ว
     localStorage.setItem("my_routines", JSON.stringify(myRoutines));
     localStorage.setItem("pageZooms", JSON.stringify(pageZooms));
     localStorage.setItem("menuOrder", JSON.stringify(menuOrder));
     localStorage.setItem("saving_jars", JSON.stringify(savingJars));
     localStorage.setItem("active_jar_id", activeJarId || "");
     localStorage.setItem("unlockedBadges", JSON.stringify(unlockedBadges));
-    localStorage.setItem("titanPoints", titanPoints);
-    localStorage.setItem("ownedItems", JSON.stringify(ownedItems));
-    localStorage.setItem("equippedItems", JSON.stringify(equippedItems));
+    // 🗑️ ลบ ownedItems และ equippedItems - ระบบสกินถูกลบแล้ว
 }
 
-/* ===== LEVEL & CONFETTI SYSTEM (ใหม่) ===== */
+/* ===== LEVEL & CONFETTI SYSTEM (ถูกลบแล้ว) ===== */
 function addExp(amount) {
-    const oldLevel = Math.floor(totalExp / EXP_PER_LEVEL);
-    totalExp += amount;
-    const newLevel = Math.floor(totalExp / EXP_PER_LEVEL);
-    if (newLevel > oldLevel) {
-        triggerConfetti();
-        setTimeout(() => alert(`🎊 LEVEL UP! ตอนนี้คุณเลเวล ${newLevel + 1} แล้ว!`), 500);
-    }
-    
-    // 🔥 เพิ่มตรงนี้เพื่อเช็ค badge ทันที่
-    updateAchievements();
-    
-    save();
+    // 🗑️ ระบบ EXP ถูกลบแล้ว - function นี้ว่างไว้เพื่อไม่ให้ code อื่นพัง
 }
 
 /* ===== SAVING EXP CALCULATION ===== */
 function calculateSavingExp(amount) {
-    if (amount < 100) return 50;      // Bronze
-    if (amount < 200) return 100;     // Silver
-    if (amount < 300) return 150;     // Gold
-    if (amount < 400) return 250;     // Diamond
-    if (amount < 1000) return 400;    // Inferno
-    return 500;                        // Legend (1000+, MAX)
+    // 🗑️ ระบบ EXP ถูกลบแล้ว
+    return 0;
 }
 
 function triggerConfetti() {
@@ -1237,9 +1191,7 @@ function render() {
     }, 50);
 
     if (currentPage === "home") {
-        const currentLevel = Math.floor(totalExp / EXP_PER_LEVEL) + 1;
-        const currentExpInLevel = totalExp % EXP_PER_LEVEL;
-        const expPercent = (currentExpInLevel / EXP_PER_LEVEL) * 100;
+        // 🗑️ ลบการใช้ totalExp และ EXP_PER_LEVEL - ระบบ EXP ถูกลบแล้ว
 
         const homeContainer = document.createElement("div");
         homeContainer.className = "home-container";
@@ -1252,32 +1204,60 @@ function render() {
         const unlockedList = getUnlockedBadgesForDisplay();
         levelBox.style.cursor = "pointer"; 
         levelBox.onclick = () => { currentPage = "profile"; render(); };
+        
+        // ดึงข้อมูล profile
+        const userProfileData = JSON.parse(localStorage.getItem("userProfile")) || {};
+        const userProfileImage = localStorage.getItem("userProfileImage") || null;
+        const googleUser = localStorage.getItem("googleUser") ? JSON.parse(localStorage.getItem("googleUser")) : null;
+        const displayName = googleUser?.name || userProfileData.username || "Setup Profile";
+        const displayImage = googleUser?.picture || userProfileImage;
+        
         levelBox.innerHTML = `
     <div style="display: flex; align-items: center; gap: 15px; width: 100%; box-sizing: border-box;">
-        <div style="position: relative; width: 50px; height: 65px; background: rgba(0,0,0,0.2); border-radius: 12px; overflow: hidden; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1);">
-            ${!equippedItems.body ? `
-                <img src="https://i.postimg.cc/Lsgxx4mj/base.png" style="width: 100%; height: 100%; object-fit: contain; position: absolute; bottom: 0; z-index: 1;">
-            ` : ''}
-            
-            ${(() => {
-                const skinId = equippedItems.body;
-                const item = SHOP_ITEMS.find(i => i.id === skinId);
-                return (item && item.image) ? `<img src="${item.image}" style="width: 100%; height: 100%; object-fit: contain; position: absolute; bottom: 0; z-index: 2;">` : '';
-            })()}
+        <!-- 👤 Profile Picture -->
+        <div style="
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            border: 2px solid rgba(0,184,148,0.3);
+        ">
+            ${displayImage ? `
+                <img src="${displayImage}" style="width:100%; height:100%; object-fit:cover;">
+            ` : `
+                <div style="font-size:28px;">👤</div>
+            `}
         </div>
 
-        <div style="flex: 1; width: 100%;">
-            <div style="display: flex; justify-content: flex-start; margin-bottom: 5px; font-weight: bold; align-items: center;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 20px;">👤</span> 
-                    <span>LV. ${currentLevel}</span>
+        <div style="flex: 1; width: 100%; min-width:0;">
+            <!-- Profile Name -->
+            <div style="
+                font-weight: bold;
+                font-size: 15px;
+                color: white;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-bottom: 5px;
+            ">
+                ${displayName}
+            </div>
+            
+            <!-- Setup hint if empty -->
+            ${!googleUser && !userProfileData.username ? `
+                <div style="font-size: 11px; opacity: 0.6; color: #f1c40f;">
+                    📝 Tap to setup profile
                 </div>
-                <span style="font-size: 12px; opacity: 0.8; margin-left: auto;">${currentExpInLevel} / ${EXP_PER_LEVEL}</span>
-            </div>
-            <div class="exp-bar-bg">
-                <div class="exp-bar-fill" style="width: ${expPercent}%"></div>
-            </div>
-            <div style="font-size: 10px; margin-top: 4px; opacity: 0.5;">แตะเพื่อไปหน้า Profile & Shop</div>
+            ` : `
+                <div style="font-size: 11px; opacity: 0.5;">
+                    ${googleUser ? '✅ Google Sync' : '👤 Local Profile'}
+                </div>
+            `}
         </div>
     </div>
 `;
@@ -1476,9 +1456,7 @@ app.appendChild(homeContainer);
     else if (currentPage === "profile") { 
         renderProfilePage(); 
     }
-    else if (currentPage === "shop") { 
-        renderShopPage(); // เดี๋ยวเราจะไปสร้างฟังก์ชันนี้กัน
-    }
+    // 🗑️ ลบหน้า shop - ไม่มีระบบ shop อีกต่อไป
     else if (currentPage === "savings") { 
         renderSavingsPage();
     }
@@ -1874,7 +1852,7 @@ function renderJarDetailPage() {
         j.history = j.history.filter(h => h.ts >= cutoff).slice(0, 50);
         const depositAmount = jarPendingDeposit;
         jarPendingDeposit = 0;
-        addExp(calculateSavingExp(depositAmount));
+        // 🗑️ ลบ addExp - ระบบ EXP ถูกลบแล้ว
         save();
         updateAchievements(); // 🔥 เช็ค badge saving jars
         const newMs = getCurrentJarMilestone(j);
@@ -2639,7 +2617,7 @@ app.appendChild(drawer);
 }
 window.addExpense = (type) => {
     const note = document.getElementById("ex-note").value; const amt = parseFloat(document.getElementById("ex-amt").value);
-    if(note && amt) { myExpenses.unshift({ note: note, amt: amt, type: type, time: new Date().toLocaleTimeString('th-TH') , date: getToday() }); addExp(50); save(); render(); }
+    if(note && amt) { myExpenses.unshift({ note: note, amt: amt, type: type, time: new Date().toLocaleTimeString('th-TH') , date: getToday() }); save(); render(); }
 };
 window.delExpense = (i) => { if(confirm("ลบ?")){ myExpenses.splice(i, 1); save(); render(); } };
 
@@ -2750,7 +2728,7 @@ app.appendChild(drawer);
         item.onclick = () => { 
             const list = (type === "daily" ? myDailyGoals : myLongTermGoals);
             if (!list[i].done) {
-                addExp(50);
+                // 🗑️ ลบ addExp - ระบบ EXP ถูกลบแล้ว
                 const completed = parseInt(localStorage.getItem("goalsCompleted") || "0") + 1;
                 localStorage.setItem("goalsCompleted", completed);
             }
@@ -3028,7 +3006,7 @@ async function saveNewNote() {
     if (passwordRaw) { password = await hashPassword(passwordRaw); }
     const newNote = { id: Date.now(), title: title || "ไม่มีชื่อ", body: body, category: category, date: new Date().toLocaleString('th-TH'), password: password, bgColor: null };
     myNotes.unshift(newNote);
-    addExp(50);
+    // 🗑️ ลบ addExp - ระบบ EXP ถูกลบแล้ว
     save();
     goNotesFromCreate();
     renderNotesPageNew();
@@ -3366,6 +3344,8 @@ function selectCategoryDropdown(category) {
     
     if (btn) btn.textContent = labels[category];
     if (dropdown) dropdown.style.display = 'none';
+  
+    enableEditMode();
 }
 
 function toggleColorPicker() {
@@ -3373,6 +3353,17 @@ function toggleColorPicker() {
     if (picker) {
         picker.style.display = picker.style.display === 'none' ? 'grid' : 'none';
     }
+}
+
+// Function สลับปุ่มแก้ไข ↔ บันทึก
+function enableEditMode() {
+    const editBtn = document.getElementById('note-edit-btn');
+    const saveBtn = document.getElementById('note-save-btn');
+    
+    if (editBtn) editBtn.style.display = 'none';
+    if (saveBtn) saveBtn.style.display = 'flex';
+    
+    window.noteEditing.isEditMode = true;
 }
 
 function changeNoteColor(color) {
@@ -3394,6 +3385,8 @@ function changeNoteColor(color) {
     }
     window.noteEditing.color = color;
     document.getElementById('note-color-picker').style.display = 'none';
+  
+    enableEditMode();
 }
 
 // ฟังก์ชันช่วยหาความสว่างของสี (Brightness calculation)
@@ -3472,7 +3465,7 @@ const textColor = brightness > 128 ? '#000000' : '#ffffff';
             pinOrder: 0
         };
         myNotes.unshift(newNote);
-        addExp(50);
+        // 🗑️ ลบ addExp - ระบบ EXP ถูกลบแล้ว
         save();
         renderNotesPageNew();
         goNotesBack();
@@ -3993,10 +3986,7 @@ function renderAchievementsPage() {
     title.innerText = "🏆 Achievements";
     app.appendChild(title);
     
-    const pointsDiv = document.createElement("div");
-pointsDiv.style.cssText = "text-align:center; color:#f1c40f; font-weight:bold; font-size:24px; margin-bottom:20px; text-shadow: 0 0 10px rgba(241, 196, 15, 0.3);";
-pointsDiv.innerHTML = `💰 My Titan Points: ${titanPoints.toLocaleString()}`;
-app.appendChild(pointsDiv);
+    // 🗑️ ลบ pointsDiv - ไม่มีระบบ titanPoints อีกต่อไป
 
     const container = document.createElement("div");
     container.className = "achievements-container";
@@ -4354,7 +4344,7 @@ function openStandardCalculator() {
 
 function renderProfilePage() {
     app.innerHTML = ""; // ล้างหน้าจอหลัก
-    const currentLevel = Math.floor(totalExp / EXP_PER_LEVEL) + 1;
+    
     // ปุ่มย้อนกลับไปหน้า Home
     const bBtn = document.createElement("button"); 
     bBtn.className = "back-btn"; 
@@ -4366,183 +4356,415 @@ function renderProfilePage() {
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
 
     const container = document.createElement("div"); 
-    container.className = "goals-page"; // ใช้ Class เดิมเพื่อคุมสไตล์ให้เหมือนหน้าอื่น
-    container.innerHTML = `
-        <div style="display:flex; justify-content:center; align-items:center; position:relative;">
-            <h1 style="margin-bottom:10px;">My Profile</h1>
-            <div onclick="adminAddPoints()" style="position:absolute; right:0; opacity:0.1; cursor:pointer; font-size:15px; padding:10px;">⚙️</div>
-        </div>
-        <div style="margin-bottom:20px; opacity:0.8; font-size:14px;">Level ${currentLevel} Warrior</div>
-        
-        <div id="char-preview" style="position:relative; width:240px; height:350px; background:linear-gradient(145deg, #2e2e2e, #1a1a1a); border-radius:30px; border:3px solid #444; display:flex; align-items:center; justify-content:center; margin: 0 auto 20px auto; box-shadow: 0 10px 20px rgba(0,0,0,0.5); overflow:hidden;">
+    container.className = "goals-page";
     
-    ${!equippedItems.body ? `
-            <img src="https://i.postimg.cc/Lsgxx4mj/base.png" style="width:100%; height:auto; z-index:1; position:absolute; bottom:0;">
-        ` : ''}
-
-        ${(() => {
-            const skinId = equippedItems.body; 
-            const item = SHOP_ITEMS.find(i => i.id === skinId);
-
-            if (item && item.image) {
-                // แสดงรูปสกิน และซ่อนรูป Base ด้านบนอัตโนมัติ
-                return `<img src="${item.image}" style="width:100%; height:auto; position:absolute; z-index:2; bottom:0; left:0;">`;
-            }
-            return ''; 
-        })()}
-</div>
-
-        <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:20px; margin-bottom:20px; text-align:center;">
-            <div style="color:#f1c40f; font-size:24px; font-weight:bold; margin-bottom:5px;">💰 ${titanPoints.toLocaleString()}</div>
-            <div style="font-size:12px; opacity:0.6; text-transform:uppercase; letter-spacing:1px;">Titan Points Available</div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <button onclick="currentPage='shop'; render();" style="padding:15px; background:#00b894; color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer;">🛒 Shop</button>
-            <button onclick="currentPage='achievements'; render();" style="padding:15px; background:#6c5ce7; color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer;">🏆 Badges</button>
-        </div>
-
-        <div style="margin-top:30px; text-align:left;">
-            <h3 style="font-size:16px; margin-bottom:10px;">📦 คลังสกินของคุณ (คลิกเพื่อสวมใส่)</h3>
-            <div style="
-                display: grid; 
-                grid-template-columns: repeat(3, 1fr); /* แบ่งแถวละ 3 ช่องเท่าๆ กัน */
-                gap: 12px; 
-                margin-top: 10px;
-            ">
-                ${ownedItems.length === 0 ? '<div style="opacity:0.5; font-size:12px; grid-column: span 3; text-align:center;">ยังไม่มีสกินในคลัง...</div>' : ''}
-                ${ownedItems.map(itemId => {
-                    const item = SHOP_ITEMS.find(i => i.id === itemId);
-                    if (!item) return '';
-                    const isEquipped = equippedItems.body === itemId;
-
-                    return `
-                        <div onclick="toggleEquip('${item.id}')" style="
-                            background: rgba(255,255,255,0.05);
-                            border-radius: 18px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            cursor: pointer;
-                            border: 2px solid ${isEquipped ? '#00b894' : 'transparent'};
-                            position: relative;
-                            aspect-ratio: 1 / 1; /* ทำให้เป็นสี่เหลี่ยมจัตุรัส */
-                        ">
-                            <img src="${item.image}" style="width: 80%; height: 80%; object-fit: contain;">
-                            
-                            ${isEquipped ? `
-                                <div style="position: absolute; top: -5px; right: -5px; background: #00b894; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; border: 2px solid #1a1a1a;">
-                                    ✓
-                                </div>
-                            ` : ''}
+    // ดึงข้อมูลปัจจุบัน
+    const userProfileData = JSON.parse(localStorage.getItem("userProfile")) || {};
+    const userProfileImage = localStorage.getItem("userProfileImage") || null;
+    const googleUser = localStorage.getItem("googleUser") ? JSON.parse(localStorage.getItem("googleUser")) : null;
+    const isGoogleLogin = !!googleUser;
+    
+    container.innerHTML = `
+        <h1 style="margin-bottom:30px;">👤 My Profile</h1>
+        
+        <div style="display:flex; flex-direction:column; align-items:center; gap:30px; padding:20px;">
+            
+            <!-- 📸 ส่วนอัพโหลดรูป -->
+            <div style="width:100%; max-width:300px;">
+                <div style="text-align:center; margin-bottom:15px;">
+                    <p style="font-weight:bold; margin-bottom:10px; color:rgba(255,255,255,0.8);">📸 Profile Picture</p>
+                </div>
+                
+                <div id="profile-image-container" style="
+                    width:100%;
+                    aspect-ratio: 1/1;
+                    background: rgba(255,255,255,0.05);
+                    border: 2px dashed rgba(255,255,255,0.3);
+                    border-radius: 15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: ${isGoogleLogin ? 'not-allowed' : 'pointer'};
+                    overflow: hidden;
+                    position: relative;
+                    opacity: ${isGoogleLogin ? 0.6 : 1};
+                    transition: all 0.3s ease;
+                ">
+                    ${userProfileImage ? `
+                        <img id="profile-preview-img" src="${userProfileImage}" style="width:100%; height:100%; object-fit:cover;">
+                    ` : `
+                        <div style="text-align:center; opacity:0.5;">
+                            <div style="font-size:40px; margin-bottom:10px;">📷</div>
+                            <div style="font-size:12px;">Click to upload<br/>or drag image</div>
                         </div>
-                    `;
-                }).join('')}
+                    `}
+                </div>
+                
+                <input type="file" id="profile-image-input" accept="image/*" style="display:none;">
+                
+                ${!isGoogleLogin ? `
+                    <div style="margin-top:10px; text-align:center;">
+                        <button onclick="document.getElementById('profile-image-input').click();" style="
+                            padding: 10px 20px;
+                            background: rgba(0,184,148,0.2);
+                            color: #00b894;
+                            border: 1px solid #00b894;
+                            border-radius: 10px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            font-size: 12px;
+                        ">🔄 Change Image</button>
+                    </div>
+                ` : `
+                    <div style="margin-top:15px; text-align:center; opacity:0.6;">
+                        <p style="font-size:12px; color:rgba(255,165,0,0.8);">⚠️ Logged in with Google<br/>Profile picture cannot be changed</p>
+                    </div>
+                `}
+            </div>
+            
+            <!-- 📝 ส่วนตั้งชื่อ -->
+            <div style="width:100%; max-width:300px;">
+                <div style="text-align:center; margin-bottom:15px;">
+                    <p style="font-weight:bold; margin-bottom:10px; color:rgba(255,255,255,0.8);">📝 Username</p>
+                </div>
+                
+                <div style="display:flex; gap:10px; flex-direction:column;">
+                    <div id="username-display" style="
+                        padding: 15px;
+                        background: rgba(255,255,255,0.08);
+                        border-radius: 12px;
+                        text-align: center;
+                        font-size: 16px;
+                        font-weight: bold;
+                        min-height: 50px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: ${isGoogleLogin ? '#00b894' : 'white'};
+                    ">
+                        ${isGoogleLogin ? `
+                            <div>
+                                <div style="font-size:12px; opacity:0.6; margin-bottom:5px;">Google Account</div>
+                                <div>${googleUser?.name || 'User'}</div>
+                            </div>
+                        ` : (userProfileData.username ? userProfileData.username : '<span style="opacity:0.5;">No username set</span>')}
+                    </div>
+                    
+                    ${!isGoogleLogin ? `
+                        <input type="text" id="username-input" maxlength="16" placeholder="Enter username (max 16 characters)" 
+                            value="${userProfileData.username || ''}"
+                            style="
+                                padding: 12px;
+                                background: rgba(255,255,255,0.08);
+                                border: 1px solid rgba(0,184,148,0.3);
+                                border-radius: 10px;
+                                color: white;
+                                font-size: 14px;
+                                outline: none;
+                                font-family: inherit;
+                            "
+                            onfocus="this.style.borderColor='#00b894'"
+                            onblur="this.style.borderColor='rgba(0,184,148,0.3)'"
+                        >
+                        
+                        <button id="save-username-btn" style="
+                            padding: 12px 20px;
+                            background: linear-gradient(135deg, #00b894, #00d2ff);
+                            color: white;
+                            border: none;
+                            border-radius: 10px;
+                            font-weight: bold;
+                            cursor: pointer;
+                            font-size: 14px;
+                            transition: transform 0.2s;
+                        "
+                            onmouseover="this.style.transform='scale(1.05)'"
+                            onmouseout="this.style.transform='scale(1)'"
+                        >✅ Save Username</button>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <!-- 🔐 Google Login Section -->
+            <div style="width:100%; max-width:300px; border-top:1px solid rgba(255,255,255,0.1); padding-top:25px;">
+                <div style="text-align:center; margin-bottom:15px;">
+                    <p style="font-weight:bold; margin-bottom:10px; color:rgba(255,255,255,0.8);">🔐 Account</p>
+                </div>
+                
+                ${isGoogleLogin ? `
+                    <div style="
+                        padding: 15px;
+                        background: rgba(0,184,148,0.1);
+                        border: 1px solid rgba(0,184,148,0.3);
+                        border-radius: 12px;
+                        text-align: center;
+                    ">
+                        <div style="font-size:12px; color:#00b894; margin-bottom:10px;">✅ Logged in with Google</div>
+                        <div style="font-size:13px; opacity:0.7; margin-bottom:10px;">${googleUser?.email}</div>
+                        <button id="profile-google-logout-btn" style="
+                            padding: 8px 15px;
+                            background: rgba(255,107,107,0.2);
+                            color: #ff6b6b;
+                            border: 1px solid #ff6b6b;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: bold;
+                            font-size: 12px;
+                        ">🚪 Logout</button>
+                    </div>
+                ` : `
+                    <div id="profile-google-login-container" style="
+                        padding: 15px;
+                        background: rgba(255,255,255,0.03);
+                        border: 1px solid rgba(255,255,255,0.1);
+                        border-radius: 12px;
+                        text-align: center;
+                    ">
+                        <p style="font-size:12px; opacity:0.6; margin-bottom:15px;">Sign in with Google to sync your profile</p>
+                        <button id="profile-google-login-btn" style="
+                            width: 100%;
+                            padding: 12px;
+                            background: white;
+                            color: #333;
+                            border: none;
+                            border-radius: 8px;
+                            font-weight: bold;
+                            cursor: pointer;
+                            font-size: 14px;
+                        ">🔵 Sign in with Google</button>
+                    </div>
+                `}
             </div>
         </div>
     `;
 
     app.appendChild(container);
-}
-function renderShopPage() {
-    app.innerHTML = "";
     
-    // ปุ่มย้อนกลับ
-    const bBtn = document.createElement("button"); 
-    bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { currentPage = "home"; render(); };
-    app.appendChild(bBtn);
-    const drawer = makeDrawer();
-    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
-    app.appendChild(settingsBtn); app.appendChild(drawer);
-
-    const container = document.createElement("div"); 
-    container.className = "goals-page";
-    
-    // สร้างส่วนหัวร้านค้า และโชว์แต้ม
-    let shopHTML = `
-        <h1 style="margin-bottom:5px;">🛒 Titan Shop</h1>
-        <div style="color:#f1c40f; font-size:22px; font-weight:bold; text-align:center; margin-bottom:25px; text-shadow: 0 0 10px rgba(241, 196, 15, 0.2);">
-            💰 Points: ${titanPoints.toLocaleString()}
-        </div>
-    <div style="
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); /* เปลี่ยนจาก 1fr 1fr เป็น 4 คอลัมน์ */
-        gap: 8px; /* ลดระยะห่างให้พอดี 4 ตัว */
-        padding: 5px;
-    ">
-`;
-
-    // วนลูปสร้างรายการสินค้าจาก SHOP_ITEMS
-    SHOP_ITEMS.forEach(item => {
-        const isOwned = ownedItems.includes(item.id); // เช็คว่าซื้อไปหรือยัง
-        shopHTML += `
-            <div style="background:rgba(255,255,255,0.05); padding:20px 15px; border-radius:25px; text-align:center; border: 2px solid ${isOwned ? '#00b894' : 'transparent'}; transition: 0.3s;">
-                <img src="${item.image}" style="width:75px; height:75px; object-fit:contain; margin-bottom:12px;">
-                <div style="font-weight:bold; font-size:15px; margin-bottom:4px;">${item.name}</div>
-                <div style="color:${item.price === 0 ? '#00b894' : '#f1c40f'}; font-size:13px; margin-bottom:12px; font-weight:bold;">
-    ${item.price === 0 ? 'FREE' : item.price + ' Points'}
-</div>
-                <button 
-                    onclick="buyItem('${item.id}', ${item.price})" 
-                    ${isOwned ? 'disabled' : ''}
-                    style="width:100%; padding:10px; border-radius:12px; border:none; 
-                           background:${isOwned ? 'rgba(255,255,255,0.1)' : '#00b894'}; 
-                           color:${isOwned ? '#888' : 'white'}; 
-                           font-weight:bold;
-                           cursor:${isOwned ? 'default' : 'pointer'};"
-                >
-                    ${isOwned ? 'Owned ✅' : (item.price === 0 ? 'Get Free' : 'Buy')}
-                </button>
-            </div>
-        `;
-    });
-
-    shopHTML += `</div>`;
-    container.innerHTML = shopHTML;
-    app.appendChild(container);
+    // Setup event listeners
+    setTimeout(() => {
+        setupProfilePageEvents(isGoogleLogin, googleUser);
+    }, 50);
 }
-function buyItem(itemId, price) {
-    if (titanPoints >= price) {
-        // หักคะแนน
-        titanPoints -= price;
-        // เพิ่มของเข้าตู้เก็บของ
-        ownedItems.push(itemId);
-        
-        // บันทึกค่าใหม่ลง LocalStorage
-        localStorage.setItem("titanPoints", titanPoints);
-        localStorage.setItem("ownedItems", JSON.stringify(ownedItems));
-        
-        // อัปเดตหน้าจอทันที
-        renderShopPage();
-        
-        // แสดงข้อความดีใจนิดนึง
-        alert("🎉 ยินดีด้วย! คุณได้รับไอเทมใหม่แล้ว");
-    } else {
-        alert("❌ แต้มไม่พอครับ! ขยันทำนิสัยดีๆ เพื่อสะสมแต้มเพิ่มนะ");
-    }
-}
-function adminAddPoints() {
-    const password = prompt("กรุณาใส่รหัสผ่านแอดมิน:");
+
+function setupProfilePageEvents(isGoogleLogin, googleUser) {
+    // Image upload handling
+    const imageInput = document.getElementById("profile-image-input");
+    const imageContainer = document.getElementById("profile-image-container");
     
-    if (password === "admin123") { // เปลี่ยนรหัสผ่านตรงนี้ได้
-        const amount = prompt("ต้องการเสกแต้มเท่าไหร่? (ใส่ตัวเลข):", "1000");
-        const pointsToAdd = parseInt(amount);
+    if (imageInput && !isGoogleLogin) {
+        imageInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                startImageCrop(file);
+            }
+        });
         
-        if (!isNaN(pointsToAdd)) {
-            titanPoints += pointsToAdd;
-            localStorage.setItem("titanPoints", titanPoints);
+        // Drag and drop
+        if (imageContainer) {
+            imageContainer.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                imageContainer.style.borderColor = "#00b894";
+                imageContainer.style.background = "rgba(0,184,148,0.1)";
+            });
             
-            alert(`✨ เสกสำเร็จ! รับไปเลย ${pointsToAdd} แต้ม`);
+            imageContainer.addEventListener("dragleave", () => {
+                imageContainer.style.borderColor = "rgba(255,255,255,0.3)";
+                imageContainer.style.background = "rgba(255,255,255,0.05)";
+            });
             
-            // อัปเดตหน้าจอที่เปิดอยู่
-            if (currentPage === "profile") renderProfilePage();
-            if (currentPage === "shop") renderShopPage();
+            imageContainer.addEventListener("drop", (e) => {
+                e.preventDefault();
+                imageContainer.style.borderColor = "rgba(255,255,255,0.3)";
+                imageContainer.style.background = "rgba(255,255,255,0.05)";
+                
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith("image/")) {
+                    startImageCrop(file);
+                }
+            });
         }
-    } else {
-        alert("❌ รหัสผ่านไม่ถูกต้อง! แอบเข้าเครื่องคนอื่นหรือเปล่านะ?");
+    }
+    
+    // Username save
+    const saveBtn = document.getElementById("save-username-btn");
+    if (saveBtn) {
+        saveBtn.onclick = () => {
+            const usernameInput = document.getElementById("username-input");
+            const username = usernameInput.value.trim();
+            
+            if (username.length === 0) {
+                alert("⚠️ Please enter a username");
+                return;
+            }
+            
+            if (username.length > 16) {
+                alert("⚠️ Username must be 16 characters or less");
+                return;
+            }
+            
+            // Save to localStorage
+            const userProfile = JSON.parse(localStorage.getItem("userProfile")) || {};
+            userProfile.username = username;
+            localStorage.setItem("userProfile", JSON.stringify(userProfile));
+            
+            showNotification("✅ Username Saved", `Welcome, ${username}!`, "success");
+            render();
+        };
+    }
+    
+    // Google Login Button
+    const googleLoginBtn = document.getElementById("profile-google-login-btn");
+    if (googleLoginBtn) {
+        googleLoginBtn.onclick = () => {
+            initializeGoogleLogin();
+        };
+    }
+    
+    // Google Logout Button
+    const googleLogoutBtn = document.getElementById("profile-google-logout-btn");
+    if (googleLogoutBtn) {
+        googleLogoutBtn.onclick = () => {
+            logout();
+        };
     }
 }
+
+function startImageCrop(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        createImageCropModal(e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function createImageCropModal(imageSrc) {
+    const modal = document.createElement("div");
+    modal.id = "image-crop-modal";
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+        box-sizing: border-box;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+        ">
+            <h2 style="margin: 0 0 15px 0; text-align:center; color:white;">🖼️ Crop Image</h2>
+            
+            <div style="
+                position: relative;
+                width: 100%;
+                aspect-ratio: 1/1;
+                background: rgba(0,0,0,0.3);
+                border-radius: 15px;
+                overflow: hidden;
+                margin-bottom: 20px;
+            ">
+                <img id="crop-image-preview" src="${imageSrc}" style="
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    cursor: move;
+                    user-select: none;
+                ">
+            </div>
+            
+            <p style="font-size:12px; opacity:0.6; text-align:center; margin-bottom:20px; color:rgba(255,255,255,0.7);">
+                You can adjust the image by dragging
+            </p>
+            
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button id="crop-cancel-btn" style="
+                    padding: 12px 25px;
+                    background: rgba(255,107,107,0.2);
+                    color: #ff6b6b;
+                    border: 1px solid #ff6b6b;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    font-weight: bold;
+                ">❌ Cancel</button>
+                
+                <button id="crop-confirm-btn" style="
+                    padding: 12px 25px;
+                    background: linear-gradient(135deg, #00b894, #00d2ff);
+                    color: white;
+                    border: none;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    font-weight: bold;
+                ">✅ Use This Image</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const cropImage = document.getElementById("crop-image-preview");
+    const confirmBtn = document.getElementById("crop-confirm-btn");
+    const cancelBtn = document.getElementById("crop-cancel-btn");
+    
+    let offsetX = 0;
+    let offsetY = 0;
+    let isMoving = false;
+    
+    cropImage.addEventListener("mousedown", () => {
+        isMoving = true;
+    });
+    
+    cropImage.addEventListener("mousemove", (e) => {
+        if (isMoving) {
+            offsetX -= e.movementX * 0.5;
+            offsetY -= e.movementY * 0.5;
+            cropImage.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        }
+    });
+    
+    document.addEventListener("mouseup", () => {
+        isMoving = false;
+    });
+    
+    confirmBtn.onclick = () => {
+        const container = modal.querySelector("div");
+        const canvas = document.createElement("canvas");
+        canvas.width = container.offsetWidth - 40;
+        canvas.height = container.offsetWidth - 40;
+        
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        img.onload = () => {
+            const size = canvas.width;
+            ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, size, size);
+            const croppedImage = canvas.toDataURL("image/jpeg", 0.95);
+            
+            localStorage.setItem("userProfileImage", croppedImage);
+            
+            modal.remove();
+            showNotification("✅ Image Saved", "Profile picture updated", "success");
+            render();
+        };
+        img.src = imageSrc;
+    };
+    
+    cancelBtn.onclick = () => {
+        modal.remove();
+    };
+}
+// 🗑️ ลบ renderShopPage, buyItem, adminAddPoints - ไม่มีระบบ shop อีกต่อไป
+
 /* ===== SAVINGS PAGE ===== */
 function renderSavingsPage() {
     app.innerHTML = "";
@@ -4567,25 +4789,7 @@ function renderSavingsPage() {
 }
 
 
-function toggleEquip(itemId) {
-    const item = SHOP_ITEMS.find(i => i.id === itemId);
-    if (!item) return;
-
-    // ระบบสกินเดียว: เช็คและจัดการเฉพาะในช่อง body เท่านั้น
-    if (equippedItems.body === itemId) {
-        // ถ้ากดอันที่ใส่อยู่แล้ว ให้ถอดออก (กลับเป็นตัวเปล่า base.png)
-        delete equippedItems.body; 
-    } else {
-        // ถ้ากดอันใหม่ ให้ใส่แทนที่อันเดิมในช่อง body ทันที
-        equippedItems.body = itemId;
-    }
-
-    // บันทึกสถานะการใส่ลงเครื่อง
-    localStorage.setItem("equippedItems", JSON.stringify(equippedItems));
-    
-    // สำคัญ: สั่งให้หน้าจอวาดใหม่เพื่อให้รูปตัวละคร (Preview) เปลี่ยนตาม
-    renderProfilePage(); 
-}
+// 🗑️ ลบ toggleEquip - ระบบสกินถูกลบแล้ว
 /* ===== TOGGLE SPECIAL BUTTONS ===== */
 function toggleSpecialButtons() {
     const settingsBtn = document.querySelector(".settings-btn");
@@ -4897,7 +5101,7 @@ function renderSettingsPage() {
                     // 2. เซ็ตค่าพื้นฐานตัวเลขป้องกัน NaN / ตัวหนังสือป้องกัน null split
                     localStorage.setItem("user_level", "1");
                     localStorage.setItem("user_exp", "0");
-                    localStorage.setItem("titan_points", "0");
+                    // 🗑️ ลบ titan_points - ระบบ shop ถูกลบแล้ว
                     localStorage.setItem("user_theme", "default");
                     
                     const todayStr = new Date().toISOString().split("T")[0];
