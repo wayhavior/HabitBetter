@@ -1197,7 +1197,6 @@ function render() {
         homeContainer.className = "home-container";
 
         const levelBox = document.createElement("div");
-        levelBox.className = "exp-container";
         
         
         // ดึง unlocked badges สำหรับแสดง
@@ -1213,51 +1212,53 @@ function render() {
         const displayImage = googleUser?.picture || userProfileImage;
         
         levelBox.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 15px; width: 100%; box-sizing: border-box;">
-        <!-- 👤 Profile Picture -->
-        <div style="
-            width: 60px;
-            height: 60px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            overflow: hidden;
-            border: 2px solid rgba(0,184,148,0.3);
-        ">
-            ${displayImage ? `
-                <img src="${displayImage}" style="width:100%; height:100%; object-fit:cover;">
-            ` : `
-                <div style="font-size:28px;">👤</div>
-            `}
-        </div>
-
-        <div style="flex: 1; width: 100%; min-width:0;">
-            <!-- Profile Name -->
+    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 0.5px solid rgba(0,212,255,0.2); border-radius: 8px; padding: 10px 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <!-- 👤 Profile Picture -->
             <div style="
-                font-weight: bold;
-                font-size: 15px;
-                color: white;
-                white-space: nowrap;
+                width: 48px;
+                height: 48px;
+                background: rgba(255,255,255,0.1);
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
                 overflow: hidden;
-                text-overflow: ellipsis;
-                margin-bottom: 5px;
+                border: 1px solid rgba(0,212,255,0.3);
             ">
-                ${displayName}
+                ${displayImage ? `
+                    <img src="${displayImage}" style="width:100%; height:100%; object-fit:cover;">
+                ` : `
+                    <div style="font-size:22px; color: #00d4ff;">✨</div>
+                `}
             </div>
-            
-            <!-- Setup hint if empty -->
-            ${!googleUser && !userProfileData.username ? `
-                <div style="font-size: 11px; opacity: 0.6; color: #f1c40f;">
-                    📝 Tap to setup profile
+
+            <div style="flex: 1; width: 100%; min-width:0;">
+                <!-- Profile Name -->
+                <div style="
+                    font-weight: 500;
+                    font-size: 13px;
+                    color: white;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    margin-bottom: 1px;
+                ">
+                    ${displayName}
                 </div>
-            ` : `
-                <div style="font-size: 11px; opacity: 0.5;">
-                    ${googleUser ? '✅ Google Sync' : '👤 Local Profile'}
-                </div>
-            `}
+                
+                <!-- Setup hint if empty -->
+                ${!googleUser && !userProfileData.username ? `
+                    <div style="font-size: 11px; color: rgba(0,212,255,0.7);">
+                        📝 Tap to setup profile
+                    </div>
+                ` : `
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.5);">
+                        ${googleUser ? '✅ Active • Google Sync' : '✅ Active • Local Profile'}
+                    </div>
+                `}
+            </div>
         </div>
     </div>
 `;
@@ -1881,27 +1882,23 @@ function renderJarDetailPage() {
 function cropImageFromBase64(base64Image, coords) {
     const img = new Image();
     const canvas = document.createElement('canvas');
+    
+    // รองรับทั้ง square crop (size) และ rectangular crop (width, height)
+    const cropWidth = coords.width || coords.size || 300;
+    const cropHeight = coords.height || coords.size || 300;
+    
     canvas.width = 300;
     canvas.height = 300;
     const ctx = canvas.getContext('2d');
     
-    img.onload = () => {
-        // crop และ resize เป็น 300x300
-        ctx.drawImage(
-            img,
-            coords.x, coords.y, coords.size, coords.size,  // source
-            0, 0, 300, 300  // destination
-        );
-    };
-    img.src = base64Image;
-    
-    // Return canvas data URL (ทำความเสี่ยง: หาก onload ยังไม่เสร็จ)
+    // Return canvas data URL
     return new Promise((resolve) => {
         img.onload = () => {
+            // crop และ resize เป็น 300x300
             ctx.drawImage(
                 img,
-                coords.x, coords.y, coords.size, coords.size,
-                0, 0, 300, 300
+                coords.x, coords.y, cropWidth, cropHeight,  // source
+                0, 0, 300, 300  // destination (เสมอ 300x300)
             );
             resolve(canvas.toDataURL('image/jpeg', 0.8));
         };
@@ -4342,427 +4339,6 @@ function openStandardCalculator() {
     document.body.appendChild(overlay);
 }
 
-function renderProfilePage() {
-    app.innerHTML = ""; // ล้างหน้าจอหลัก
-    
-    // ปุ่มย้อนกลับไปหน้า Home
-    const bBtn = document.createElement("button"); 
-    bBtn.className = "back-btn"; 
-    bBtn.innerText = "🏠";
-    bBtn.onclick = () => { currentPage = "home"; render(); };
-    
-    const drawer = makeDrawer();
-    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
-    app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
-
-    const container = document.createElement("div"); 
-    container.className = "goals-page";
-    
-    // ดึงข้อมูลปัจจุบัน
-    const userProfileData = JSON.parse(localStorage.getItem("userProfile")) || {};
-    const userProfileImage = localStorage.getItem("userProfileImage") || null;
-    const googleUser = localStorage.getItem("googleUser") ? JSON.parse(localStorage.getItem("googleUser")) : null;
-    const isGoogleLogin = !!googleUser;
-    
-    container.innerHTML = `
-        <h1 style="margin-bottom:30px;">👤 My Profile</h1>
-        
-        <div style="display:flex; flex-direction:column; align-items:center; gap:30px; padding:20px;">
-            
-            <!-- 📸 ส่วนอัพโหลดรูป -->
-            <div style="width:100%; max-width:300px;">
-                <div style="text-align:center; margin-bottom:15px;">
-                    <p style="font-weight:bold; margin-bottom:10px; color:rgba(255,255,255,0.8);">📸 Profile Picture</p>
-                </div>
-                
-                <div id="profile-image-container" style="
-                    width:100%;
-                    aspect-ratio: 1/1;
-                    background: rgba(255,255,255,0.05);
-                    border: 2px dashed rgba(255,255,255,0.3);
-                    border-radius: 15px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: ${isGoogleLogin ? 'not-allowed' : 'pointer'};
-                    overflow: hidden;
-                    position: relative;
-                    opacity: ${isGoogleLogin ? 0.6 : 1};
-                    transition: all 0.3s ease;
-                ">
-                    ${userProfileImage ? `
-                        <img id="profile-preview-img" src="${userProfileImage}" style="width:100%; height:100%; object-fit:cover;">
-                    ` : `
-                        <div style="text-align:center; opacity:0.5;">
-                            <div style="font-size:40px; margin-bottom:10px;">📷</div>
-                            <div style="font-size:12px;">Click to upload<br/>or drag image</div>
-                        </div>
-                    `}
-                </div>
-                
-                <input type="file" id="profile-image-input" accept="image/*" style="display:none;">
-                
-                ${!isGoogleLogin ? `
-                    <div style="margin-top:10px; text-align:center;">
-                        <button onclick="document.getElementById('profile-image-input').click();" style="
-                            padding: 10px 20px;
-                            background: rgba(0,184,148,0.2);
-                            color: #00b894;
-                            border: 1px solid #00b894;
-                            border-radius: 10px;
-                            cursor: pointer;
-                            font-weight: bold;
-                            font-size: 12px;
-                        ">🔄 Change Image</button>
-                    </div>
-                ` : `
-                    <div style="margin-top:15px; text-align:center; opacity:0.6;">
-                        <p style="font-size:12px; color:rgba(255,165,0,0.8);">⚠️ Logged in with Google<br/>Profile picture cannot be changed</p>
-                    </div>
-                `}
-            </div>
-            
-            <!-- 📝 ส่วนตั้งชื่อ -->
-            <div style="width:100%; max-width:300px;">
-                <div style="text-align:center; margin-bottom:15px;">
-                    <p style="font-weight:bold; margin-bottom:10px; color:rgba(255,255,255,0.8);">📝 Username</p>
-                </div>
-                
-                <div style="display:flex; gap:10px; flex-direction:column;">
-                    <div id="username-display" style="
-                        padding: 15px;
-                        background: rgba(255,255,255,0.08);
-                        border-radius: 12px;
-                        text-align: center;
-                        font-size: 16px;
-                        font-weight: bold;
-                        min-height: 50px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: ${isGoogleLogin ? '#00b894' : 'white'};
-                    ">
-                        ${isGoogleLogin ? `
-                            <div>
-                                <div style="font-size:12px; opacity:0.6; margin-bottom:5px;">Google Account</div>
-                                <div>${googleUser?.name || 'User'}</div>
-                            </div>
-                        ` : (userProfileData.username ? userProfileData.username : '<span style="opacity:0.5;">No username set</span>')}
-                    </div>
-                    
-                    ${!isGoogleLogin ? `
-                        <input type="text" id="username-input" maxlength="16" placeholder="Enter username (max 16 characters)" 
-                            value="${userProfileData.username || ''}"
-                            style="
-                                padding: 12px;
-                                background: rgba(255,255,255,0.08);
-                                border: 1px solid rgba(0,184,148,0.3);
-                                border-radius: 10px;
-                                color: white;
-                                font-size: 14px;
-                                outline: none;
-                                font-family: inherit;
-                            "
-                            onfocus="this.style.borderColor='#00b894'"
-                            onblur="this.style.borderColor='rgba(0,184,148,0.3)'"
-                        >
-                        
-                        <button id="save-username-btn" style="
-                            padding: 12px 20px;
-                            background: linear-gradient(135deg, #00b894, #00d2ff);
-                            color: white;
-                            border: none;
-                            border-radius: 10px;
-                            font-weight: bold;
-                            cursor: pointer;
-                            font-size: 14px;
-                            transition: transform 0.2s;
-                        "
-                            onmouseover="this.style.transform='scale(1.05)'"
-                            onmouseout="this.style.transform='scale(1)'"
-                        >✅ Save Username</button>
-                    ` : ''}
-                </div>
-            </div>
-            
-            <!-- 🔐 Google Login Section -->
-            <div style="width:100%; max-width:300px; border-top:1px solid rgba(255,255,255,0.1); padding-top:25px;">
-                <div style="text-align:center; margin-bottom:15px;">
-                    <p style="font-weight:bold; margin-bottom:10px; color:rgba(255,255,255,0.8);">🔐 Account</p>
-                </div>
-                
-                ${isGoogleLogin ? `
-                    <div style="
-                        padding: 15px;
-                        background: rgba(0,184,148,0.1);
-                        border: 1px solid rgba(0,184,148,0.3);
-                        border-radius: 12px;
-                        text-align: center;
-                    ">
-                        <div style="font-size:12px; color:#00b894; margin-bottom:10px;">✅ Logged in with Google</div>
-                        <div style="font-size:13px; opacity:0.7; margin-bottom:10px;">${googleUser?.email}</div>
-                        <button id="profile-google-logout-btn" style="
-                            padding: 8px 15px;
-                            background: rgba(255,107,107,0.2);
-                            color: #ff6b6b;
-                            border: 1px solid #ff6b6b;
-                            border-radius: 8px;
-                            cursor: pointer;
-                            font-weight: bold;
-                            font-size: 12px;
-                        ">🚪 Logout</button>
-                    </div>
-                ` : `
-                    <div id="profile-google-login-container" style="
-                        padding: 15px;
-                        background: rgba(255,255,255,0.03);
-                        border: 1px solid rgba(255,255,255,0.1);
-                        border-radius: 12px;
-                        text-align: center;
-                    ">
-                        <p style="font-size:12px; opacity:0.6; margin-bottom:15px;">Sign in with Google to sync your profile</p>
-                        <button id="profile-google-login-btn" style="
-                            width: 100%;
-                            padding: 12px;
-                            background: white;
-                            color: #333;
-                            border: none;
-                            border-radius: 8px;
-                            font-weight: bold;
-                            cursor: pointer;
-                            font-size: 14px;
-                        ">🔵 Sign in with Google</button>
-                    </div>
-                `}
-            </div>
-        </div>
-    `;
-
-    app.appendChild(container);
-    
-    // Setup event listeners
-    setTimeout(() => {
-        setupProfilePageEvents(isGoogleLogin, googleUser);
-    }, 50);
-}
-
-function setupProfilePageEvents(isGoogleLogin, googleUser) {
-    // Image upload handling
-    const imageInput = document.getElementById("profile-image-input");
-    const imageContainer = document.getElementById("profile-image-container");
-    
-    if (imageInput && !isGoogleLogin) {
-        imageInput.addEventListener("change", (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                startImageCrop(file);
-            }
-        });
-        
-        // Drag and drop
-        if (imageContainer) {
-            imageContainer.addEventListener("dragover", (e) => {
-                e.preventDefault();
-                imageContainer.style.borderColor = "#00b894";
-                imageContainer.style.background = "rgba(0,184,148,0.1)";
-            });
-            
-            imageContainer.addEventListener("dragleave", () => {
-                imageContainer.style.borderColor = "rgba(255,255,255,0.3)";
-                imageContainer.style.background = "rgba(255,255,255,0.05)";
-            });
-            
-            imageContainer.addEventListener("drop", (e) => {
-                e.preventDefault();
-                imageContainer.style.borderColor = "rgba(255,255,255,0.3)";
-                imageContainer.style.background = "rgba(255,255,255,0.05)";
-                
-                const file = e.dataTransfer.files[0];
-                if (file && file.type.startsWith("image/")) {
-                    startImageCrop(file);
-                }
-            });
-        }
-    }
-    
-    // Username save
-    const saveBtn = document.getElementById("save-username-btn");
-    if (saveBtn) {
-        saveBtn.onclick = () => {
-            const usernameInput = document.getElementById("username-input");
-            const username = usernameInput.value.trim();
-            
-            if (username.length === 0) {
-                alert("⚠️ Please enter a username");
-                return;
-            }
-            
-            if (username.length > 16) {
-                alert("⚠️ Username must be 16 characters or less");
-                return;
-            }
-            
-            // Save to localStorage
-            const userProfile = JSON.parse(localStorage.getItem("userProfile")) || {};
-            userProfile.username = username;
-            localStorage.setItem("userProfile", JSON.stringify(userProfile));
-            
-            showNotification("✅ Username Saved", `Welcome, ${username}!`, "success");
-            render();
-        };
-    }
-    
-    // Google Login Button
-    const googleLoginBtn = document.getElementById("profile-google-login-btn");
-    if (googleLoginBtn) {
-        googleLoginBtn.onclick = () => {
-            initializeGoogleLogin();
-        };
-    }
-    
-    // Google Logout Button
-    const googleLogoutBtn = document.getElementById("profile-google-logout-btn");
-    if (googleLogoutBtn) {
-        googleLogoutBtn.onclick = () => {
-            logout();
-        };
-    }
-}
-
-function startImageCrop(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        createImageCropModal(e.target.result);
-    };
-    reader.readAsDataURL(file);
-}
-
-function createImageCropModal(imageSrc) {
-    const modal = document.createElement("div");
-    modal.id = "image-crop-modal";
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.95);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        padding: 20px;
-        box-sizing: border-box;
-    `;
-    
-    modal.innerHTML = `
-        <div style="
-            background: #1a1a1a;
-            border-radius: 20px;
-            padding: 20px;
-            max-width: 500px;
-            width: 100%;
-        ">
-            <h2 style="margin: 0 0 15px 0; text-align:center; color:white;">🖼️ Crop Image</h2>
-            
-            <div style="
-                position: relative;
-                width: 100%;
-                aspect-ratio: 1/1;
-                background: rgba(0,0,0,0.3);
-                border-radius: 15px;
-                overflow: hidden;
-                margin-bottom: 20px;
-            ">
-                <img id="crop-image-preview" src="${imageSrc}" style="
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    cursor: move;
-                    user-select: none;
-                ">
-            </div>
-            
-            <p style="font-size:12px; opacity:0.6; text-align:center; margin-bottom:20px; color:rgba(255,255,255,0.7);">
-                You can adjust the image by dragging
-            </p>
-            
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button id="crop-cancel-btn" style="
-                    padding: 12px 25px;
-                    background: rgba(255,107,107,0.2);
-                    color: #ff6b6b;
-                    border: 1px solid #ff6b6b;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    font-weight: bold;
-                ">❌ Cancel</button>
-                
-                <button id="crop-confirm-btn" style="
-                    padding: 12px 25px;
-                    background: linear-gradient(135deg, #00b894, #00d2ff);
-                    color: white;
-                    border: none;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    font-weight: bold;
-                ">✅ Use This Image</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    const cropImage = document.getElementById("crop-image-preview");
-    const confirmBtn = document.getElementById("crop-confirm-btn");
-    const cancelBtn = document.getElementById("crop-cancel-btn");
-    
-    let offsetX = 0;
-    let offsetY = 0;
-    let isMoving = false;
-    
-    cropImage.addEventListener("mousedown", () => {
-        isMoving = true;
-    });
-    
-    cropImage.addEventListener("mousemove", (e) => {
-        if (isMoving) {
-            offsetX -= e.movementX * 0.5;
-            offsetY -= e.movementY * 0.5;
-            cropImage.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-        }
-    });
-    
-    document.addEventListener("mouseup", () => {
-        isMoving = false;
-    });
-    
-    confirmBtn.onclick = () => {
-        const container = modal.querySelector("div");
-        const canvas = document.createElement("canvas");
-        canvas.width = container.offsetWidth - 40;
-        canvas.height = container.offsetWidth - 40;
-        
-        const ctx = canvas.getContext("2d");
-        const img = new Image();
-        img.onload = () => {
-            const size = canvas.width;
-            ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, size, size);
-            const croppedImage = canvas.toDataURL("image/jpeg", 0.95);
-            
-            localStorage.setItem("userProfileImage", croppedImage);
-            
-            modal.remove();
-            showNotification("✅ Image Saved", "Profile picture updated", "success");
-            render();
-        };
-        img.src = imageSrc;
-    };
-    
-    cancelBtn.onclick = () => {
-        modal.remove();
-    };
-}
 // 🗑️ ลบ renderShopPage, buyItem, adminAddPoints - ไม่มีระบบ shop อีกต่อไป
 
 /* ===== SAVINGS PAGE ===== */
@@ -5132,4 +4708,427 @@ function updateSpecialButtonsVisibility() {
     if (typeof zoomBtns !== "undefined") {
         zoomBtns.forEach(btn => btn.style.display = specialButtonsVisible ? "block" : "none");
     }
+}// ====== CUSTOM GOOGLE BUTTON + PROFILE PAGE ======
+
+function renderProfilePage() {
+    app.innerHTML = ""; 
+    const bBtn = document.createElement("button"); 
+    bBtn.className = "back-btn"; 
+    bBtn.innerText = "🏠";
+    bBtn.onclick = () => { currentPage = "home"; render(); };
+    
+    const drawer = makeDrawer();
+    drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
+    app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
+
+    const container = document.createElement("div"); 
+    container.className = "goals-page";
+    
+    const userProfileData = JSON.parse(localStorage.getItem("userProfile")) || {};
+    const userProfileImage = localStorage.getItem("userProfileImage") || null;
+    const googleUser = localStorage.getItem("googleUser") ? JSON.parse(localStorage.getItem("googleUser")) : null;
+    const isGoogleLogin = !!googleUser;
+    
+    container.innerHTML = `
+        <h1 style="margin-bottom:20px; font-size:18px;">👤 My Profile</h1>
+        
+        <div style="display:flex; gap:24px; align-items:flex-start; padding:0 10px;">
+            <!-- Left: Profile Picture -->
+            <div style="flex-shrink:0;">
+                <p style="font-size:11px; color:rgba(255,255,255,0.5); margin:0 0 8px 0; text-transform:uppercase; letter-spacing:0.5px;">📸 Picture</p>
+                
+                <div id="profile-image-container" style="
+                    width:140px; height:140px;
+                    background:rgba(255,255,255,0.08);
+                    border:2px solid rgba(255,255,255,0.15);
+                    border-radius:12px;
+                    display:flex; align-items:center; justify-content:center;
+                    overflow:hidden; flex-shrink:0;
+                ">
+                    ${googleUser?.picture ? `<img src="${googleUser.picture}" style="width:100%; height:100%; object-fit:cover;">` : (userProfileImage ? `<img src="${userProfileImage}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="font-size:48px;">📷</div>`)}
+                </div>
+                
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    ${!isGoogleLogin ? `
+                        <button id="profile-change-btn" style="flex:1; padding:8px; background:rgba(255,140,0,0.2); border:2px solid #ff8c00; border-radius:8px; color:#ff8c00; font-weight:600; font-size:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,140,0,0.3)'" onmouseout="this.style.background='rgba(255,140,0,0.2)'">Change</button>
+                        <button id="profile-delete-btn" style="flex:1; padding:8px; background:rgba(255,50,50,0.2); border:2px solid #ff3232; border-radius:8px; color:#ff3232; font-weight:600; font-size:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,50,50,0.3)'" onmouseout="this.style.background='rgba(255,50,50,0.2)'">Delete</button>
+                    ` : `<div style="opacity:0.5; font-size:11px; text-align:center; width:100%; color:rgba(255,165,0,0.8);">🔒 Google</div>`}
+                </div>
+                
+                <input type="file" id="profile-image-input" accept="image/*" style="display:none;">
+            </div>
+            
+            <!-- Right: Username & Google -->
+            <div style="flex:1; min-width:0;">
+                <!-- Username Section -->
+                <div style="margin-bottom:20px;">
+                    <p style="font-size:11px; color:rgba(255,255,255,0.5); margin:0 0 8px 0; text-transform:uppercase;">📝 Username</p>
+                    ${isGoogleLogin ? `
+                        <div style="padding:10px; background:rgba(0,184,148,0.1); border:2px solid rgba(0,184,148,0.4); border-radius:8px; color:#00b894; font-size:13px; font-weight:600; text-align:center;">
+                            ${googleUser?.name || 'User'}<br/><span style="font-size:11px; opacity:0.7;">From Google</span>
+                        </div>
+                    ` : `
+                        <input type="text" id="username-input" maxlength="16" placeholder="Enter username" value="${userProfileData.username || ''}" style="width:100%; padding:10px; background:rgba(255,255,255,0.08); border:2px solid rgba(0,184,148,0.4); border-radius:8px; color:white; font-size:13px; outline:none; box-sizing:border-box; font-family:inherit;" onfocus="this.style.borderColor='#00b894'" onblur="this.style.borderColor='rgba(0,184,148,0.4)'">
+                        <button id="save-username-btn" style="width:100%; margin-top:8px; padding:10px; background:linear-gradient(135deg, #00b894, #00d2ff); color:white; border:none; border-radius:8px; font-weight:600; font-size:12px; cursor:pointer; transition:transform 0.2s; font-family:inherit;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">✅ Save</button>
+                    `}
+                </div>
+                
+                <!-- Google Account Section -->
+                <div>
+                    <p style="font-size:11px; color:rgba(255,255,255,0.5); margin:0 0 8px 0; text-transform:uppercase;">🔐 Account</p>
+                    ${isGoogleLogin ? `
+                        <div style="padding:10px; background:rgba(0,184,148,0.1); border:2px solid rgba(0,184,148,0.4); border-radius:8px; text-align:center;">
+                            <div style="font-size:12px; color:#00b894; margin-bottom:8px;">✅ Logged in</div>
+                            <div style="font-size:11px; color:rgba(255,255,255,0.6); margin-bottom:10px; word-break:break-all;">${googleUser?.email}</div>
+                            <button id="profile-google-logout-btn" style="width:100%; padding:8px; background:rgba(255,107,107,0.2); color:#ff6b6b; border:1px solid #ff6b6b; border-radius:8px; font-weight:bold; font-size:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,107,107,0.3)'" onmouseout="this.style.background='rgba(255,107,107,0.2)'">🚪 Logout</button>
+                        </div>
+                    ` : `
+                        <button id="profile-google-login-btn" style="
+                            width:100%;
+                            padding:12px;
+                            background:white;
+                            color:#1f2937;
+                            border:1px solid #d1d5db;
+                            border-radius:8px;
+                            font-weight:600;
+                            font-size:14px;
+                            cursor:pointer;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            gap:10px;
+                            transition:all 0.2s;
+                            font-family:inherit;
+                        " onmouseover="this.style.background='#f9fafb'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)'" onmouseout="this.style.background='white'; this.style.boxShadow='none'">
+                            <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Sign in with Google
+                        </button>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+
+    app.appendChild(container);
+    setTimeout(() => setupProfilePageEvents(isGoogleLogin, googleUser), 100);
+}
+
+function showDeleteProfilePictureModal(onConfirm) {
+    // สร้าง overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
+    // สร้าง modal
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 32px 24px;
+        max-width: 300px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    // เพิ่ม animation ถ้ายังไม่มี
+    const style = document.createElement("style");
+    style.textContent = `
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    if (!document.querySelector("style[data-modal-anim]")) {
+        style.setAttribute("data-modal-anim", "true");
+        document.head.appendChild(style);
+    }
+    
+    modal.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">ลบรูปโปรไฟล์?</h3>
+            <p style="margin: 0 0 24px; color: rgba(255, 255, 255, 0.6); font-size: 13px;">คุณแน่ใจว่าต้องการลบรูปโปรไฟล์หรือไม่</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="cancel-delete-profile" style="flex: 1; padding: 12px 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">ยกเลิก</button>
+                <button id="confirm-delete-profile" style="flex: 1; padding: 12px 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);">ลบ</button>
+            </div>
+        </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Event listeners
+    document.getElementById("cancel-delete-profile").onclick = () => {
+        overlay.remove();
+    };
+    
+    document.getElementById("confirm-delete-profile").onclick = () => {
+        overlay.remove();
+        if (onConfirm) onConfirm();
+    };
+    
+    // Close on overlay click
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
+}
+
+function setupProfilePageEvents(isGoogleLogin, googleUser) {
+    const imageInput = document.getElementById("profile-image-input");
+    const changeBtn = document.getElementById("profile-change-btn");
+    const deleteBtn = document.getElementById("profile-delete-btn");
+    const imageContainer = document.getElementById("profile-image-container");
+    
+    if (changeBtn && !isGoogleLogin) {
+        changeBtn.onclick = () => imageInput.click();
+    }
+    
+    if (imageInput && !isGoogleLogin) {
+        imageInput.addEventListener("change", (e) => {
+            if (e.target.files[0]) {
+                startImageCropFromProfile(e.target.files[0]);
+            }
+        });
+        
+        if (deleteBtn) {
+            deleteBtn.onclick = () => {
+                showDeleteProfilePictureModal(() => {
+                    localStorage.removeItem("userProfileImage");
+                    showNotification("✅ Deleted", "Profile picture removed", "success");
+                    render();
+                });
+            };
+        }
+        
+        if (imageContainer) {
+            imageContainer.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                imageContainer.style.borderColor = "#00b894";
+                imageContainer.style.background = "rgba(0,184,148,0.1)";
+            });
+            imageContainer.addEventListener("dragleave", () => {
+                imageContainer.style.borderColor = "rgba(255,255,255,0.15)";
+                imageContainer.style.background = "rgba(255,255,255,0.08)";
+            });
+            imageContainer.addEventListener("drop", (e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files[0]?.type.startsWith("image/")) {
+                    startImageCropFromProfile(e.dataTransfer.files[0]);
+                }
+            });
+        }
+    }
+    
+    const saveBtn = document.getElementById("save-username-btn");
+    if (saveBtn) {
+        saveBtn.onclick = () => {
+            const usernameInput = document.getElementById("username-input");
+            const username = usernameInput.value.trim();
+            if (username.length === 0 || username.length > 16) {
+                alert("Username must be 1-16 characters");
+                return;
+            }
+            const userProfile = JSON.parse(localStorage.getItem("userProfile")) || {};
+            userProfile.username = username;
+            localStorage.setItem("userProfile", JSON.stringify(userProfile));
+            showNotification("✅ Saved", `Welcome, ${username}!`, "success");
+            render();
+        };
+    }
+    
+    // Custom Google Button (ไม่ใช้ Google library)
+    const googleLoginBtn = document.getElementById("profile-google-login-btn");
+    if (googleLoginBtn && !isGoogleLogin) {
+        googleLoginBtn.onclick = () => {
+            initializeGoogleLogin();
+        };
+    }
+    
+    const logoutBtn = document.getElementById("profile-google-logout-btn");
+    if (logoutBtn) {
+        logoutBtn.onclick = () => logout();
+    }
+}
+
+function startImageCropFromProfile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        showImageCropperForProfile(e.target.result, (croppedImage) => {
+            localStorage.setItem("userProfileImage", croppedImage);
+            showNotification("✅ Saved", "Profile picture updated", "success");
+            render();
+        });
+    };
+    reader.readAsDataURL(file);
+}
+
+function showImageCropperForProfile(imageSrc, onSuccess) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:10002;padding:20px;`;
+    
+    let cropCoords = { x: 0, y: 0, width: 0, height: 0 }; // เก็บพิกัด crop (rectangular)
+    
+    overlay.innerHTML = `
+        <div style="background:#1a1a2e;border-radius:24px;padding:24px;width:100%;max-width:420px;box-shadow:0 10px 60px rgba(0,0,0,0.7);">
+            <h2 style="margin:0 0 16px;color:white;font-size:18px;font-weight:bold;">🖼️ เลือกพื้นที่รูปภาพ</h2>
+            <p style="margin:0 0 16px;color:rgba(255,255,255,0.6);font-size:13px;">ลากเพื่อเลือกพื้นที่ที่ต้องการ</p>
+            
+            <div style="position:relative;width:100%;max-width:380px;margin:0 auto 16px;border:2px solid rgba(255,255,255,0.2);border-radius:16px;overflow:hidden;background:black;">
+                <img id="cropImage" src="${imageSrc}" style="width:100%;height:auto;display:block;cursor:crosshair;">
+                <canvas id="cropCanvas" style="position:absolute;top:0;left:0;cursor:crosshair;"></canvas>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+                <button onclick="cancelImageUpload()" style="padding:12px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.2);background:transparent;color:white;font-size:14px;font-weight:bold;cursor:pointer;font-family:inherit;">❌ ยกเลิก</button>
+                <button onclick="confirmImageUploadWithCropProfile()" style="padding:12px;border-radius:12px;border:none;background:#22c55e;color:white;font-size:14px;font-weight:bold;cursor:pointer;font-family:inherit;">✅ ใช้รูปนี้</button>
+            </div>
+            
+            <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:12px;font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6;">
+                💡 <strong>คำแนะนำ:</strong> เลือกพื้นที่ที่มีใบหน้าหรือเนื้อหาหลัก
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    const img = overlay.querySelector('#cropImage');
+    const canvas = overlay.querySelector('#cropCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    img.onload = () => {
+        const rect = img.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        
+        let isSelecting = false;
+        let startX, startY, endX, endY;
+        
+        function drawSelection() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (isSelecting && startX !== undefined) {
+                const x = Math.min(startX, endX);
+                const y = Math.min(startY, endY);
+                const width = Math.abs(endX - startX);
+                const height = Math.abs(endY - startY);
+                
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = 'rgba(0,0,0,0)';
+                ctx.clearRect(x, y, width, height);
+                
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 4]);
+                ctx.strokeRect(x, y, width, height);
+                ctx.setLineDash([]);
+                
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(x, y, width, height);
+                
+                // เก็บพิกัด crop (ปรับให้เป็นสัดส่วน original image)
+                const scale = img.naturalWidth / canvas.width;
+                cropCoords = {
+                    x: Math.floor(x * scale),
+                    y: Math.floor(y * scale),
+                    width: Math.floor(width * scale),
+                    height: Math.floor(height * scale)
+                };
+            }
+        }
+        
+        canvas.addEventListener('mousedown', (e) => {
+            isSelecting = true;
+            const rect = canvas.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+            endX = startX;
+            endY = startY;
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isSelecting) return;
+            const rect = canvas.getBoundingClientRect();
+            endX = e.clientX - rect.left;
+            endY = e.clientY - rect.top;
+            drawSelection();
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isSelecting = false;
+        });
+        
+        canvas.addEventListener('touchstart', (e) => {
+            isSelecting = true;
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            startX = touch.clientX - rect.left;
+            startY = touch.clientY - rect.top;
+            endX = startX;
+            endY = startY;
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (!isSelecting) return;
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            endX = touch.clientX - rect.left;
+            endY = touch.clientY - rect.top;
+            drawSelection();
+        });
+        
+        canvas.addEventListener('touchend', () => {
+            isSelecting = false;
+        });
+    };
+    
+    window.cancelImageUpload = () => {
+        overlay.remove();
+    };
+    
+    window.confirmImageUploadWithCropProfile = async () => {
+        // ถ้าไม่ได้ลาก crop ให้ใช้ full image แทน (ปรับสัดส่วนให้ square)
+        if (cropCoords.width === 0 || cropCoords.height === 0) {
+            const img = overlay.querySelector('#cropImage');
+            const size = Math.min(img.naturalWidth, img.naturalHeight);
+            cropCoords = {
+                x: Math.floor((img.naturalWidth - size) / 2),
+                y: Math.floor((img.naturalHeight - size) / 2),
+                width: size,
+                height: size
+            };
+        }
+        
+        // Crop image ตัวจริง
+        const croppedImage = await cropImageFromBase64(imageSrc, cropCoords);
+        overlay.remove();
+        onSuccess(croppedImage);
+    };
 }

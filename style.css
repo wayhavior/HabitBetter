@@ -628,8 +628,8 @@ body.dark-mode{
 
 /* ===== EXP UI (NEW) ===== */
 .exp-container { 
-    background: rgba(255,255,255,0.1); 
-    padding: 15px; 
+    background: transparent; 
+    padding: 0; 
     border-radius: 15px; 
     margin-bottom: 10px; 
     width: 90vw;
