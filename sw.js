@@ -1,7 +1,6 @@
 // This is the "Offline page" service worker
 
-// Import OneSignal (เพิ่มบรรทัดนี้ข้างบน)
-importScripts('https://cdn.onesignal.com/sdks/OneSignalSDK.js');
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js?appId=6d2966e8-0b04-4f19-9f6c-78d31ba9ad5d');
 
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
 
