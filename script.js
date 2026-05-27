@@ -1176,78 +1176,22 @@ function showTrackerModal() {
 }
 
 /* ===== MAIN RENDER ===== */
-function getProfileCardHTML(displayName, displayImage, googleUser, userProfileData, cardStyle) {
-    const imageHTML = displayImage ? `<img src="${displayImage}" style="width:100%; height:100%; object-fit:cover;">` : `<div style="font-size:26px; color: #00d4ff;">✨</div>`;
+function getProfileCardHTML(displayName, displayImage, googleUser, userProfileData) {
+    const imageHTML = displayImage ? `<img src="${displayImage}" style="width:100%; height:100%; object-fit:cover;">` : `<img src="https://github.com/wayhavior/HabitBetter/raw/main/icon512_rounded.png" style="width:100%; height:100%; object-fit:cover;">`;
     const statusText = googleUser ? '✅ Active • Google Sync' : '✅ Active • Local Profile';
     
-    const designs = {
-        "1": `<div style="background: transparent; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; cursor: pointer; transition: all 0.2s; border-left: 4px solid #00d4ff;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 56px; height: 56px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0,212,255,0.3);">${imageHTML}</div>
+    return `<div style="background: transparent; border: 0.5px solid var(--color-border-tertiary); border-radius: 16px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);">
+        <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                <div style="width: 56px; height: 56px; border-radius: 12px; background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; overflow: hidden;">${imageHTML}</div>
                 <div style="flex: 1; min-width: 0;">
                     <div style="font-weight: 700; font-size: 14px; color: white; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.7);">${statusText}</div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); white-space: nowrap;">${statusText}</div>
                 </div>
             </div>
-        </div>`,
-        
-        "2": `<div style="background: transparent; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 0; overflow: hidden; cursor: pointer; transition: all 0.2s;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 8px 12px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 56px; height: 56px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(0,212,255,0.3); overflow: hidden;">${imageHTML}</div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 700; font-size: 14px; color: white; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.7);">${statusText}</div>
-                    </div>
-                </div>
-            </div>
-        </div>`,
-        
-        "3": `<div style="background: transparent; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);">
-            <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-                    <div style="width: 56px; height: 56px; border-radius: 8px; background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; overflow: hidden;">${imageHTML}</div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="font-weight: 700; font-size: 14px; color: white; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.6); white-space: nowrap;">${statusText}</div>
-                    </div>
-                </div>
-                <div style="background: linear-gradient(135deg, #ffd89b 0%, #ff9a56 100%); padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; color: white; flex-shrink: 0; white-space: nowrap;">9 badges</div>
-            </div>
-        </div>`,
-        
-        "4": `<div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 0.5px solid rgba(0,212,255,0.2); border-radius: 8px; padding: 8px 10px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 56px; height: 56px; background: rgba(255,255,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0,212,255,0.3);">${imageHTML}</div>
-                <div style="flex: 1; width: 100%; min-width:0;">
-                    <div style="font-weight: 700; font-size: 14px; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 1px;">${displayName}</div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.5);">${statusText}</div>
-                </div>
-            </div>
-        </div>`,
-        
-        "5": `<div style="background: transparent; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; cursor: pointer; transition: all 0.2s;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 56px; height: 56px; border-radius: 8px; background: linear-gradient(135deg, #1dd1a1 0%, #10ac84 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0,212,255,0.3);">${imageHTML}</div>
-                <div style="flex: 1; min-width: 0;">
-                    <div style="font-weight: 700; font-size: 14px; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);">${statusText}</div>
-                </div>
-            </div>
-        </div>`,
-        
-        "6": `<div style="background: rgba(102,126,234,0.08); backdrop-filter: blur(10px); border: 1px solid rgba(102,126,234,0.2); border-radius: var(--border-radius-md); padding: 10px 12px; cursor: pointer; transition: all 0.2s;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 56px; height: 56px; border-radius: 8px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid rgba(0,212,255,0.3); overflow: hidden;">${imageHTML}</div>
-                <div style="flex: 1; min-width: 0;">
-                    <div style="font-weight: 700; font-size: 14px; color: white; margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${displayName}</div>
-                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);">${statusText}</div>
-                </div>
-            </div>
-        </div>`
-    };
-    
-    return designs[cardStyle] || designs["4"];
+            <div style="background: linear-gradient(135deg, #ffd89b 0%, #ff9a56 100%); padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; color: white; flex-shrink: 0; white-space: nowrap;">9 badges</div>
+        </div>
+    </div>`;
 }
 
 function render() {
@@ -1284,9 +1228,8 @@ function render() {
         const googleUser = localStorage.getItem("googleUser") ? JSON.parse(localStorage.getItem("googleUser")) : null;
         const displayName = googleUser?.name || userProfileData.username || "Setup Profile";
         const displayImage = googleUser?.picture || userProfileImage;
-        const cardStyle = localStorage.getItem("profileCardStyle") || "4";
         
-        levelBox.innerHTML = getProfileCardHTML(displayName, displayImage, googleUser, userProfileData, cardStyle);
+        levelBox.innerHTML = getProfileCardHTML(displayName, displayImage, googleUser, userProfileData);
         homeContainer.appendChild(levelBox);
       // สร้าง Coach Section ใหม่ (ลบรูปโค้ชแล้ว)
 const coachSection = document.createElement("div");
@@ -4837,18 +4780,6 @@ function renderProfilePage() {
                 </div>
             </div>
         </div>
-        
-        <div style="margin-top:30px; padding:0 10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;">
-            <label style="font-size:11px; color:rgba(255,255,255,0.5); margin:0 0 8px 0; text-transform:uppercase; display:block; letter-spacing:0.5px;">🎨 Card Design</label>
-            <select id="profile-card-style" style="width:100%; padding:10px; background:rgba(0,184,148,0.1); border:2px solid rgba(0,184,148,0.4); border-radius:8px; color:#00b894; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit;">
-                <option value="1">✨ Design 1: Accent Border</option>
-                <option value="2">💜 Design 2: Gradient Header</option>
-                <option value="3">💎 Design 3: Side Accent</option>
-                <option value="4">🌙 Design 4: Minimalist Elegant (Current)</option>
-                <option value="5">⭐ Design 5: Double Stats</option>
-                <option value="6">⚡ Design 6: Glassmorphism</option>
-            </select>
-        </div>
     `;
 
     app.appendChild(container);
@@ -4941,20 +4872,6 @@ function setupProfilePageEvents(isGoogleLogin, googleUser) {
     const changeBtn = document.getElementById("profile-change-btn");
     const deleteBtn = document.getElementById("profile-delete-btn");
     const imageContainer = document.getElementById("profile-image-container");
-    const cardStyleSelect = document.getElementById("profile-card-style");
-    
-    // Dropdown handler
-    if (cardStyleSelect) {
-        // Load saved style
-        const savedStyle = localStorage.getItem("profileCardStyle") || "4";
-        cardStyleSelect.value = savedStyle;
-        
-        cardStyleSelect.onchange = (e) => {
-            localStorage.setItem("profileCardStyle", e.target.value);
-            showNotification("✅ Saved", "Profile card style updated", "success");
-            render();
-        };
-    }
     
     if (changeBtn && !isGoogleLogin) {
         changeBtn.onclick = () => imageInput.click();
