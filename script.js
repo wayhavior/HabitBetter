@@ -5108,27 +5108,40 @@ function showImageCropperForProfile(imageSrc, onSuccess) {
 
 /* ===== PUSH NOTIFICATION FUNCTIONS ===== */
 function setupPushNotificationToggle() {
+    console.log("🔔 [SETUP] Starting push notification toggle setup...");
+    
     const toggleBtn = document.getElementById("push-notification-toggle");
     const toggleDot = document.getElementById("push-notification-toggle-dot");
     
+    console.log("🔍 [SETUP] toggleBtn found:", !!toggleBtn);
+    console.log("🔍 [SETUP] toggleDot found:", !!toggleDot);
+    
     if (!toggleBtn) {
-        console.warn("⚠️ Push notification toggle button not found");
+        console.warn("⚠️ [SETUP] Push notification toggle button not found - retrying in 500ms");
+        // รีทราย หลัง 500ms ถ้าไม่เจอ
+        setTimeout(setupPushNotificationToggle, 500);
         return;
     }
     
-    console.log("🔔 Setting up push notification toggle...");
+    console.log("✅ [SETUP] Found toggle button, setting up...");
     
     // ✅ wrap ใน OneSignal.push() เพื่อรอให้ OneSignal พร้อม
     OneSignal.push(function() {
+        console.log("✅ [SETUP] OneSignal ready, checking subscription status...");
+        
         OneSignal.isPushNotificationsEnabled(function(isEnabled) {
-            console.log("📢 Current push notification status:", isEnabled);
+            console.log("📢 [SETUP] Current push notification status:", isEnabled);
             updatePushNotificationToggleUI(isEnabled);
         });
         
         // เพิ่ม event listener ให้ toggle button
+        console.log("🔗 [SETUP] Adding click listener to toggle button...");
         toggleBtn.addEventListener("click", function() {
+            console.log("👆 [CLICK] Toggle button clicked!");
             handlePushNotificationToggle();
         });
+        
+        console.log("✅ [SETUP] Setup complete!");
     });
 }
 
@@ -5136,40 +5149,59 @@ function updatePushNotificationToggleUI(isEnabled) {
     const toggleBtn = document.getElementById("push-notification-toggle");
     const toggleDot = document.getElementById("push-notification-toggle-dot");
     
-    if (!toggleBtn || !toggleDot) return;
+    if (!toggleBtn || !toggleDot) {
+        console.warn("⚠️ [UI UPDATE] Toggle elements not found");
+        return;
+    }
+    
+    console.log("🎨 [UI UPDATE] Updating UI - enabled:", isEnabled);
     
     if (isEnabled) {
         toggleBtn.style.background = "#4caf50";
         toggleDot.style.right = "2px";
         toggleDot.style.left = "auto";
-        console.log("✅ Push notification toggle UI: ON");
+        console.log("✅ [UI UPDATE] Toggle ON (green)");
     } else {
         toggleBtn.style.background = "#555";
         toggleDot.style.left = "2px";
         toggleDot.style.right = "auto";
-        console.log("❌ Push notification toggle UI: OFF");
+        console.log("❌ [UI UPDATE] Toggle OFF (gray)");
     }
 }
 
 function handlePushNotificationToggle() {
+    console.log("⚙️ [HANDLER] handlePushNotificationToggle called");
+    
     OneSignal.push(function() {
+        console.log("⚙️ [HANDLER] Inside OneSignal.push");
+        
         OneSignal.isPushNotificationsEnabled(function(isEnabled) {
+            console.log("⚙️ [HANDLER] isPushNotificationsEnabled result:", isEnabled);
+            
             if (isEnabled) {
                 // ถ้า enabled อยู่ ให้ unsubscribe
-                console.log("🔕 Unsubscribing from push notifications...");
+                console.log("🔕 [HANDLER] Unsubscribing from push notifications...");
                 OneSignal.setSubscription(false);
                 updatePushNotificationToggleUI(false);
                 showNotification("✅ ปิด", "ปิดการแจ้งเตือนแล้ว", "success");
+                console.log("✅ [HANDLER] Unsubscribed successfully");
+                
             } else {
                 // ถ้า disabled อยู่ ให้ subscribe
-                console.log("🔔 Showing push notification prompt...");
+                console.log("🔔 [HANDLER] Showing push notification prompt...");
                 OneSignal.showSlidedownPrompt();
+                
                 // อัปเดต UI หลังจากผู้ใช้กด
                 setTimeout(() => {
+                    console.log("⚙️ [HANDLER] Checking subscription status after prompt...");
                     OneSignal.isPushNotificationsEnabled(function(newStatus) {
+                        console.log("⚙️ [HANDLER] New subscription status:", newStatus);
                         updatePushNotificationToggleUI(newStatus);
                         if (newStatus) {
                             showNotification("✅ สำเร็จ", "เปิดการแจ้งเตือนแล้ว", "success");
+                            console.log("✅ [HANDLER] Subscribed successfully");
+                        } else {
+                            console.log("ℹ️ [HANDLER] User denied notification permission");
                         }
                     });
                 }, 1000);
