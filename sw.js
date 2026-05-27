@@ -1,5 +1,8 @@
 // This is the "Offline page" service worker
 
+// Import OneSignal (เพิ่มบรรทัดนี้ข้างบน)
+importScripts('https://cdn.onesignal.com/sdks/OneSignalSDK.js');
+
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
 
 const CACHE = "pwabuilder-page";
