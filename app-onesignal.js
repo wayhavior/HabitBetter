@@ -8,15 +8,23 @@ window.OneSignal = window.OneSignal || [];
 OneSignal.push(function() {
     console.log("✅ OneSignal SDK Ready");
     
-    // ✅ Init OneSignal - ให้ OneSignal จัดการ Service Worker เอง
+    // ✅ Init OneSignal 
     OneSignal.init({
         appId: "6d2966e8-0b04-4f19-9f6c-78d31ba9ad5d",
-        // ไม่ต้องระบุ serviceWorkerPath - ให้ OneSignal หาเอง
+        // ไม่ต้องระบุ serviceWorkerPath
         allowLocalhostAsSecureOrigin: true,
         notifyButton: {
-            enable: false // ปิด default button
+            enable: false
         }
     });
+
+    // ✅ ป้องกัน OneSignal ค้นหา OneSignalSDKWorker.js
+    // ด้วยการเซ็ต service worker path ให้เหมือน sw.js
+    try {
+        OneSignal.setServiceWorkerPath("/HabitBetter/sw.js");
+    } catch(e) {
+        console.log("Service worker already registered");
+    }
 
     console.log("✅ OneSignal Initialized");
     
