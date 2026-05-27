@@ -1177,7 +1177,7 @@ function showTrackerModal() {
 
 /* ===== MAIN RENDER ===== */
 function getProfileCardHTML(displayName, displayImage, googleUser, userProfileData) {
-    const imageHTML = displayImage ? `<img src="${displayImage}" style="width:100%; height:100%; object-fit:cover;">` : `<img src="icon512_rounded.png" style="width:100%; height:100%; object-fit:cover;">`;
+    const imageHTML = displayImage ? `<img src="${displayImage}" style="width:100%; height:100%; object-fit:cover;">` : `<img src="https://github.com/wayhavior/HabitBetter/raw/main/icon512_rounded.png" style="width:100%; height:100%; object-fit:cover;">`;
     const statusText = googleUser ? '✅ Active • Google Sync' : '✅ Active • Local Profile';
     
     return `<div style="background: transparent; border: 0.5px solid var(--color-border-tertiary); border-radius: 16px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);">
@@ -4490,8 +4490,8 @@ function renderSettingsPage() {
                                 <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">เปิดการแจ้งเตือน</p>
                             </div>
                         </div>
-                        <div style="width: 50px; height: 30px; background: #555; border-radius: 15px; position: relative; cursor: pointer;">
-                            <div style="position: absolute; width: 26px; height: 26px; background: white; border-radius: 50%; top: 2px; left: 2px;"></div>
+                        <div style="width: 50px; height: 30px; background: #555; border-radius: 15px; position: relative; cursor: pointer;" id="push-notification-toggle">
+                            <div style="position: absolute; width: 26px; height: 26px; background: white; border-radius: 50%; top: 2px; left: 2px;" id="push-notification-toggle-dot"></div>
                         </div>
                     </div>
                     <div style="padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
@@ -4548,6 +4548,11 @@ function renderSettingsPage() {
     `;
     
     settingsContainer.innerHTML = settingsHTML;
+
+    // ===== Setup Push Notification Toggle =====
+    setTimeout(() => {
+        setupPushNotificationToggle();
+    }, 100);
     app.appendChild(settingsContainer);
     
     setTimeout(() => {
@@ -5099,4 +5104,113 @@ function showImageCropperForProfile(imageSrc, onSuccess) {
         overlay.remove();
         onSuccess(croppedImage);
     };
+}
+
+/* ===== PUSH NOTIFICATION FUNCTIONS ===== */
+function setupPushNotificationToggle() {
+    console.log("🔔 [SETUP] Starting push notification toggle setup...");
+    
+    const toggleBtn = document.getElementById("push-notification-toggle");
+    const toggleDot = document.getElementById("push-notification-toggle-dot");
+    
+    console.log("🔍 [SETUP] toggleBtn found:", !!toggleBtn);
+    console.log("🔍 [SETUP] toggleDot found:", !!toggleDot);
+    
+    if (!toggleBtn) {
+        console.warn("⚠️ [SETUP] Push notification toggle button not found - retrying in 500ms");
+        // รีทราย หลัง 500ms ถ้าไม่เจอ
+        setTimeout(setupPushNotificationToggle, 500);
+        return;
+    }
+    
+    console.log("✅ [SETUP] Found toggle button, setting up...");
+    
+    // ✅ Direct onclick handler
+    toggleBtn.onclick = function() {
+        console.log("👆 [CLICK] Toggle button clicked via onclick!");
+        handlePushNotificationToggle();
+    };
+    
+    // ✅ Also add addEventListener as backup
+    toggleBtn.addEventListener("click", function() {
+        console.log("👆 [CLICK] Toggle button clicked via addEventListener!");
+        handlePushNotificationToggle();
+    });
+    
+    // ✅ wrap ใน OneSignal.push() เพื่อรอให้ OneSignal พร้อม
+    OneSignal.push(function() {
+        console.log("✅ [SETUP] OneSignal ready, checking subscription status...");
+        
+        OneSignal.isPushNotificationsEnabled(function(isEnabled) {
+            console.log("📢 [SETUP] Current push notification status:", isEnabled);
+            updatePushNotificationToggleUI(isEnabled);
+        });
+        
+        console.log("✅ [SETUP] Setup complete!");
+    });
+}
+
+function updatePushNotificationToggleUI(isEnabled) {
+    const toggleBtn = document.getElementById("push-notification-toggle");
+    const toggleDot = document.getElementById("push-notification-toggle-dot");
+    
+    if (!toggleBtn || !toggleDot) {
+        console.warn("⚠️ [UI UPDATE] Toggle elements not found");
+        return;
+    }
+    
+    console.log("🎨 [UI UPDATE] Updating UI - enabled:", isEnabled);
+    
+    if (isEnabled) {
+        toggleBtn.style.background = "#4caf50";
+        toggleDot.style.right = "2px";
+        toggleDot.style.left = "auto";
+        console.log("✅ [UI UPDATE] Toggle ON (green)");
+    } else {
+        toggleBtn.style.background = "#555";
+        toggleDot.style.left = "2px";
+        toggleDot.style.right = "auto";
+        console.log("❌ [UI UPDATE] Toggle OFF (gray)");
+    }
+}
+
+function handlePushNotificationToggle() {
+    console.log("⚙️ [HANDLER] handlePushNotificationToggle called");
+    
+    OneSignal.push(function() {
+        console.log("⚙️ [HANDLER] Inside OneSignal.push");
+        
+        OneSignal.isPushNotificationsEnabled(function(isEnabled) {
+            console.log("⚙️ [HANDLER] isPushNotificationsEnabled result:", isEnabled);
+            
+            if (isEnabled) {
+                // ถ้า enabled อยู่ ให้ unsubscribe
+                console.log("🔕 [HANDLER] Unsubscribing from push notifications...");
+                OneSignal.setSubscription(false);
+                updatePushNotificationToggleUI(false);
+                showNotification("✅ ปิด", "ปิดการแจ้งเตือนแล้ว", "success");
+                console.log("✅ [HANDLER] Unsubscribed successfully");
+                
+            } else {
+                // ถ้า disabled อยู่ ให้ subscribe
+                console.log("🔔 [HANDLER] Showing push notification prompt...");
+                OneSignal.showSlidedownPrompt();
+                
+                // อัปเดต UI หลังจากผู้ใช้กด
+                setTimeout(() => {
+                    console.log("⚙️ [HANDLER] Checking subscription status after prompt...");
+                    OneSignal.isPushNotificationsEnabled(function(newStatus) {
+                        console.log("⚙️ [HANDLER] New subscription status:", newStatus);
+                        updatePushNotificationToggleUI(newStatus);
+                        if (newStatus) {
+                            showNotification("✅ สำเร็จ", "เปิดการแจ้งเตือนแล้ว", "success");
+                            console.log("✅ [HANDLER] Subscribed successfully");
+                        } else {
+                            console.log("ℹ️ [HANDLER] User denied notification permission");
+                        }
+                    });
+                }, 1000);
+            }
+        });
+    });
 }
