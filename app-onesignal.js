@@ -12,12 +12,12 @@ OneSignal.push(function() {
     // ตั้งค่า OneSignal
     OneSignal.init({
         appId: "6d2966e8-0b04-4f19-9f6c-78d31ba9ad5d",
-        serviceWorkerPath: "OneSignalSDKWorker.js",
+        serviceWorkerPath: "/HabitBetter/OneSignalSDKWorker.js",
         allowLocalhostAsSecureOrigin: true,
     });
 
     // ตั้งค่า Service Worker
-    OneSignal.setServiceWorkerPath("OneSignalSDKWorker.js");
+    OneSignal.setServiceWorkerPath("/HabitBetter/OneSignalSDKWorker.js");
 
     // ฟังการเปลี่ยนแปลง Subscription
     OneSignal.on("subscriptionChange", function(isSubscribed) {
