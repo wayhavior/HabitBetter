@@ -9,16 +9,20 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Google API Library -->
     <script src="https://apis.google.com/js/api.js" async defer></script>
+    <!-- OneSignal SDK (เพิ่มบรรทัดนี้) -->
+    <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async=""></script>
     <link rel="manifest" href="./manifest.json">
     <link rel="stylesheet" href="./style.css">
 </head>
-
 <body>
     <div id="app"></div>
-
+    
     <!-- โหลด script.js ให้เรียบร้อยก่อน Google APIs -->
     <script src="./script.js"></script>
-
+    
+    <!-- OneSignal Configuration (เพิ่มบรรทัดนี้) -->
+    <script src="./app-onesignal.js"></script>
+    
     <!-- รอให้ page โหลดจบแล้วเรียก initialization -->
     <script>
         // เรียกใช้เมื่อ page โหลดจบ
@@ -32,7 +36,6 @@
                     console.warn('⚠️ initializeGoogleDriveAPI not ready yet');
                 }
             }, 500);
-
             // Service Worker registration
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
