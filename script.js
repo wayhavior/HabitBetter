@@ -5125,6 +5125,18 @@ function setupPushNotificationToggle() {
     
     console.log("✅ [SETUP] Found toggle button, setting up...");
     
+    // ✅ Direct onclick handler
+    toggleBtn.onclick = function() {
+        console.log("👆 [CLICK] Toggle button clicked via onclick!");
+        handlePushNotificationToggle();
+    };
+    
+    // ✅ Also add addEventListener as backup
+    toggleBtn.addEventListener("click", function() {
+        console.log("👆 [CLICK] Toggle button clicked via addEventListener!");
+        handlePushNotificationToggle();
+    });
+    
     // ✅ wrap ใน OneSignal.push() เพื่อรอให้ OneSignal พร้อม
     OneSignal.push(function() {
         console.log("✅ [SETUP] OneSignal ready, checking subscription status...");
@@ -5132,13 +5144,6 @@ function setupPushNotificationToggle() {
         OneSignal.isPushNotificationsEnabled(function(isEnabled) {
             console.log("📢 [SETUP] Current push notification status:", isEnabled);
             updatePushNotificationToggleUI(isEnabled);
-        });
-        
-        // เพิ่ม event listener ให้ toggle button
-        console.log("🔗 [SETUP] Adding click listener to toggle button...");
-        toggleBtn.addEventListener("click", function() {
-            console.log("👆 [CLICK] Toggle button clicked!");
-            handlePushNotificationToggle();
         });
         
         console.log("✅ [SETUP] Setup complete!");
