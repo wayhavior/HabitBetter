@@ -15,7 +15,7 @@ const GOOGLE_API_KEY = "AIzaSyATr3RANcNwBMal7MSrtkwG4p4A7vCwq5E";
 let accessToken = null;
 
 // 🔔 OneSignal Configuration
-const ONE_SIGNAL_APP_ID = "YOUR_ONESIGNAL_APP_ID"; // 👈 เปลี่ยนเป็น App ID ของคุณจาก OneSignal Dashboard
+const ONE_SIGNAL_APP_ID = "6d2966e8-0b04-4f19-9f6c-78d31ba9ad5d"; // 👈 เปลี่ยนเป็น App ID ของคุณจาก OneSignal Dashboard
 
 // 🌟 เพิ่มบล็อกโค้ดนี้เข้าไปด้านล่าง let accessToken = null; ครับ 🌟
 if (localStorage.getItem("googleDriveToken")) {
