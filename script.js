@@ -25,7 +25,7 @@ if (localStorage.getItem("googleDriveToken")) {
 // 🔔 Initialize OneSignal
 function initializeOneSignal() {
     const script = document.createElement('script');
-    script.src = 'https://cdn.onesignal.com/sdks/onesignalSDK.js';
+    script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js';
     script.async = true;
     
     script.onload = () => {
