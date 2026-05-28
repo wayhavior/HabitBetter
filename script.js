@@ -56,18 +56,22 @@ function getToday() { return new Date().toISOString().split("T")[0]; }
 /* ===== ONE SIGNAL FUNCTIONS ===== */
 // 🔔 ฟังก์ชันขอสิทธิ์ notification (Native Dialog เฉพาะตรง - ไม่มี Slidedown Prompt)
 function requestNotificationPermission() {
-    if (!window.OneSignal) {
-        alert("OneSignal ยังไม่พร้อม กรุณารอสักครู่");
-        return;
-    }
-    
-    OneSignal.push(function() {
-        // 🔔 ขึ้น Native Browser Dialog โดยตรง (ไม่ขึ้น Slidedown Prompt)
-        OneSignal.Notifications.requestPermission().then(function(permission) {
-            if (permission === true || permission === 'granted') {
+    // 🔔 ขึ้น Native Browser Dialog โดยตรง (ใช้ Standard Web API)
+    if ('Notification' in window) {
+        Notification.requestPermission().then(function(permission) {
+            console.log("Notification permission:", permission);
+            
+            if (permission === 'granted') {
                 // ✅ ผู้ใช้กด Allow
                 console.log("✅ Notification permission granted");
                 showNotification("✅ สำเร็จ", "สิทธิ์การแจ้งเตือนได้รับการตั้งค่า", "success");
+                
+                // 🔔 บอก OneSignal ว่าได้ permission แล้ว
+                if (window.OneSignal) {
+                    OneSignal.push(function() {
+                        console.log("✅ OneSignal notified about permission");
+                    });
+                }
             } else {
                 // ❌ ผู้ใช้กด Block หรือปิด
                 console.log("❌ Notification permission denied");
@@ -77,7 +81,9 @@ function requestNotificationPermission() {
             console.error("Notification permission error:", err);
             showNotification("⚠️ ข้อผิดพลาด", "เกิดข้อผิดพลาดในการขออนุญาต", "error");
         });
-    });
+    } else {
+        alert("เบราว์เซอร์ของคุณไม่สนับสนุน Notification");
+    }
 }
 
 /* ===== GOOGLE LOGIN FUNCTIONS ===== */
