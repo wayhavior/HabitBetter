@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function getToday() { return new Date().toISOString().split("T")[0]; }
 
 /* ===== ONE SIGNAL FUNCTIONS ===== */
-// 🔔 ฟังก์ชันขอสิทธิ์ notification
+// 🔔 ฟังก์ชันขอสิทธิ์ notification (Native Dialog เฉพาะตรง - ไม่มี Slidedown Prompt)
 function requestNotificationPermission() {
     if (!window.OneSignal) {
         alert("OneSignal ยังไม่พร้อม กรุณารอสักครู่");
@@ -61,12 +61,20 @@ function requestNotificationPermission() {
     }
     
     OneSignal.push(function() {
-        OneSignal.showSlidedownPrompt().then(function() {
-            console.log("✅ Notification permission prompt shown");
-            showNotification("✅ สำเร็จ", "สิทธิ์การแจ้งเตือนได้รับการตั้งค่า", "success");
+        // 🔔 ขึ้น Native Browser Dialog โดยตรง (ไม่ขึ้น Slidedown Prompt)
+        OneSignal.Notifications.requestPermission().then(function(permission) {
+            if (permission === true || permission === 'granted') {
+                // ✅ ผู้ใช้กด Allow
+                console.log("✅ Notification permission granted");
+                showNotification("✅ สำเร็จ", "สิทธิ์การแจ้งเตือนได้รับการตั้งค่า", "success");
+            } else {
+                // ❌ ผู้ใช้กด Block หรือปิด
+                console.log("❌ Notification permission denied");
+                showNotification("ℹ️ ข้อมูล", "เบราว์เซอร์ของคุณไม่สนับสนุน Push Notification หรือคุณปฏิเสธแล้ว", "info");
+            }
         }).catch(err => {
             console.error("Notification permission error:", err);
-            showNotification("ℹ️ ข้อมูล", "เบราว์เซอร์ของคุณไม่สนับสนุน Push Notification หรือคุณปฏิเสธแล้ว", "info");
+            showNotification("⚠️ ข้อผิดพลาด", "เกิดข้อผิดพลาดในการขออนุญาต", "error");
         });
     });
 }
