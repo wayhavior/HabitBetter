@@ -5021,7 +5021,27 @@ function setupProfilePageEvents(isGoogleLogin, googleUser) {
     const pushNotificationBtn = document.getElementById("push-notification-btn");
     if (pushNotificationBtn) {
         pushNotificationBtn.onclick = () => {
-            requestNotificationPermission();
+            // 🔔 ขึ้น Native Browser Dialog โดยตรง (Inline)
+            if ('Notification' in window) {
+                Notification.requestPermission().then(function(permission) {
+                    console.log("Notification permission:", permission);
+                    
+                    if (permission === 'granted') {
+                        // ✅ ผู้ใช้กด Allow
+                        console.log("✅ Notification permission granted");
+                        showNotification("✅ สำเร็จ", "สิทธิ์การแจ้งเตือนได้รับการตั้งค่า", "success");
+                    } else {
+                        // ❌ ผู้ใช้กด Block
+                        console.log("❌ Notification permission denied");
+                        showNotification("ℹ️ ข้อมูล", "เบราว์เซอร์ของคุณไม่สนับสนุน Push Notification หรือคุณปฏิเสธแล้ว", "info");
+                    }
+                }).catch(err => {
+                    console.error("Notification permission error:", err);
+                    showNotification("⚠️ ข้อผิดพลาด", "เกิดข้อผิดพลาดในการขออนุญาต", "error");
+                });
+            } else {
+                alert("เบราว์เซอร์ของคุณไม่สนับสนุน Notification");
+            }
         };
     }
 }
