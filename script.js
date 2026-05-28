@@ -34,7 +34,7 @@ function initializeOneSignal() {
             OneSignal.init({
                 appId: ONE_SIGNAL_APP_ID,
                 allowLocalhostAsSecureOrigin: true, // สำหรับ localhost testing
-                autoPrompt: false, // 🔔 ไม่ให้ OneSignal แสดง Prompt อัตโนมัติ (รอให้ผู้ใช้กดปุ่มเท่านั้น)
+                //autoPrompt: false, // 🔔 ไม่ให้ OneSignal แสดง Prompt อัตโนมัติ (รอให้ผู้ใช้กดปุ่มเท่านั้น)
             });
             console.log("✅ OneSignal initialized successfully");
         });
