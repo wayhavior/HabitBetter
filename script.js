@@ -23,20 +23,39 @@ if (localStorage.getItem("googleDriveToken")) {
 }
 
 // 🔔 Initialize OneSignal
+let isOneSignalReady = false; // 🆕 เพิ่มตัวแปรตรวจสอบสถานะ
+
 function initializeOneSignal() {
+    // ถ้า OneSignal อยู่แล้ว ให้ skip
+    if (window.OneSignal && typeof window.OneSignal === 'object') {
+        console.log("✅ OneSignal already initialized");
+        isOneSignalReady = true;
+        return;
+    }
+
     const script = document.createElement('script');
     script.src = 'https://cdn.onesignal.com/sdks/onesignalSDK.js';
     script.async = true;
     
+    script.onerror = () => {
+        console.error("❌ Failed to load OneSignal SDK");
+    };
+    
     script.onload = () => {
+        console.log("📦 OneSignal SDK loaded, initializing...");
         window.OneSignal = window.OneSignal || [];
         OneSignal.push(function() {
-            OneSignal.init({
-                appId: ONE_SIGNAL_APP_ID,
-                allowLocalhostAsSecureOrigin: true, // สำหรับ localhost testing
-                autoPrompt: false, // 🔔 ไม่ให้ OneSignal แสดง Prompt อัตโนมัติ (รอให้ผู้ใช้กดปุ่มเท่านั้น)
-            });
-            console.log("✅ OneSignal initialized successfully");
+            try {
+                OneSignal.init({
+                    appId: ONE_SIGNAL_APP_ID,
+                    allowLocalhostAsSecureOrigin: true, // สำหรับ localhost testing
+                    autoPrompt: false, // 🔔 ไม่ให้ OneSignal แสดง Prompt อัตโนมัติ (รอให้ผู้ใช้กดปุ่มเท่านั้น)
+                });
+                isOneSignalReady = true;
+                console.log("✅ OneSignal initialized successfully");
+            } catch (err) {
+                console.error("❌ OneSignal init error:", err);
+            }
         });
     };
     
@@ -55,29 +74,56 @@ function getToday() { return new Date().toISOString().split("T")[0]; }
 
 /* ===== ONE SIGNAL FUNCTIONS ===== */
 // 🔔 ฟังก์ชันขอสิทธิ์ notification (Native Dialog เฉพาะตรง - ไม่มี Slidedown Prompt)
-function requestNotificationPermission() {
-    if (!window.OneSignal) {
-        alert("OneSignal ยังไม่พร้อม กรุณารอสักครู่");
+async function requestNotificationPermission() {
+    console.log("🔔 Requesting notification permission...");
+    
+    // ✅ รอให้ OneSignal พร้อมหากยังไม่พร้อม
+    let retries = 0;
+    const maxRetries = 10;
+    
+    while (!isOneSignalReady && retries < maxRetries) {
+        console.log(`⏳ Waiting for OneSignal... (${retries + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retries++;
+    }
+    
+    if (!isOneSignalReady) {
+        console.error("❌ OneSignal not ready after waiting");
+        showNotification("⚠️ ข้อผิดพลาด", "OneSignal ยังไม่พร้อม กรุณารอสักครู่และลองอีกครั้ง", "error");
         return;
     }
     
-    OneSignal.push(function() {
+    // ✅ ตรวจสอบ OneSignal.Notifications มีจริงหรือไม่
+    if (!window.OneSignal || !window.OneSignal.Notifications) {
+        console.error("❌ OneSignal.Notifications not available");
+        showNotification("⚠️ ข้อผิดพลาด", "ระบบแจ้งเตือนไม่พร้อม", "error");
+        return;
+    }
+    
+    try {
         // 🔔 ขึ้น Native Browser Dialog โดยตรง (ไม่ขึ้น Slidedown Prompt)
-        OneSignal.Notifications.requestPermission().then(function(permission) {
-            if (permission === true || permission === 'granted') {
-                // ✅ ผู้ใช้กด Allow
-                console.log("✅ Notification permission granted");
-                showNotification("✅ สำเร็จ", "สิทธิ์การแจ้งเตือนได้รับการตั้งค่า", "success");
-            } else {
-                // ❌ ผู้ใช้กด Block หรือปิด
-                console.log("❌ Notification permission denied");
-                showNotification("ℹ️ ข้อมูล", "เบราว์เซอร์ของคุณไม่สนับสนุน Push Notification หรือคุณปฏิเสธแล้ว", "info");
-            }
-        }).catch(err => {
-            console.error("Notification permission error:", err);
-            showNotification("⚠️ ข้อผิดพลาด", "เกิดข้อผิดพลาดในการขออนุญาต", "error");
-        });
-    });
+        console.log("📢 Calling OneSignal.Notifications.requestPermission()...");
+        const permission = await OneSignal.Notifications.requestPermission();
+        
+        console.log("✅ Permission result:", permission);
+        
+        if (permission === true || permission === 'granted') {
+            // ✅ ผู้ใช้กด Allow
+            console.log("✅ Notification permission granted");
+            showNotification("✅ สำเร็จ", "สิทธิ์การแจ้งเตือนได้รับการตั้งค่า", "success");
+        } else if (permission === false || permission === 'denied') {
+            // ❌ ผู้ใช้กด Block
+            console.log("❌ Notification permission denied");
+            showNotification("ℹ️ ข้อมูล", "คุณปฏิเสธการแจ้งเตือน หากต้องการเปลี่ยนใจ ให้ไปตั้งค่าเบราว์เซอร์", "info");
+        } else {
+            // ❌ สถานะอื่นๆ
+            console.log("⚠️ Notification permission default:", permission);
+            showNotification("ℹ️ ข้อมูล", "เบราว์เซอร์ของคุณไม่สนับสนุน Push Notification หรือไม่อนุญาต", "info");
+        }
+    } catch (err) {
+        console.error("❌ Notification permission error:", err);
+        showNotification("⚠️ ข้อผิดพลาด", "เกิดข้อผิดพลาดในการขออนุญาต: " + err.message, "error");
+    }
 }
 
 /* ===== GOOGLE LOGIN FUNCTIONS ===== */
@@ -5015,8 +5061,13 @@ function setupProfilePageEvents(isGoogleLogin, googleUser) {
     const pushNotificationBtn = document.getElementById("push-notification-btn");
     if (pushNotificationBtn) {
         pushNotificationBtn.onclick = () => {
+            console.log("🖱️ Push notification button clicked");
+            console.log("📊 OneSignal ready:", isOneSignalReady);
+            console.log("📊 OneSignal object:", !!window.OneSignal);
             requestNotificationPermission();
         };
+    } else {
+        console.warn("⚠️ Push notification button not found (ID: push-notification-btn)");
     }
 }
 
