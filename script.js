@@ -14,77 +14,13 @@ const GOOGLE_CLIENT_ID = "192099173031-arqdd6koquej0is89egvmna3bg7j552m.apps.goo
 const GOOGLE_API_KEY = "AIzaSyATr3RANcNwBMal7MSrtkwG4p4A7vCwq5E";
 let accessToken = null;
 
-// 🔔 OneSignal Configuration
-const ONE_SIGNAL_APP_ID = "6d2966e8-0b04-4f19-9f6c-78d31ba9ad5d"; // 👈 เปลี่ยนเป็น App ID ของคุณจาก OneSignal Dashboard
-
 // 🌟 เพิ่มบล็อกโค้ดนี้เข้าไปด้านล่าง let accessToken = null; ครับ 🌟
 if (localStorage.getItem("googleDriveToken")) {
     accessToken = localStorage.getItem("googleDriveToken");
 }
 
-// 🔔 Initialize OneSignal
-function initializeOneSignal() {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.onesignal.com/sdks/OneSignalSDK.js';
-    script.async = true;
-    
-    script.onload = () => {
-        window.OneSignal = window.OneSignal || [];
-        OneSignal.push(function() {
-            OneSignal.init({
-                appId: ONE_SIGNAL_APP_ID,
-                allowLocalhostAsSecureOrigin: true, // สำหรับ localhost testing
-                //autoPrompt: false, // 🔔 ไม่ให้ OneSignal แสดง Prompt อัตโนมัติ (รอให้ผู้ใช้กดปุ่มเท่านั้น)
-            });
-            console.log("✅ OneSignal initialized successfully");
-        });
-    };
-    
-    document.head.appendChild(script);
-}
-
-// เรียก initialize OneSignal เมื่อหน้าโหลด
-document.addEventListener('DOMContentLoaded', () => {
-    if (ONE_SIGNAL_APP_ID !== "YOUR_ONESIGNAL_APP_ID") {
-        initializeOneSignal();
-    }
-});
-
 /* 1. ย้ายมาบนสุดกัน Error */
 function getToday() { return new Date().toISOString().split("T")[0]; }
-
-/* ===== ONE SIGNAL FUNCTIONS ===== */
-// 🔔 ฟังก์ชันขอสิทธิ์ notification (Native Dialog เฉพาะตรง - ไม่มี Slidedown Prompt)
-function requestNotificationPermission() {
-    // 🔔 ขึ้น Native Browser Dialog โดยตรง (ใช้ Standard Web API)
-    if ('Notification' in window) {
-        Notification.requestPermission().then(function(permission) {
-            console.log("Notification permission:", permission);
-            
-            if (permission === 'granted') {
-                // ✅ ผู้ใช้กด Allow
-                console.log("✅ Notification permission granted");
-                showNotification("✅ สำเร็จ", "สิทธิ์การแจ้งเตือนได้รับการตั้งค่า", "success");
-                
-                // 🔔 บอก OneSignal ว่าได้ permission แล้ว
-                if (window.OneSignal) {
-                    OneSignal.push(function() {
-                        console.log("✅ OneSignal notified about permission");
-                    });
-                }
-            } else {
-                // ❌ ผู้ใช้กด Block หรือปิด
-                console.log("❌ Notification permission denied");
-                showNotification("ℹ️ ข้อมูล", "เบราว์เซอร์ของคุณไม่สนับสนุน Push Notification หรือคุณปฏิเสธแล้ว", "info");
-            }
-        }).catch(err => {
-            console.error("Notification permission error:", err);
-            showNotification("⚠️ ข้อผิดพลาด", "เกิดข้อผิดพลาดในการขออนุญาต", "error");
-        });
-    } else {
-        alert("เบราว์เซอร์ของคุณไม่สนับสนุน Notification");
-    }
-}
 
 /* ===== GOOGLE LOGIN FUNCTIONS ===== */
 // ฟังก์ชันเพื่อ decode JWT token
@@ -4550,16 +4486,6 @@ function renderSettingsPage() {
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #a8edea, #fed6e3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">🔔</div>
                             <div>
-                                <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">Push Notification</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">รับการแจ้งเตือนแม้ปิดแอป</p>
-                            </div>
-                        </div>
-                        <button style="padding: 0.5rem 1.2rem; background: linear-gradient(135deg, #a8edea, #fed6e3); color: #1f2937; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.3s;" id="push-notification-btn">เปิดใจ</button>
-                    </div>
-                    <div style="padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #a8edea, #fed6e3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">🔔</div>
-                            <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">การแจ้งเตือน</p>
                                 <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">เปิดการแจ้งเตือน</p>
                             </div>
@@ -5015,34 +4941,6 @@ function setupProfilePageEvents(isGoogleLogin, googleUser) {
     const logoutBtn = document.getElementById("profile-google-logout-btn");
     if (logoutBtn) {
         logoutBtn.onclick = () => logout();
-    }
-    
-    // 🔔 Push Notification Button
-    const pushNotificationBtn = document.getElementById("push-notification-btn");
-    if (pushNotificationBtn) {
-        pushNotificationBtn.onclick = () => {
-            // 🔔 ขึ้น Native Browser Dialog โดยตรง (Inline)
-            if ('Notification' in window) {
-                Notification.requestPermission().then(function(permission) {
-                    console.log("Notification permission:", permission);
-                    
-                    if (permission === 'granted') {
-                        // ✅ ผู้ใช้กด Allow
-                        console.log("✅ Notification permission granted");
-                        showNotification("✅ สำเร็จ", "สิทธิ์การแจ้งเตือนได้รับการตั้งค่า", "success");
-                    } else {
-                        // ❌ ผู้ใช้กด Block
-                        console.log("❌ Notification permission denied");
-                        showNotification("ℹ️ ข้อมูล", "เบราว์เซอร์ของคุณไม่สนับสนุน Push Notification หรือคุณปฏิเสธแล้ว", "info");
-                    }
-                }).catch(err => {
-                    console.error("Notification permission error:", err);
-                    showNotification("⚠️ ข้อผิดพลาด", "เกิดข้อผิดพลาดในการขออนุญาต", "error");
-                });
-            } else {
-                alert("เบราว์เซอร์ของคุณไม่สนับสนุน Notification");
-            }
-        };
     }
 }
 
