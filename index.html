@@ -9,6 +9,9 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Google API Library -->
     <script src="https://apis.google.com/js/api.js" async defer></script>
+    <!-- Firebase Initialization -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging.js"></script>
     <link rel="manifest" href="./manifest.json">
     <link rel="stylesheet" href="./style.css">
 </head>
@@ -38,6 +41,11 @@
                 navigator.serviceWorker.register('./sw.js')
                     .then(reg => console.log('✓ Service Worker registered!'))
                     .catch(err => console.log('⚠️ Service Worker registration failed: ', err));
+            }
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('firebase-messaging-sw.js')
+                    .then(registration => console.log('✅ Firebase Service Worker registered'))
+                    .catch(error => console.warn('⚠️ Firebase Service Worker registration failed:', error));
             }
         });
     </script>
