@@ -19,6 +19,156 @@ if (localStorage.getItem("googleDriveToken")) {
     accessToken = localStorage.getItem("googleDriveToken");
 }
 
+/* ===== FIREBASE CONFIGURATION ===== */
+const firebaseConfig = {
+    apiKey: "AIzaSyDneT0LeIJwZcKfjyAYEnkoQ5_D25LV43M",  // ✏️ เปลี่ยนตามค่าของคุณ
+    authDomain: "habit-better-df87d.firebaseapp.com",  // เช่น habitbetter.firebaseapp.com
+    projectId: "habit-better-df87d",  // เช่น habitbetter
+    storageBucket: "habit-better-df87d.firebasestorage.app",  // เช่น habitbetter.appspot.com
+    messagingSenderId: "137647040602",  // เช่น 12345678
+    appId: "1:137647040602:web:b56d8369acef44fc2f5063"  // เช่น 1:12345678:web:xyz...
+};
+
+const FIREBASE_VAPID_KEY = "BNpaWO00mhBS7FrXIKHxcyXpBNDA8BdVi9ltM8Vosg5jGYq2wvYpU0g2BgdfTY0lNUPYU69zEzzaWVv7_M0qm0o";  // ✏️ เปลี่ยนตามค่าของคุณ
+
+let firebaseMessaging = null;
+
+// เริ่มต้น Firebase
+try {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    firebaseMessaging = firebase.messaging();
+    console.log('✅ Firebase initialized successfully');
+} catch (error) {
+    console.warn('⚠️ Firebase initialization warning:', error.message);
+}
+
+// ฟังก์ชันขอสิทธิ์ notification จากเบราว์เซอร์
+async function requestNotificationPermission() {
+    try {
+        // ขอสิทธิ์ notification จากเบราว์เซอร์
+        const permission = await Notification.requestPermission();
+        
+        if (permission === 'granted') {
+            console.log('✅ Notification permission granted');
+            
+            // ขอ FCM token จาก Firebase
+            if (firebaseMessaging) {
+                try {
+                    const token = await firebaseMessaging.getToken({
+                        vapidKey: FIREBASE_VAPID_KEY
+                    });
+                    
+                    if (token) {
+                        console.log('✅ FCM Token received:', token);
+                        
+                        // บันทึก token ลง localStorage เพื่อส่งไปยังเซิร์ฟเวอร์
+                        localStorage.setItem('fcmToken', token);
+                        localStorage.setItem('notificationsEnabled', 'true');
+                        
+                        // แสดง notification สำเร็จ
+                        showNotification(
+                            "✅ Push Notification เปิดแล้ว",
+                            "คุณจะได้รับการแจ้งเตือนแบบ Push",
+                            "success"
+                        );
+                        
+                        // อัปเดต UI
+                        updateNotificationButtonUI();
+                        
+                        return token;
+                    }
+                } catch (error) {
+                    console.error('❌ Error getting FCM token:', error);
+                    showNotification(
+                        "⚠️ เกิดข้อผิดพลาด",
+                        "ไม่สามารถเปิด Push Notification ได้: " + error.message,
+                        "error"
+                    );
+                }
+            } else {
+                console.warn('⚠️ Firebase Messaging not initialized');
+                showNotification(
+                    "⚠️ Firebase ไม่พร้อม",
+                    "กรุณารีเฟรชหน้าแล้วลองใหม่",
+                    "error"
+                );
+            }
+        } else if (permission === 'denied') {
+            console.log('❌ Notification permission denied');
+            showNotification(
+                "❌ ไม่ได้รับอนุญาต",
+                "กรุณาอนุญาตให้เปิด Push Notification ในการตั้งค่า",
+                "error"
+            );
+        }
+    } catch (error) {
+        console.error('❌ Error requesting notification permission:', error);
+        showNotification(
+            "❌ เกิดข้อผิดพลาด",
+            error.message,
+            "error"
+        );
+    }
+}
+
+// ฟังก์ชันอัปเดต UI ของปุ่ม notification
+function updateNotificationButtonUI() {
+    const notificationBtn = document.getElementById('enable-notification-btn');
+    if (notificationBtn) {
+        const fcmToken = localStorage.getItem('fcmToken');
+        if (fcmToken) {
+            notificationBtn.textContent = '✅ เปิดแล้ว';
+            notificationBtn.disabled = true;
+            notificationBtn.style.opacity = '0.6';
+            notificationBtn.style.cursor = 'not-allowed';
+        } else {
+            notificationBtn.textContent = 'เปิด';
+            notificationBtn.disabled = false;
+            notificationBtn.style.opacity = '1';
+            notificationBtn.style.cursor = 'pointer';
+        }
+    }
+}
+
+// ฟังก์ชันฟังข้อมูล notification ขณะ app เปิด (foreground)
+if (firebaseMessaging) {
+    firebaseMessaging.onMessage((payload) => {
+        console.log('📬 Message received in foreground:', payload);
+        
+        const notificationTitle = payload.notification?.title || 'การแจ้งเตือน';
+        const notificationBody = payload.notification?.body || '';
+        const notificationIcon = payload.notification?.icon || '/logo.png';
+        
+        // แสดง notification ผ่าน app
+        showNotification(notificationTitle, notificationBody, 'info');
+        
+        // ถ้าต้องการ แสดง browser notification ด้วย
+        if (Notification.permission === 'granted') {
+            new Notification(notificationTitle, {
+                body: notificationBody,
+                icon: notificationIcon,
+                badge: '/badge-icon.png'
+            });
+        }
+    });
+}
+
+// ฟังก์ชัน: ตรวจสอบการเปิด notification เมื่อโหลดหน้า
+function checkNotificationStatus() {
+    const fcmToken = localStorage.getItem('fcmToken');
+    const notificationsEnabled = localStorage.getItem('notificationsEnabled') === 'true';
+    
+    if (fcmToken && notificationsEnabled) {
+        console.log('✅ Notifications are enabled');
+        return true;
+    } else {
+        console.log('❌ Notifications are not enabled');
+        return false;
+    }
+}
+
 /* 1. ย้ายมาบนสุดกัน Error */
 function getToday() { return new Date().toISOString().split("T")[0]; }
 
@@ -157,6 +307,10 @@ function logout() {
     localStorage.removeItem("lastBackupFileId");
     localStorage.removeItem("lastBackupFileName");
     localStorage.removeItem("lastBackupTimestamp");
+
+    // 🌟 ลบ Firebase Notification tokens
+    localStorage.removeItem("fcmToken");
+    localStorage.removeItem("notificationsEnabled");
 
     // 🌟 บรรทัดสำคัญ: ล้างค่าตัวแปรสิทธิ์ Drive ในระบบแอปให้เป็นว่างเปล่า
     accessToken = null;
@@ -4486,13 +4640,11 @@ function renderSettingsPage() {
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #a8edea, #fed6e3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">🔔</div>
                             <div>
-                                <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">การแจ้งเตือน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">เปิดการแจ้งเตือน</p>
+                                <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">Push Notification</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">เปิดการแจ้งเตือนแบบ Push</p>
                             </div>
                         </div>
-                        <div style="width: 50px; height: 30px; background: #555; border-radius: 15px; position: relative; cursor: pointer;">
-                            <div style="position: absolute; width: 26px; height: 26px; background: white; border-radius: 50%; top: 2px; left: 2px;"></div>
-                        </div>
+                        <button id="enable-notification-btn" style="padding: 0.5rem 1.2rem; background: linear-gradient(135deg, #a8edea, #fed6e3); color: #333; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.3s; font-family: inherit;" onclick="requestNotificationPermission()">เปิด</button>
                     </div>
                     <div style="padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -4667,6 +4819,9 @@ function renderSettingsPage() {
                 }
             };
         }
+
+        // Update notification button UI
+        updateNotificationButtonUI();
     }, 50);
 }
 // ฟังก์ชันสำหรับสั่งให้ปุ่มพิเศษทั้งหมด อัปเดตการแสดงผลทันทีตามสวิตช์
