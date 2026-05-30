@@ -5,48 +5,68 @@
     <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Habit Better</title>
-    <!-- Google Sign-In Library -->
+    
+    <!-- ===== Google Sign-In & API Library ===== -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!-- Google API Library -->
     <script src="https://apis.google.com/js/api.js" async defer></script>
-    <!-- Firebase Initialization -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging.js"></script>
+    
+    <!-- ===== Firebase (Updated to v10.7.0 Compat) ===== -->
+    <!-- ⚠️ ใช้ compat version เพื่อหลีกเลี่ยง import/export errors -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
+    
+    <!-- ===== Manifest & Stylesheets ===== -->
     <link rel="manifest" href="./manifest.json">
     <link rel="stylesheet" href="./style.css">
 </head>
-
 <body>
     <div id="app"></div>
-
-    <!-- โหลด script.js ให้เรียบร้อยก่อน Google APIs -->
+    
+    <!-- ===== Main Script ===== -->
     <script src="./script.js"></script>
-
-    <!-- รอให้ page โหลดจบแล้วเรียก initialization -->
+    
+    <!-- ===== Page Load Initialization ===== -->
     <script>
-        // เรียกใช้เมื่อ page โหลดจบ
         window.addEventListener('load', function() {
-            // ให้เวลา Google APIs โหลด
+            console.log('📄 Page loaded');
+            
+            // ===== Initialize Google Drive API =====
             setTimeout(() => {
                 if (typeof initializeGoogleDriveAPI === 'function') {
                     initializeGoogleDriveAPI();
-                    console.log('✓ Google Drive API initialized');
+                    console.log('✅ Google Drive API initialized');
                 } else {
                     console.warn('⚠️ initializeGoogleDriveAPI not ready yet');
                 }
             }, 500);
-
-            // Service Worker registration
+            
+            // ===== Register Offline Service Worker (sw.js) =====
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('✓ Service Worker registered!'))
-                    .catch(err => console.log('⚠️ Service Worker registration failed: ', err));
+                    .then(reg => {
+                        console.log('✅ Offline Service Worker registered!');
+                        console.log('   - Handles: Offline caching, assets, static files');
+                    })
+                    .catch(err => {
+                        console.error('❌ Offline Service Worker registration failed:', err);
+                    });
+            } else {
+                console.warn('⚠️ Service Workers not supported');
             }
+            
+            // ===== Register Firebase Messaging Service Worker (firebase-messaging-sw.js) =====
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('firebase-messaging-sw.js')
-                    .then(registration => console.log('✅ Firebase Service Worker registered'))
-                    .catch(error => console.warn('⚠️ Firebase Service Worker registration failed:', error));
+                    .then(registration => {
+                        console.log('✅ Firebase Messaging Service Worker registered');
+                        console.log('   - Handles: Push notifications, background messages');
+                    })
+                    .catch(error => {
+                        console.error('❌ Firebase Messaging Service Worker registration failed:', error);
+                    });
             }
+            
+            console.log('📡 All Service Workers registered');
         });
     </script>
 </body>
