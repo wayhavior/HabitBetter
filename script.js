@@ -67,8 +67,11 @@ async function requestNotificationPermission() {
             
             if (firebaseMessaging) {
                 try {
+                    const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+
                     const token = await firebaseMessaging.getToken({
-                        vapidKey: FIREBASE_VAPID_KEY
+                        vapidKey: FIREBASE_VAPID_KEY,
+                        serviceWorkerRegistration: registration
                     });
                     
                     if (token) {
