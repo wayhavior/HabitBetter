@@ -16,10 +16,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
+// ===== Background Messages =====
+
 messaging.onBackgroundMessage((payload) => {
     console.log('📬 Received background message:', payload);
-    
+
     const notificationTitle = payload.notification?.title || 'การแจ้งเตือน';
+
     const notificationOptions = {
         body: payload.notification?.body || '',
         icon: './icon512_rounded.png',
@@ -27,6 +30,37 @@ messaging.onBackgroundMessage((payload) => {
         tag: 'notification',
         requireInteraction: false
     };
-    
-//    self.registration.showNotification(notificationTitle, notificationOptions);
+
+    console.log('Background message received:', notificationTitle, notificationOptions);
+
+    // ปิดไว้ก่อน เพราะ Firebase Console แสดง Notification ให้อัตโนมัติอยู่แล้ว
+    // self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// ===== Notification Click =====
+
+self.addEventListener('notificationclick', (event) => {
+    console.log('🔔 Notification clicked');
+
+    event.notification.close();
+
+    event.waitUntil(
+        clients.matchAll({
+            type: 'window',
+            includeUncontrolled: true
+        }).then((clientList) => {
+
+            // ถ้า Habit Better เปิดอยู่แล้ว ให้โฟกัสหน้าต่างเดิม
+            for (const client of clientList) {
+                if (client.url.includes('/HabitBetter/') && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+
+            // ถ้ายังไม่เปิด ให้เปิด Habit Better
+            if (clients.openWindow) {
+                return clients.openWindow('/HabitBetter/');
+            }
+        })
+    );
 });
