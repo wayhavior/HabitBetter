@@ -28,5 +28,5 @@ messaging.onBackgroundMessage((payload) => {
         requireInteraction: false
     };
     
-    self.registration.showNotification(notificationTitle, notificationOptions);
+//    self.registration.showNotification(notificationTitle, notificationOptions);
 });
