@@ -19,41 +19,52 @@ if (localStorage.getItem("googleDriveToken")) {
     accessToken = localStorage.getItem("googleDriveToken");
 }
 
-/* ===== FIREBASE CONFIGURATION ===== */
+// ===== FIREBASE CONFIGURATION & INITIALIZATION =====
+
+// Firebase Config
 const firebaseConfig = {
-    apiKey: "AIzaSyDneT0LeIJwZcKfjyAYEnkoQ5_D25LV43M",  // ✏️ เปลี่ยนตามค่าของคุณ
-    authDomain: "habit-better-df87d.firebaseapp.com",  // เช่น habitbetter.firebaseapp.com
-    projectId: "habit-better-df87d",  // เช่น habitbetter
-    storageBucket: "habit-better-df87d.firebasestorage.app",  // เช่น habitbetter.appspot.com
-    messagingSenderId: "137647040602",  // เช่น 12345678
-    appId: "1:137647040602:web:b56d8369acef44fc2f5063"  // เช่น 1:12345678:web:xyz...
+    apiKey: "AIzaSyDneT0LeIJwZcKfjyAYEnkoQ5_D25LV43M",  // ← เปลี่ยน
+    authDomain: "habit-better-df87d.firebaseapp.com",  // ← เปลี่ยน
+    projectId: "habit-better-df87d",  // ← เปลี่ยน
+    storageBucket: "habit-better-df87d.firebasestorage.app",  // ← เปลี่ยน
+    messagingSenderId: "137647040602",  // ← เปลี่ยน
+    appId: "1:137647040602:web:b56d8369acef44fc2f5063"  // ← เปลี่ยน
 };
 
-const FIREBASE_VAPID_KEY = "BNpaWO00mhBS7FrXIKHxcyXpBNDA8BdVi9ltM8Vosg5jGYq2wvYpU0g2BgdfTY0lNUPYU69zEzzaWVv7_M0qm0o";  // ✏️ เปลี่ยนตามค่าของคุณ
+const FIREBASE_VAPID_KEY = "BNpaWO00mhBS7FrXIKHxcyXpBNDA8BdVi9ltM8Vosg5jGYq2wvYpU0g2BgdfTY0lNUPYU69zEzzaWVv7_M0qm0o";  // ← เปลี่ยน
 
 let firebaseMessaging = null;
 
-// เริ่มต้น Firebase
 try {
+    // Initialize Firebase
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
+        console.log('✅ Firebase initialized');
     }
+    
+    // Get Messaging instance
     firebaseMessaging = firebase.messaging();
-    console.log('✅ Firebase initialized successfully');
+    console.log('✅ Firebase Messaging ready');
 } catch (error) {
     console.warn('⚠️ Firebase initialization warning:', error.message);
 }
 
-// ฟังก์ชันขอสิทธิ์ notification จากเบราว์เซอร์
+// ===== REQUEST NOTIFICATION PERMISSION =====
+
 async function requestNotificationPermission() {
     try {
-        // ขอสิทธิ์ notification จากเบราว์เซอร์
+        // Check if browser supports notifications
+        if (!('Notification' in window)) {
+            console.warn('⚠️ This browser does not support notifications');
+            return null;
+        }
+
+        // Request permission
         const permission = await Notification.requestPermission();
         
         if (permission === 'granted') {
             console.log('✅ Notification permission granted');
             
-            // ขอ FCM token จาก Firebase
             if (firebaseMessaging) {
                 try {
                     const token = await firebaseMessaging.getToken({
@@ -63,18 +74,18 @@ async function requestNotificationPermission() {
                     if (token) {
                         console.log('✅ FCM Token received:', token);
                         
-                        // บันทึก token ลง localStorage เพื่อส่งไปยังเซิร์ฟเวอร์
+                        // Save token
                         localStorage.setItem('fcmToken', token);
                         localStorage.setItem('notificationsEnabled', 'true');
                         
-                        // แสดง notification สำเร็จ
+                        // Show success message
                         showNotification(
                             "✅ Push Notification เปิดแล้ว",
                             "คุณจะได้รับการแจ้งเตือนแบบ Push",
                             "success"
                         );
                         
-                        // อัปเดต UI
+                        // Update button
                         updateNotificationButtonUI();
                         
                         return token;
@@ -83,17 +94,12 @@ async function requestNotificationPermission() {
                     console.error('❌ Error getting FCM token:', error);
                     showNotification(
                         "⚠️ เกิดข้อผิดพลาด",
-                        "ไม่สามารถเปิด Push Notification ได้: " + error.message,
+                        "ไม่สามารถเปิด Push Notification ได้",
                         "error"
                     );
                 }
             } else {
-                console.warn('⚠️ Firebase Messaging not initialized');
-                showNotification(
-                    "⚠️ Firebase ไม่พร้อม",
-                    "กรุณารีเฟรชหน้าแล้วลองใหม่",
-                    "error"
-                );
+                console.warn('⚠️ Firebase Messaging not available');
             }
         } else if (permission === 'denied') {
             console.log('❌ Notification permission denied');
@@ -105,15 +111,11 @@ async function requestNotificationPermission() {
         }
     } catch (error) {
         console.error('❌ Error requesting notification permission:', error);
-        showNotification(
-            "❌ เกิดข้อผิดพลาด",
-            error.message,
-            "error"
-        );
     }
 }
 
-// ฟังก์ชันอัปเดต UI ของปุ่ม notification
+// ===== UPDATE NOTIFICATION BUTTON UI =====
+
 function updateNotificationButtonUI() {
     const notificationBtn = document.getElementById('enable-notification-btn');
     if (notificationBtn) {
@@ -132,7 +134,8 @@ function updateNotificationButtonUI() {
     }
 }
 
-// ฟังก์ชันฟังข้อมูล notification ขณะ app เปิด (foreground)
+// ===== LISTEN TO FOREGROUND MESSAGES =====
+
 if (firebaseMessaging) {
     firebaseMessaging.onMessage((payload) => {
         console.log('📬 Message received in foreground:', payload);
@@ -141,10 +144,10 @@ if (firebaseMessaging) {
         const notificationBody = payload.notification?.body || '';
         const notificationIcon = payload.notification?.icon || '/logo.png';
         
-        // แสดง notification ผ่าน app
+        // Show in-app notification
         showNotification(notificationTitle, notificationBody, 'info');
         
-        // ถ้าต้องการ แสดง browser notification ด้วย
+        // Also show browser notification
         if (Notification.permission === 'granted') {
             new Notification(notificationTitle, {
                 body: notificationBody,
@@ -155,19 +158,36 @@ if (firebaseMessaging) {
     });
 }
 
-// ฟังก์ชัน: ตรวจสอบการเปิด notification เมื่อโหลดหน้า
+// ===== CHECK NOTIFICATION STATUS =====
+
 function checkNotificationStatus() {
     const fcmToken = localStorage.getItem('fcmToken');
     const notificationsEnabled = localStorage.getItem('notificationsEnabled') === 'true';
     
     if (fcmToken && notificationsEnabled) {
         console.log('✅ Notifications are enabled');
+        updateNotificationButtonUI();
         return true;
     } else {
         console.log('❌ Notifications are not enabled');
         return false;
     }
 }
+
+// Check on page load
+document.addEventListener('DOMContentLoaded', () => {
+    checkNotificationStatus();
+});
+
+// ===== LOGOUT - REMOVE FCM TOKEN =====
+
+function logoutAndRemoveFCM() {
+    localStorage.removeItem('fcmToken');
+    localStorage.removeItem('notificationsEnabled');
+    console.log('✅ FCM Token removed on logout');
+}
+
+// ===== END FIREBASE CONFIGURATION =====
 
 /* 1. ย้ายมาบนสุดกัน Error */
 function getToday() { return new Date().toISOString().split("T")[0]; }
