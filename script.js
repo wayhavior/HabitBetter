@@ -145,7 +145,7 @@ if (firebaseMessaging) {
         
         const notificationTitle = payload.notification?.title || 'การแจ้งเตือน';
         const notificationBody = payload.notification?.body || '';
-        const notificationIcon = payload.notification?.icon || '/logo.png';
+        const notificationIcon = payload.notification?.icon || './icon512_rounded.png';
         
         // Show in-app notification
         showNotification(notificationTitle, notificationBody, 'info');
@@ -155,7 +155,7 @@ if (firebaseMessaging) {
             new Notification(notificationTitle, {
                 body: notificationBody,
                 icon: notificationIcon,
-                badge: '/badge-icon.png'
+                badge: './icon512_rounded.png'
             });
         }
     });
