@@ -22,8 +22,8 @@ messaging.onBackgroundMessage((payload) => {
     const notificationTitle = payload.notification?.title || 'การแจ้งเตือน';
     const notificationOptions = {
         body: payload.notification?.body || '',
-        icon: '/logo.png',
-        badge: '/badge-icon.png',
+        icon: './icon512_rounded.png',
+        badge: './icon512_rounded.png',
         tag: 'notification',
         requireInteraction: false
     };
