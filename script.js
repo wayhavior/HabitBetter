@@ -125,7 +125,7 @@ async function requestNotificationPermission() {
 function sendTokenToBackendServer(token, topicName) {
     // ⚠️ อย่าลืม! หลังจากรัน firebase deploy ในสเต็ปสร้าง Functions เสร็จแล้ว
     // ให้เอา URL ที่ Firebase ให้มา สลับมาวางแทนที่ลิงก์ด้านล่างนี้ด้วยนะครับ
-    const backendUrl = "https://YOUR_CLOUD_FUNCTION_URL/subscribeToTopic"; 
+    const backendUrl = "https://subscribetotopic-krcnhvb7hq-uc.a.run.app"; 
 
     console.log('⏳ กำลังส่ง Token ไปลงทะเบียนที่หลังบ้าน...');
 
