@@ -23,15 +23,15 @@ if (localStorage.getItem("googleDriveToken")) {
 
 // Firebase Config
 const firebaseConfig = {
-    apiKey: "AIzaSyDneT0LeIJwZcKfjyAYEnkoQ5_D25LV43M",  // ← เปลี่ยน
-    authDomain: "habit-better-df87d.firebaseapp.com",  // ← เปลี่ยน
-    projectId: "habit-better-df87d",  // ← เปลี่ยน
-    storageBucket: "habit-better-df87d.firebasestorage.app",  // ← เปลี่ยน
-    messagingSenderId: "137647040602",  // ← เปลี่ยน
-    appId: "1:137647040602:web:b56d8369acef44fc2f5063"  // ← เปลี่ยน
+    apiKey: "AIzaSyDneT0LeIJwZcKfjyAYEnkoQ5_D25LV43M",  // ← ข้อมูลเดิมของคุณ
+    authDomain: "habit-better-df87d.firebaseapp.com",  // ← ข้อมูลเดิมของคุณ
+    projectId: "habit-better-df87d",  // ← ข้อมูลเดิมของคุณ
+    storageBucket: "habit-better-df87d.firebasestorage.app",  // ← ข้อมูลเดิมของคุณ
+    messagingSenderId: "137647040602",  // ← ข้อมูลเดิมของคุณ
+    appId: "1:137647040602:web:b56d8369acef44fc2f5063"  // ← ข้อมูลเดิมของคุณ
 };
 
-const FIREBASE_VAPID_KEY = "BNpaWO00mhBS7FrXIKHxcyXpBNDA8BdVi9ltM8Vosg5jGYq2wvYpU0g2BgdfTY0lNUPYU69zEzzaWVv7_M0qm0o";  // ← เปลี่ยน
+const FIREBASE_VAPID_KEY = "BNpaWO00mhBS7FrXIKHxcyXpBNDA8BdVi9ltM8Vosg5jGYq2wvYpU0g2BgdfTY0lNUPYU69zEzzaWVv7_M0qm0o";  // ← ข้อมูลเดิมของคุณ
 
 let firebaseMessaging = null;
 
@@ -81,6 +81,10 @@ async function requestNotificationPermission() {
                         localStorage.setItem('fcmToken', token);
                         localStorage.setItem('notificationsEnabled', 'true');
                         
+                        // 🟢 ส่ง Token นี้ไปลงทะเบียนกลุ่มที่หลังบ้าน (Server) ของเรา
+                        // ปลอดภัยตามกฎ Store เพราะไม่มีคีย์ลับหลุดไปอยู่ที่หน้าเว็บ
+                        sendTokenToBackendServer(token, 'all_users');
+                        
                         // Show success message
                         showNotification(
                             "✅ Push Notification เปิดแล้ว",
@@ -115,6 +119,36 @@ async function requestNotificationPermission() {
     } catch (error) {
         console.error('❌ Error requesting notification permission:', error);
     }
+}
+
+// 🟢 ฟังก์ชันส่ง Token ไปหา Server หลังบ้านของเราเพื่อเข้ากลุ่ม (Topic)
+function sendTokenToBackendServer(token, topicName) {
+    // ⚠️ อย่าลืม! หลังจากรัน firebase deploy ในสเต็ปสร้าง Functions เสร็จแล้ว
+    // ให้เอา URL ที่ Firebase ให้มา สลับมาวางแทนที่ลิงก์ด้านล่างนี้ด้วยนะครับ
+    const backendUrl = "https://YOUR_CLOUD_FUNCTION_URL/subscribeToTopic"; 
+
+    console.log('⏳ กำลังส่ง Token ไปลงทะเบียนที่หลังบ้าน...');
+
+    fetch(backendUrl, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ 
+            token: token, 
+            topic: topicName 
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            console.log(`✅ เซิร์ฟเวอร์หลังบ้านจัดการนำเครื่องนี้เข้ากลุ่ม [${topicName}] เรียบร้อย!`);
+        } else {
+            console.warn('❌ เซิร์ฟเวอร์หลังบ้านตอบกลับมาว่าเกิดข้อผิดพลาด');
+        }
+    })
+    .catch(error => {
+        console.error('❌ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์หลังบ้านได้:', error);
+    });
 }
 
 // ===== UPDATE NOTIFICATION BUTTON UI =====
