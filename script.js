@@ -137,30 +137,6 @@ function updateNotificationButtonUI() {
     }
 }
 
-// ===== LISTEN TO FOREGROUND MESSAGES =====
-
-if (firebaseMessaging) {
-    firebaseMessaging.onMessage((payload) => {
-        console.log('📬 Message received in foreground:', payload);
-        
-        const notificationTitle = payload.notification?.title || 'การแจ้งเตือน';
-        const notificationBody = payload.notification?.body || '';
-        const notificationIcon = payload.notification?.icon || './icon512_rounded.png';
-        
-        // Show in-app notification
-        showNotification(notificationTitle, notificationBody, 'info');
-        
-        // Also show browser notification
-        if (Notification.permission === 'granted') {
-            new Notification(notificationTitle, {
-                body: notificationBody,
-                icon: notificationIcon,
-                badge: './icon512_rounded.png'
-            });
-        }
-    });
-}
-
 // ===== CHECK NOTIFICATION STATUS =====
 
 function checkNotificationStatus() {
@@ -181,14 +157,6 @@ function checkNotificationStatus() {
 document.addEventListener('DOMContentLoaded', () => {
     checkNotificationStatus();
 });
-
-// ===== LOGOUT - REMOVE FCM TOKEN =====
-
-function logoutAndRemoveFCM() {
-    localStorage.removeItem('fcmToken');
-    localStorage.removeItem('notificationsEnabled');
-    console.log('✅ FCM Token removed on logout');
-}
 
 // ===== END FIREBASE CONFIGURATION =====
 
@@ -331,9 +299,7 @@ function logout() {
     localStorage.removeItem("lastBackupFileName");
     localStorage.removeItem("lastBackupTimestamp");
 
-    // 🌟 ลบ Firebase Notification tokens
-    localStorage.removeItem("fcmToken");
-    localStorage.removeItem("notificationsEnabled");
+
 
     // 🌟 บรรทัดสำคัญ: ล้างค่าตัวแปรสิทธิ์ Drive ในระบบแอปให้เป็นว่างเปล่า
     accessToken = null;
