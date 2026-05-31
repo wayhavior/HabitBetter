@@ -34,7 +34,7 @@ messaging.onBackgroundMessage((payload) => {
     console.log('Background message received:', notificationTitle, notificationOptions);
 
     // ปิดไว้ก่อน เพราะ Firebase Console แสดง Notification ให้อัตโนมัติอยู่แล้ว
-    // self.registration.showNotification(notificationTitle, notificationOptions);
+     self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // ===== Notification Click =====
