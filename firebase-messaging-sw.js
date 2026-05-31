@@ -5,12 +5,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDneT0LeIJwZcKfjyAYEnkoQ5_D25LV43M",  // ← เปลี่ยน
-    authDomain: "habit-better-df87d.firebaseapp.com",  // ← เปลี่ยน
-    projectId: "habit-better-df87d",  // ← เปลี่ยน
-    storageBucket: "habit-better-df87d.firebasestorage.app",  // ← เปลี่ยน
-    messagingSenderId: "137647040602",  // ← เปลี่ยน
-    appId: "1:137647040602:web:b56d8369acef44fc2f5063"  // ← เปลี่ยน
+    apiKey: "AIzaSyDneT0LeIJwZcKfjyAYEnkoQ5_D25LV43M",
+    authDomain: "habit-better-df87d.firebaseapp.com",
+    projectId: "habit-better-df87d",
+    storageBucket: "habit-better-df87d.firebasestorage.app",
+    messagingSenderId: "137647040602",
+    appId: "1:137647040602:web:b56d8369acef44fc2f5063"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -21,10 +21,12 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
     console.log('📬 Received background message:', payload);
 
-    const notificationTitle = payload.notification?.title || 'การแจ้งเตือน';
+    // เปลี่ยนจาก payload.notification มาดึงจาก payload.data แทน
+    // เพื่อบังคับให้สิทธิ์ขาดการวาดเป็นของ PWA เท่านั้น
+    const notificationTitle = payload.data?.title || 'การแจ้งเตือนจาก Habit Better';
 
     const notificationOptions = {
-        body: payload.notification?.body || '',
+        body: payload.data?.body || '',
         icon: './icon512_rounded.png',
         badge: './icon512_rounded.png',
         tag: 'notification',
@@ -33,8 +35,8 @@ messaging.onBackgroundMessage((payload) => {
 
     console.log('Background message received:', notificationTitle, notificationOptions);
 
-    // ปิดไว้ก่อน เพราะ Firebase Console แสดง Notification ให้อัตโนมัติอยู่แล้ว
-     self.registration.showNotification(notificationTitle, notificationOptions);
+    // เปิดใช้งานบรรทัดนี้ เพื่อให้ PWA เป็นคนสร้าง Notification อันเดียวโดดๆ
+    self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // ===== Notification Click =====
