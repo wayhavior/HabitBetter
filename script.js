@@ -23,15 +23,15 @@ if (localStorage.getItem("googleDriveToken")) {
 
 // Firebase Config
 const firebaseConfig = {
-    apiKey: "AIzaSyDneT0LeIJwZcKfjyAYEnkoQ5_D25LV43M",  // ← ข้อมูลเดิมของคุณ
-    authDomain: "habit-better-df87d.firebaseapp.com",  // ← ข้อมูลเดิมของคุณ
-    projectId: "habit-better-df87d",  // ← ข้อมูลเดิมของคุณ
-    storageBucket: "habit-better-df87d.firebasestorage.app",  // ← ข้อมูลเดิมของคุณ
-    messagingSenderId: "137647040602",  // ← ข้อมูลเดิมของคุณ
-    appId: "1:137647040602:web:b56d8369acef44fc2f5063"  // ← ข้อมูลเดิมของคุณ
+    apiKey: "AIzaSyDneT0LeIJwZcKfjyAYEnkoQ5_D25LV43M",
+    authDomain: "habit-better-df87d.firebaseapp.com",
+    projectId: "habit-better-df87d",
+    storageBucket: "habit-better-df87d.firebasestorage.app",
+    messagingSenderId: "137647040602",
+    appId: "1:137647040602:web:b56d8369acef44fc2f5063"
 };
 
-const FIREBASE_VAPID_KEY = "BNpaWO00mhBS7FrXIKHxcyXpBNDA8BdVi9ltM8Vosg5jGYq2wvYpU0g2BgdfTY0lNUPYU69zEzzaWVv7_M0qm0o";  // ← ข้อมูลเดิมของคุณ
+const FIREBASE_VAPID_KEY = "BNpaWO00mhBS7FrXIKHxcyXpBNDA8BdVi9ltM8Vosg5jGYq2wvYpU0g2BgdfTY0lNUPYU69zEzzaWVv7_M0qm0o";
 
 let firebaseMessaging = null;
 
@@ -47,6 +47,40 @@ try {
     console.log('✅ Firebase Messaging ready');
 } catch (error) {
     console.warn('⚠️ Firebase initialization warning:', error.message);
+}
+
+// ===== HANDLE FOREGROUND MESSAGES =====
+
+if (firebaseMessaging) {
+    firebaseMessaging.onMessage((payload) => {
+        console.log('📬 Received foreground message:', payload);
+        
+        const notificationTitle = payload.data?.title || payload.notification?.title || 'Habit Better';
+        const notificationBody = payload.data?.body || payload.notification?.body || '';
+        
+        // ✅ สร้าง notification ให้เห็นตอนแอพเปิดอยู่
+        const options = {
+            body: notificationBody,
+            icon: './icon512_rounded.png',
+            badge: './icon512_rounded.png',
+            tag: 'foreground-notification-' + Date.now(), // ✅ ให้แต่ละ notification มี unique tag
+            requireInteraction: false,
+            priority: 'high'
+        };
+        
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'SHOW_NOTIFICATION',
+                title: notificationTitle,
+                options: options
+            });
+        } else {
+            // Fallback: สร้าง notification โดยตรง
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(notificationTitle, options);
+            }
+        }
+    });
 }
 
 // ===== REQUEST NOTIFICATION PERMISSION =====
@@ -82,7 +116,6 @@ async function requestNotificationPermission() {
                         localStorage.setItem('notificationsEnabled', 'true');
                         
                         // 🟢 ส่ง Token นี้ไปลงทะเบียนกลุ่มที่หลังบ้าน (Server) ของเรา
-                        // ปลอดภัยตามกฎ Store เพราะไม่มีคีย์ลับหลุดไปอยู่ที่หน้าเว็บ
                         sendTokenToBackendServer(token, 'all_users');
                         
                         // Show success message
@@ -94,6 +127,9 @@ async function requestNotificationPermission() {
                         
                         // Update button
                         updateNotificationButtonUI();
+                        
+                        // Start FCM connection monitor
+                        startFCMMonitoring();
                         
                         return token;
                     }
@@ -123,9 +159,7 @@ async function requestNotificationPermission() {
 
 // 🟢 ฟังก์ชันส่ง Token ไปหา Server หลังบ้านของเราเพื่อเข้ากลุ่ม (Topic)
 function sendTokenToBackendServer(token, topicName) {
-    // ⚠️ อย่าลืม! หลังจากรัน firebase deploy ในสเต็ปสร้าง Functions เสร็จแล้ว
-    // ให้เอา URL ที่ Firebase ให้มา สลับมาวางแทนที่ลิงก์ด้านล่างนี้ด้วยนะครับ
-    const backendUrl = "https://subscribetotopic-krcnhvb7hq-uc.a.run.app"; 
+    const backendUrl = "https://subscribetotopic-krcnhvb7hq-uc.a.run.app";
 
     console.log('⏳ กำลังส่ง Token ไปลงทะเบียนที่หลังบ้าน...');
 
@@ -150,6 +184,80 @@ function sendTokenToBackendServer(token, topicName) {
         console.error('❌ ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์หลังบ้านได้:', error);
     });
 }
+
+// ===== FCM CONNECTION MONITORING & RECONNECTION =====
+
+let fcmRetryCount = 0;
+const MAX_FCM_RETRIES = 5;
+const FCM_RETRY_DELAY = 5000; // 5 seconds
+let fcmMonitoringInterval = null;
+
+function checkFCMConnection() {
+    if (!firebaseMessaging) {
+        console.warn('⚠️ Firebase Messaging not available');
+        return;
+    }
+    
+    firebaseMessaging.getToken({
+        vapidKey: FIREBASE_VAPID_KEY
+    }).then(token => {
+        if (token) {
+            console.log('✅ FCM Connection alive:', token.substring(0, 20) + '...');
+            fcmRetryCount = 0; // Reset retry count
+        } else {
+            console.warn('⚠️ No FCM token available');
+            resubscribeFCM();
+        }
+    }).catch(error => {
+        console.error('❌ FCM Connection check failed:', error);
+        resubscribeFCM();
+    });
+}
+
+function resubscribeFCM() {
+    if (fcmRetryCount >= MAX_FCM_RETRIES) {
+        console.error('❌ Max FCM reconnection attempts reached');
+        return;
+    }
+    
+    fcmRetryCount++;
+    console.log(`⏳ FCM Reconnection attempt ${fcmRetryCount}/${MAX_FCM_RETRIES}...`);
+    
+    setTimeout(() => {
+        const token = localStorage.getItem('fcmToken');
+        if (token) {
+            sendTokenToBackendServer(token, 'all_users');
+        } else {
+            requestNotificationPermission();
+        }
+    }, FCM_RETRY_DELAY * fcmRetryCount);
+}
+
+function startFCMMonitoring() {
+    // ✅ ตรวจสอบ FCM ทุก 30 วินาที
+    if (!fcmMonitoringInterval) {
+        fcmMonitoringInterval = setInterval(() => {
+            checkFCMConnection();
+        }, 30000);
+        console.log('✅ FCM monitoring started');
+    }
+}
+
+function stopFCMMonitoring() {
+    if (fcmMonitoringInterval) {
+        clearInterval(fcmMonitoringInterval);
+        fcmMonitoringInterval = null;
+        console.log('⏹️ FCM monitoring stopped');
+    }
+}
+
+// ✅ ตรวจสอบเมื่อมี visibility change (กลับมาจากหน้าหลัก)
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        console.log('📱 App came to foreground, checking FCM...');
+        checkFCMConnection();
+    }
+});
 
 // ===== UPDATE NOTIFICATION BUTTON UI =====
 
@@ -180,6 +288,7 @@ function checkNotificationStatus() {
     if (fcmToken && notificationsEnabled) {
         console.log('✅ Notifications are enabled');
         updateNotificationButtonUI();
+        startFCMMonitoring(); // ✅ เริ่ม monitoring เมื่อ notification เปิดอยู่
         return true;
     } else {
         console.log('❌ Notifications are not enabled');
