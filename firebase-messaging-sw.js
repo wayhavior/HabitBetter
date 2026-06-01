@@ -30,13 +30,14 @@ messaging.onBackgroundMessage((payload) => {
         icon: './icon512_rounded.png',
         badge: './icon512_rounded.png',
         tag: 'notification',
-        requireInteraction: false
+        requireInteraction: false,
+        priority: 'high' // เพิ่มตรงนี้ด้วย
     };
 
     console.log('Background message received:', notificationTitle, notificationOptions);
 
     // เปิดใช้งานบรรทัดนี้ เพื่อให้ PWA เป็นคนสร้าง Notification อันเดียวโดดๆ
-    self.registration.showNotification(notificationTitle, notificationOptions);
+   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // ===== Notification Click =====
