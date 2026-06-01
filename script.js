@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===== เพิ่มฟังก์ชันดักจับข้อความตอนเปิดแอป (Foreground) ต่อท้ายไฟล์เดิมได้เลย =====
 
 // ดึงฟังก์ชัน onMessage มาใช้จาก Firebase Messaging
-//import { onMessage } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging.js";
+import { onMessage } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging.js";
 
 // ดักจับข้อความเมื่อเปิดหน้าแอปอยู่
 onMessage(firebaseMessaging, (payload) => {
