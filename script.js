@@ -128,8 +128,7 @@ async function requestNotificationPermission() {
                         // Update button
                         updateNotificationButtonUI();
                         
-                        // Start FCM connection monitor
-                        startFCMMonitoring();
+                        
                         
                         return token;
                     }
@@ -214,7 +213,7 @@ function checkNotificationStatus() {
     if (fcmToken && notificationsEnabled) {
         console.log('✅ Notifications are enabled');
         updateNotificationButtonUI();
-        startFCMMonitoring(); // ✅ เริ่ม monitoring เมื่อ notification เปิดอยู่
+       
         return true;
     } else {
         console.log('❌ Notifications are not enabled');
