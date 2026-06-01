@@ -192,26 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
     checkNotificationStatus();
 });
 
-// ===== เพิ่มฟังก์ชันดักจับข้อความตอนเปิดแอป (Foreground) ต่อท้ายไฟล์เดิมได้เลย =====
-
-// ดึงฟังก์ชัน onMessage มาใช้จาก Firebase Messaging
-import { onMessage } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging.js";
-
-// ดักจับข้อความเมื่อเปิดหน้าแอปอยู่
-onMessage(firebaseMessaging, (payload) => {
-    console.log('📬 ได้รับข้อความตอนเปิดแอป (Foreground):', payload);
-
-    // สร้างการแจ้งเตือนด้วยตัวเองผ่าน Browser API
-    if (Notification.permission === 'granted') {
-        const title = payload.data?.title || 'Habit Better แจ้งเตือน';
-        const options = {
-            body: payload.data?.body || 'มีกิจกรรมใหม่ของคุณ!',
-            icon: './icon512_rounded.png' // เช็กว่าไฟล์รูปไอคอนคุณชื่อนี้
-        };
-        
-        new Notification(title, options);
-    }
-});
 // ===== END FIREBASE CONFIGURATION =====
 
 /* 1. ย้ายมาบนสุดกัน Error */
