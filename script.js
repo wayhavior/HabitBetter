@@ -229,7 +229,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===== END FIREBASE CONFIGURATION =====
 
 /* 1. ย้ายมาบนสุดกัน Error */
-function getToday() { return new Date().toISOString().split("T")[0]; }
+function getToday(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
 
 /* ===== GOOGLE LOGIN FUNCTIONS ===== */
 // ฟังก์ชันเพื่อ decode JWT token
@@ -1028,9 +1033,16 @@ function resetDailyGoalsIfNeeded() {
 }
 
 // 💰 AUTO ARCHIVE EXPENSE RESET (เช่นเดียวกับ Daily Goals)
-let lastExpenseAutoArchiveDate = localStorage.getItem("lastExpenseAutoArchiveDate") || "";
+let lastExpenseAutoArchiveDate = localStorage.getItem("lastExpenseAutoArchiveDate") || getToday();
+if (lastExpenseAutoArchiveDate && !/^\d{4}-\d{2}-\d{2}$/.test(lastExpenseAutoArchiveDate)) {
+    const parsedArchiveDate = new Date(lastExpenseAutoArchiveDate);
+    if (!Number.isNaN(parsedArchiveDate.getTime())) {
+        lastExpenseAutoArchiveDate = getToday(parsedArchiveDate);
+    }
+}
+localStorage.setItem("lastExpenseAutoArchiveDate", lastExpenseAutoArchiveDate);
 function autoArchiveExpenseIfNeeded() {
-    const today = new Date().toDateString();
+    const today = getToday();
     
     // ถ้ายังไม่เคย auto archive วันนี้ AND มีรายการให้บันทึก
     if (lastExpenseAutoArchiveDate !== today && myExpenses.length > 0) {
@@ -3033,7 +3045,7 @@ app.appendChild(drawer);
         const div = document.createElement("div"); div.className = "archive-item";
         const autoLabel = a.autoArchived ? " 🤖 (อัตโนมัติ)" : "";
         const balance = a.balance !== undefined ? a.balance : (a.totalIn - a.totalOut); // ✅ ป้องกัน undefined
-        div.innerHTML = `📅 <b>${a.date}</b> | รับ: <span style="color:#00b894">+${a.totalIn}</span> | จ่าย: <span style="color:#ff7675">-${a.totalOut}</span> | คงเหลือ: <b>${balance}</b>${autoLabel} <span style="margin-left:10px; cursor:pointer; opacity:0.5; font-size:18px;" onclick="delArchiveExpense(${i})" title="ลบประวัตินี้">🗑️</span>`;
+        div.innerHTML = `📅 <b>${a.date}</b> | รับ: <span style="color:#00b894">+${a.totalIn.toLocaleString()}</span> | จ่าย: <span style="color:#ff7675">-${a.totalOut.toLocaleString()}</span> | คงเหลือ: <b>${balance.toLocaleString()}</b>${autoLabel} <span style="margin-left:10px; cursor:pointer; opacity:0.5; font-size:18px;" onclick="delArchiveExpense(${i})" title="ลบประวัตินี้">🗑️</span>`;
         archDiv.appendChild(div);
     });
     
@@ -3056,7 +3068,15 @@ window.delArchiveExpense = (i) => {
 };
 
 /* ===== EXPENSE COUNTDOWN (เช่นเดียวกับ Daily Goals) ===== */
+let expenseCountdownTimer = null;
+let countdownTimer = null;
 function updateExpenseCountdown() {
+    if (expenseCountdownTimer) {
+        clearTimeout(expenseCountdownTimer);
+        expenseCountdownTimer = null;
+    }
+    if (currentPage !== "expense") return;
+
     const el = document.getElementById("expense-timer");
     if (el) {
         const now = new Date();
@@ -3077,7 +3097,7 @@ function updateExpenseCountdown() {
 
     // หัวใจสำคัญ: สั่งให้รันตัวเองซ้ำทุก 1 วินาทีเมื่ออยู่ในหน้า Expense
     if (currentPage === "expense") {
-        setTimeout(updateExpenseCountdown, 1000);
+        expenseCountdownTimer = setTimeout(updateExpenseCountdown, 1000);
     }
 }
 
@@ -4222,6 +4242,12 @@ window.delNote = (i) => { if(confirm("ลบโน้ต?")){ myNotes.splice(i, 
 
 // เปลี่ยนฟังก์ชันเดิมเป็นอันนี้ครับ
 function updateCountdown() {
+    // Clear previous timer to prevent overlapping
+    if (countdownTimer) {
+        clearTimeout(countdownTimer);
+        countdownTimer = null;
+    }
+
     // 1. เช็คและรีเซ็ตค่าเสมอไม่ว่าจะอยู่หน้าไหน
     resetDailyGoalsIfNeeded();
     autoArchiveExpenseIfNeeded();  // 💰 เพิ่มการบันทึก expense อัตโนมัติ
@@ -4247,7 +4273,7 @@ function updateCountdown() {
     }
 
     // 3. หัวใจสำคัญ: สั่งให้รันตัวเองซ้ำทุก 1 วินาทีเสมอ (ถาวร)
-    setTimeout(updateCountdown, 1000);
+    countdownTimer = setTimeout(updateCountdown, 1000);
 }
 
 // 4. บังคับให้หัวใจเริ่มเต้นครั้งแรกทันทีที่เปิดแอป (วางไว้บรรทัดสุดท้ายของไฟล์เลยครับ)
