@@ -3004,16 +3004,12 @@ app.appendChild(drawer);
     const container = document.createElement("div"); container.className = "goals-page";
     container.innerHTML = `
         <h1>Daily Expense</h1>
-        <div class="timer-box" id="expense-timer" style="margin-bottom: 15px; padding: 10px; background: rgba(255,165,0,0.2); border-radius: 10px; text-align: center; font-weight: bold; color: #ffa500;">⏱️ Auto Save in: --:--:--</div>
         <div class="expense-card">
             <div class="expense-summary">
                 <div class="summary-box income-box"><small>วันนี้รับ</small><br>+${totalIn.toLocaleString()}</div>
                 <div class="summary-box out-box"><small>วันนี้จ่าย</small><br>-${totalOut.toLocaleString()}</div>
                 <div class="summary-box balance-box">${(totalIn - totalOut).toLocaleString()}</div>
             </div>
-            <button onclick="manualArchiveExpense()" style="width:100%; padding:15px; background:#f1c40f; color:black; border:none; border-radius:12px; font-weight:bold; margin-bottom:15px; cursor:pointer;">
-                📦 สรุปยอดและบันทึกรายวัน
-            </button>
             <div class="add-box" style="width:100%; max-width:none;">
                 <input type="text" id="ex-note" placeholder="รายการ เช่น ค่าข้าว">
                 <input type="number" id="ex-amt" placeholder="จำนวนเงิน">
@@ -3152,27 +3148,146 @@ app.appendChild(drawer);
                 <span style="color: #ff7675; font-size: 9px; line-height: 1;">${expense.out > 0 ? `-${expense.out}` : '0'}</span>
                 <span style="color: #00b894; font-size: 9px; line-height: 1;">${expense.in > 0 ? `+${expense.in}` : '0'}</span>
             `;
+            // Make clickable
+            cell.style.cursor = 'pointer';
+            cell.onclick = () => showExpenseDetailModal(calendarViewYear, calendarViewMonth, day.date);
         }
         gridDiv.appendChild(cell);
     });
-    
-    // 💰 เริ่มนับถอยหลังเมื่ออยู่ในหน้า Expense
-    updateExpenseCountdown();
 }
 window.addExpense = (type) => {
-    const note = document.getElementById("ex-note").value; const amt = parseFloat(document.getElementById("ex-amt").value);
-    if(note && amt) { myExpenses.unshift({ note: note, amt: amt, type: type, time: new Date().toLocaleTimeString('th-TH') , date: getToday() }); save(); render(); }
+    const note = document.getElementById("ex-note").value; 
+    const amt = parseFloat(document.getElementById("ex-amt").value);
+    if(note && amt) { 
+        // Add to today's list
+        myExpenses.unshift({ note: note, amt: amt, type: type, time: new Date().toLocaleTimeString('th-TH'), date: getToday() }); 
+        
+        // Auto-archive immediately
+        let tin = 0; let tout = 0;
+        myExpenses.forEach(x => { if(x.type === "in") tin += x.amt; else tout += x.amt; });
+        
+        // Update or create today's archive
+        const today = getToday();
+        const existingIndex = myExpenseArchive.findIndex(a => a.date === today);
+        const balance = tin - tout;
+        
+        if (existingIndex >= 0) {
+            // Update existing entry
+            myExpenseArchive[existingIndex] = {
+                date: today,
+                totalIn: tin,
+                totalOut: tout,
+                balance: balance,
+                total: balance,
+                type: "in"
+            };
+        } else {
+            // Create new entry
+            myExpenseArchive.unshift({
+                date: today,
+                totalIn: tin,
+                totalOut: tout,
+                balance: balance,
+                total: balance,
+                type: "in"
+            });
+        }
+        
+        save(); 
+        
+        // Clear input
+        document.getElementById("ex-note").value = '';
+        document.getElementById("ex-amt").value = '';
+        
+        render(); 
+    }
 };
 window.delExpense = (i) => { if(confirm("ลบ?")){ myExpenses.splice(i, 1); save(); render(); } };
 
-/* ===== DELETE ARCHIVE EXPENSE ===== */
-window.delArchiveExpense = (i) => { 
-    if(confirm("ลบประวัติสรุปรายวันนี้หรือไม่?")) { 
-        myExpenseArchive.splice(i, 1); 
-        save(); 
-        render(); 
-    } 
-};
+/* ===== EXPENSE DETAIL POPUP ===== */
+function showExpenseDetailModal(year, month, day) {
+    // Find expenses for this date from myExpenseArchive
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const archiveEntry = myExpenseArchive.find(a => a.date === dateStr);
+    
+    if (!archiveEntry) {
+        showNotification("ไม่มีข้อมูล", `ไม่มีข้อมูลสำหรับวันที่ ${day}`, "info");
+        return;
+    }
+    
+    const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+    
+    // Create overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
+    // Create modal
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 24px;
+        max-width: 350px;
+        width: 90%;
+        max-height: 70vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    let expenseHTML = `
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="font-size: 40px; margin-bottom: 12px;">📅</div>
+            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">${day} ${monthNames[month]} ${year}</h3>
+            <p style="margin: 0; color: rgba(255, 255, 255, 0.6); font-size: 13px;">${archiveEntry.autoArchived ? '🤖 บันทึกอัตโนมัติ' : '✋ บันทึกด้วยตนเอง'}</p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+            <div style="background: rgba(255,107,107,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                <small style="color: rgba(255,255,255,0.6);">รับ</small><br>
+                <strong style="color: #00b894; font-size: 16px;">+${archiveEntry.totalIn.toLocaleString()}</strong>
+            </div>
+            <div style="background: rgba(255,107,107,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                <small style="color: rgba(255,255,255,0.6);">จ่าย</small><br>
+                <strong style="color: #ff7675; font-size: 16px;">-${archiveEntry.totalOut.toLocaleString()}</strong>
+            </div>
+        </div>
+        
+        <div style="background: rgba(100,200,255,0.2); padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+            <small style="color: rgba(255,255,255,0.6);">คงเหลือ</small><br>
+            <strong style="color: #64c8ff; font-size: 18px;">${(archiveEntry.totalIn - archiveEntry.totalOut).toLocaleString()}</strong>
+        </div>
+        
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+            <button onclick="document.querySelector('[data-expense-modal]').parentNode.remove();" style="width: 100%; padding: 12px 20px; background: rgba(100,200,255,0.3); border: 1px solid rgba(100,200,255,0.5); border-radius: 10px; color: #64c8ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">ปิด</button>
+        </div>
+    `;
+    
+    modal.innerHTML = expenseHTML;
+    modal.setAttribute("data-expense-modal", "true");
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Close on overlay click
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
+}
 
 /* ===== EXPENSE COUNTDOWN (เช่นเดียวกับ Daily Goals) ===== */
 let expenseCountdownTimer = null;
@@ -4443,6 +4558,18 @@ window.tryEditNote = async (id, pass) => {
 };
 window.delNote = (i) => { if(confirm("ลบโน้ต?")){ myNotes.splice(i, 1); save(); render(); } };
 
+/* ===== AUTO-RESET EXPENSE ON NEW DAY ===== */
+function resetExpenseIfNeeded() {
+    const today = getToday();
+    if (lastExpenseResetDate !== today) {
+        console.log(`🔄 New day! Resetting daily expenses: ${lastExpenseResetDate} → ${today}`);
+        myExpenses = []; // Clear today's entries
+        lastExpenseResetDate = today;
+        localStorage.setItem("lastExpenseResetDate", today);
+        save();
+    }
+}
+
 // เปลี่ยนฟังก์ชันเดิมเป็นอันนี้ครับ
 function updateCountdown() {
     // Clear previous timer to prevent overlapping
@@ -4455,6 +4582,7 @@ function updateCountdown() {
     resetDailyGoalsIfNeeded();
     autoArchiveExpenseIfNeeded();  // 💰 เพิ่มการบันทึก expense อัตโนมัติ
     resetTrackerIfNeeded(); // 🔥 ใช้ฟังก์ชัน reset ใหม่ (เหมือน Daily Goals)
+    resetExpenseIfNeeded(); // 📊 รีเซ็ตรายการรายรับรายจ่ายเมื่อข้ามวัน
     cleanupOldYearData(); // 🗑️ ลบข้อมูลเก่าจากปีที่แล้ว
 
     // 2. ถ้าหน้าจอมีตัวเลขตัวนับเวลา (id="timer") ให้คำนวณและแสดงผล
