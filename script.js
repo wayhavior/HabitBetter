@@ -3026,47 +3026,47 @@ app.appendChild(drawer);
         <div style="width:100%; max-width:380px;">
             <h3 style="margin-left:10px;text-align:left;">รายการวันนี้</h3>
             <div id="expense-list"></div>
+        </div>
             
-            <div style="margin-top: 25px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h2 style="margin: 0; font-size: 18px;">📅 รายเดือน</h2>
-                    <button onclick="prevCalendarMonth()" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 14px;">◀</button>
-                    <button onclick="nextCalendarMonth()" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 14px;">▶</button>
-                </div>
-                
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <select id="calendar-month-select" onchange="selectCalendarMonth()" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white;">
-                        <option value="0">มกราคม</option>
-                        <option value="1">กุมภาพันธ์</option>
-                        <option value="2">มีนาคม</option>
-                        <option value="3">เมษายน</option>
-                        <option value="4">พฤษภาคม</option>
-                        <option value="5">มิถุนายน</option>
-                        <option value="6">กรกฎาคม</option>
-                        <option value="7">สิงหาคม</option>
-                        <option value="8">กันยายน</option>
-                        <option value="9">ตุลาคม</option>
-                        <option value="10">พฤศจิกายน</option>
-                        <option value="11">ธันวาคม</option>
-                    </select>
-                    <select id="calendar-year-select" onchange="selectCalendarMonth()" style="flex: 0.6; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white;">
-                    </select>
-                </div>
-                
-                <div id="calendar-summary" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
-                
-                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 10px;">
-                    <div style="color: rgba(255,255,255,0.6);">จ.</div>
-                    <div style="color: rgba(255,255,255,0.6);">อ.</div>
-                    <div style="color: rgba(255,255,255,0.6);">พ.</div>
-                    <div style="color: rgba(255,255,255,0.6);">พฤ.</div>
-                    <div style="color: rgba(255,255,255,0.6);">ศ.</div>
-                    <div style="color: rgba(255,255,255,0.6);">ส.</div>
-                    <div style="color: rgba(255,255,255,0.6);">อา.</div>
-                </div>
-                
-                <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
+        <div style="width:100%; margin-top: 25px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin: 0; font-size: 18px;">📅 รายเดือน</h2>
+                <button onclick="prevCalendarMonth()" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 14px;">◀</button>
+                <button onclick="nextCalendarMonth()" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 14px;">▶</button>
             </div>
+                
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <select id="calendar-month-select" onchange="selectCalendarMonth()" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white;">
+                    <option value="0">มกราคม</option>
+                    <option value="1">กุมภาพันธ์</option>
+                    <option value="2">มีนาคม</option>
+                    <option value="3">เมษายน</option>
+                    <option value="4">พฤษภาคม</option>
+                    <option value="5">มิถุนายน</option>
+                    <option value="6">กรกฎาคม</option>
+                    <option value="7">สิงหาคม</option>
+                    <option value="8">กันยายน</option>
+                    <option value="9">ตุลาคม</option>
+                    <option value="10">พฤศจิกายน</option>
+                    <option value="11">ธันวาคม</option>
+                </select>
+                <select id="calendar-year-select" onchange="selectCalendarMonth()" style="flex: 0.6; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white;">
+                </select>
+            </div>
+            
+            <div id="calendar-summary" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
+            
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 8px;">
+                <div style="color: rgba(255,255,255,0.6);">จ.</div>
+                <div style="color: rgba(255,255,255,0.6);">อ.</div>
+                <div style="color: rgba(255,255,255,0.6);">พ.</div>
+                <div style="color: rgba(255,255,255,0.6);">พฤ.</div>
+                <div style="color: rgba(255,255,255,0.6);">ศ.</div>
+                <div style="color: rgba(255,255,255,0.6);">ส.</div>
+                <div style="color: rgba(255,255,255,0.6);">อา.</div>
+            </div>
+            
+            <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;"></div>
         </div>
     `;
     app.appendChild(container);
@@ -3184,7 +3184,10 @@ let calendarViewYear = new Date().getFullYear();
 
 /* ===== CALENDAR HELPER FUNCTIONS ===== */
 function generateCalendarDays(year, month) {
-    const firstDay = new Date(year, month, 1).getDay(); // 0-6 (Sun-Sat)
+    let firstDay = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    // Convert to Monday=0, Tuesday=1, ..., Sunday=6 (since we display Mon-Sun)
+    firstDay = (firstDay === 0) ? 6 : firstDay - 1;
+    
     const lastDate = new Date(year, month + 1, 0).getDate(); // Days in month
     const days = [];
     
