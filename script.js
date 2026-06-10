@@ -844,10 +844,14 @@ function getTotalSavingsFromAllJars() {
 }
 
 /* POMODORO STATE */
-let pomoTime = 25 * 60;
+const DEFAULT_POMO_SETTINGS = { focus: 25, short: 5, long: 15 };
+let pomoSettings = JSON.parse(localStorage.getItem("pomoSettings")) || DEFAULT_POMO_SETTINGS;
+let pomoTime = (parseInt(pomoSettings.focus) || DEFAULT_POMO_SETTINGS.focus) * 60;
 let pomoInterval = null;
 let isPomoRunning = false;
 let pomoMode = "focus"; 
+let pomoEndAt = null;
+let pomoCompletedFocusInCycle = parseInt(localStorage.getItem("pomoCompletedFocusInCycle") || "0");
 const pomoAlarm = new Audio("https://videotourl.com/audio/1778680880748-9ce6988b-fcb3-4e42-aedb-5a126611271c.mp3");
 
 /* ===== ACHIEVEMENT/BADGE SYSTEM ===== */
@@ -2726,6 +2730,170 @@ function updatePomoStatusUI() {
 window.stopPomo = () => { clearInterval(pomoInterval); isPomoRunning = false; };
 window.resetPomo = () => { stopPomo(); applyPomoSettings(); };
 function updatePomoDisplay() { const el = document.getElementById('pomo-display'); if(!el) return; const m = Math.floor(pomoTime / 60); const s = pomoTime % 60; el.innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }
+
+function getPomoSettings() {
+    const saved = JSON.parse(localStorage.getItem("pomoSettings") || "null");
+    const base = saved || pomoSettings || DEFAULT_POMO_SETTINGS;
+    return {
+        focus: Math.max(1, parseInt(base.focus) || DEFAULT_POMO_SETTINGS.focus),
+        short: Math.max(1, parseInt(base.short) || DEFAULT_POMO_SETTINGS.short),
+        long: Math.max(1, parseInt(base.long) || DEFAULT_POMO_SETTINGS.long)
+    };
+}
+
+function readPomoSettingsFromInputs() {
+    return {
+        focus: Math.max(1, parseInt(document.getElementById("in-focus")?.value) || DEFAULT_POMO_SETTINGS.focus),
+        short: Math.max(1, parseInt(document.getElementById("in-short")?.value) || DEFAULT_POMO_SETTINGS.short),
+        long: Math.max(1, parseInt(document.getElementById("in-long")?.value) || DEFAULT_POMO_SETTINGS.long)
+    };
+}
+
+function savePomoSettings() {
+    localStorage.setItem("pomoSettings", JSON.stringify(pomoSettings));
+}
+
+function renderPomoPage() {
+    pomoSettings = getPomoSettings();
+
+    const bBtn = document.createElement("button");
+    bBtn.className = "back-btn";
+    bBtn.innerText = "🏠";
+    bBtn.onclick = () => {
+        stopPomo();
+        settingsOpen = false;
+        currentPage = "home";
+        render();
+    };
+
+    const drawer = makeDrawer();
+    drawer.appendChild(themeBtn);
+    drawer.appendChild(zoomBtn);
+
+    app.appendChild(bBtn);
+    app.appendChild(settingsBtn);
+    app.appendChild(drawer);
+
+    const title = document.createElement("h1");
+    title.innerText = "Pomodoro Timer";
+    app.appendChild(title);
+
+    const container = document.createElement("div");
+    container.className = "goals-page";
+    container.innerHTML = `
+        <div class="pomo-card" id="pomodoro-card">
+            <div id="pomo-status" class="pomo-status-label status-focus">FOCUS TIME 🎯</div>
+            <div id="pomo-display" class="pomo-timer-display">25:00</div>
+            <div class="pomo-btns">
+                <button class="btn-start" onclick="startPomo()">START</button>
+                <button class="btn-stop" onclick="stopPomo()">STOP</button>
+                <button class="btn-reset" onclick="resetPomo()">RESET</button>
+            </div>
+            <div class="pomo-setup-group">
+                <div class="pomo-input-box"><label>Focus</label><input type="number" id="in-focus" min="1" max="180" value="${pomoSettings.focus}"></div>
+                <div class="pomo-input-box"><label>พักสั้น</label><input type="number" id="in-short" min="1" max="60" value="${pomoSettings.short}"></div>
+                <div class="pomo-input-box"><label>พักยาว</label><input type="number" id="in-long" min="1" max="120" value="${pomoSettings.long}"></div>
+            </div>
+            <button onclick="applyPomoSettings()" style="margin-top:10px; padding:12px; border-radius:12px; border:none; background:#00b894; color:white; font-weight:bold; cursor:pointer; width:100%;">Update & Reset</button>
+        </div>
+    `;
+    app.appendChild(container);
+    updatePomoDisplay();
+    updatePomoStatusUI();
+}
+
+window.applyPomoSettings = () => {
+    stopPomo();
+    pomoSettings = readPomoSettingsFromInputs();
+    savePomoSettings();
+    pomoMode = "focus";
+    pomoTime = pomoSettings.focus * 60;
+    pomoCompletedFocusInCycle = 0;
+    localStorage.setItem("pomoCompletedFocusInCycle", "0");
+    updatePomoDisplay();
+    updatePomoStatusUI();
+};
+
+window.startPomo = () => {
+    if (isPomoRunning) return;
+    clearInterval(pomoInterval);
+    pomoSettings = getPomoSettings();
+    pomoAlarm.play().then(() => {
+        pomoAlarm.pause();
+        pomoAlarm.currentTime = 0;
+    }).catch(e => console.log("Audio waiting for user"));
+    isPomoRunning = true;
+    pomoEndAt = Date.now() + (pomoTime * 1000);
+    pomoInterval = setInterval(tickPomo, 250);
+};
+
+function tickPomo() {
+    if (!isPomoRunning || !pomoEndAt) return;
+    pomoTime = Math.max(0, Math.ceil((pomoEndAt - Date.now()) / 1000));
+    updatePomoDisplay();
+    if (pomoTime <= 0) handlePomoFlow();
+}
+
+function handlePomoFlow() {
+    pomoAlarm.play().catch(e => console.log("Audio play error", e));
+
+    if (pomoMode === "focus") {
+        const count = parseInt(localStorage.getItem("pomoCount") || "0");
+        localStorage.setItem("pomoCount", count + 1);
+
+        const totalFocusMinutes = parseInt(localStorage.getItem("pomoFocusMinutes") || "0");
+        localStorage.setItem("pomoFocusMinutes", totalFocusMinutes + pomoSettings.focus);
+
+        pomoCompletedFocusInCycle = (pomoCompletedFocusInCycle + 1) % 4;
+        localStorage.setItem("pomoCompletedFocusInCycle", String(pomoCompletedFocusInCycle));
+        updateAchievements();
+
+        const shouldTakeLongBreak = pomoCompletedFocusInCycle === 0;
+        pomoMode = shouldTakeLongBreak ? "long" : "short";
+        pomoTime = (shouldTakeLongBreak ? pomoSettings.long : pomoSettings.short) * 60;
+    } else {
+        pomoMode = "focus";
+        pomoTime = pomoSettings.focus * 60;
+    }
+
+    if (isPomoRunning) pomoEndAt = Date.now() + (pomoTime * 1000);
+    updatePomoStatusUI();
+    updatePomoDisplay();
+}
+
+function updatePomoStatusUI() {
+    const el = document.getElementById("pomo-status");
+    if (!el) return;
+    if (pomoMode === "focus") {
+        el.innerText = "FOCUS TIME 🎯";
+        el.className = "pomo-status-label status-focus";
+    } else if (pomoMode === "long") {
+        el.innerText = "LONG BREAK 🥛";
+        el.className = "pomo-status-label status-break";
+    } else {
+        el.innerText = "BREAK TIME 🥛";
+        el.className = "pomo-status-label status-break";
+    }
+}
+
+window.stopPomo = () => {
+    if (pomoEndAt) {
+        pomoTime = Math.max(0, Math.ceil((pomoEndAt - Date.now()) / 1000));
+        updatePomoDisplay();
+    }
+    clearInterval(pomoInterval);
+    isPomoRunning = false;
+    pomoEndAt = null;
+};
+
+window.resetPomo = () => {
+    stopPomo();
+    pomoMode = "focus";
+    pomoSettings = getPomoSettings();
+    pomoTime = pomoSettings.focus * 60;
+    updatePomoDisplay();
+    updatePomoStatusUI();
+};
 
 /* ===== EXPENSE & ARCHIVE LOGIC ===== */
 function renderExpensePage() {
