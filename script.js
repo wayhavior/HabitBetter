@@ -2831,7 +2831,7 @@ window.startPomo = async () => {
     isPomoRunning = true;
     pomoEndAt = Date.now() + (pomoTime * 1000);
     pomoInterval = setInterval(tickPomo, 250);
-    if (canNotify) showPomoLocalNotification("Pomodoro เริ่มแล้ว", getPomoNotificationBody(), "pomo-running");
+    if (canNotify) showPomoLocalNotification("Pomodoro เริ่มแล้ว", getPomoNotificationBody());
 };
 
 function tickPomo() {
@@ -2866,7 +2866,7 @@ function handlePomoFlow() {
     if (isPomoRunning) pomoEndAt = Date.now() + (pomoTime * 1000);
     updatePomoStatusUI();
     updatePomoDisplay();
-    showPomoLocalNotification(getPomoNotificationTitle(), getPomoNotificationBody(), "pomo-mode");
+    showPomoLocalNotification(getPomoNotificationTitle(), getPomoNotificationBody());
 }
 
 function updatePomoStatusUI() {
@@ -2942,14 +2942,14 @@ function getPomoNotificationBody() {
     return `พักสั้น ${minutes} นาที แล้วค่อยกลับมา Focus`;
 }
 
-async function showPomoLocalNotification(title, body, tag = "pomo-status") {
+async function showPomoLocalNotification(title, body) {
     if (!("Notification" in window) || Notification.permission !== "granted") return;
 
     const options = {
         body,
         icon: "./icon512_rounded.png",
         badge: "./icon512_rounded.png",
-        tag,
+        tag: "pomodoro-status",
         renotify: true,
         requireInteraction: false,
         data: {
@@ -2972,7 +2972,7 @@ async function showPomoLocalNotification(title, body, tag = "pomo-status") {
 
 document.addEventListener("visibilitychange", () => {
     if (document.hidden && isPomoRunning) {
-        showPomoLocalNotification("Pomodoro ยังทำงานอยู่", getPomoNotificationBody(), "pomo-running");
+        showPomoLocalNotification("Pomodoro ยังทำงานอยู่", getPomoNotificationBody());
     }
 });
 
