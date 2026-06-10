@@ -3026,8 +3026,47 @@ app.appendChild(drawer);
         <div style="width:100%; max-width:380px;">
             <h3 style="margin-left:10px;text-align:left;">รายการวันนี้</h3>
             <div id="expense-list"></div>
-            <h3 style="margin: 20px 0 10px 10px;text-align:left;">ประวัติสรุปรายวัน</h3>
-            <div id="archive-list"></div>
+            
+            <div style="margin-top: 25px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0; font-size: 18px;">📅 รายเดือน</h2>
+                    <button onclick="prevCalendarMonth()" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 14px;">◀</button>
+                    <button onclick="nextCalendarMonth()" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 14px;">▶</button>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <select id="calendar-month-select" onchange="selectCalendarMonth()" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white;">
+                        <option value="0">มกราคม</option>
+                        <option value="1">กุมภาพันธ์</option>
+                        <option value="2">มีนาคม</option>
+                        <option value="3">เมษายน</option>
+                        <option value="4">พฤษภาคม</option>
+                        <option value="5">มิถุนายน</option>
+                        <option value="6">กรกฎาคม</option>
+                        <option value="7">สิงหาคม</option>
+                        <option value="8">กันยายน</option>
+                        <option value="9">ตุลาคม</option>
+                        <option value="10">พฤศจิกายน</option>
+                        <option value="11">ธันวาคม</option>
+                    </select>
+                    <select id="calendar-year-select" onchange="selectCalendarMonth()" style="flex: 0.6; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white;">
+                    </select>
+                </div>
+                
+                <div id="calendar-summary" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
+                
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 10px;">
+                    <div style="color: rgba(255,255,255,0.6);">จ.</div>
+                    <div style="color: rgba(255,255,255,0.6);">อ.</div>
+                    <div style="color: rgba(255,255,255,0.6);">พ.</div>
+                    <div style="color: rgba(255,255,255,0.6);">พฤ.</div>
+                    <div style="color: rgba(255,255,255,0.6);">ศ.</div>
+                    <div style="color: rgba(255,255,255,0.6);">ส.</div>
+                    <div style="color: rgba(255,255,255,0.6);">อา.</div>
+                </div>
+                
+                <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;"></div>
+            </div>
         </div>
     `;
     app.appendChild(container);
@@ -3040,13 +3079,77 @@ app.appendChild(drawer);
             <span style="margin-left:10px; cursor:pointer; opacity:0.3;" onclick="delExpense(${i})">🗑️</span></div>`;
         listDiv.appendChild(item);
     });
-    const archDiv = document.getElementById("archive-list");
-    myExpenseArchive.forEach((a, i) => {
-        const div = document.createElement("div"); div.className = "archive-item";
-        const autoLabel = a.autoArchived ? " 🤖 (อัตโนมัติ)" : "";
-        const balance = a.balance !== undefined ? a.balance : (a.totalIn - a.totalOut); // ✅ ป้องกัน undefined
-        div.innerHTML = `📅 <b>${a.date}</b> | รับ: <span style="color:#00b894">+${a.totalIn.toLocaleString()}</span> | จ่าย: <span style="color:#ff7675">-${a.totalOut.toLocaleString()}</span> | คงเหลือ: <b>${balance.toLocaleString()}</b>${autoLabel} <span style="margin-left:10px; cursor:pointer; opacity:0.5; font-size:18px;" onclick="delArchiveExpense(${i})" title="ลบประวัตินี้">🗑️</span>`;
-        archDiv.appendChild(div);
+    
+    // 📅 CALENDAR RENDERING
+    // Set month/year dropdowns
+    const monthSelect = document.getElementById("calendar-month-select");
+    const yearSelect = document.getElementById("calendar-year-select");
+    if (monthSelect) monthSelect.value = calendarViewMonth;
+    
+    // Populate year dropdown with range
+    if (yearSelect) {
+        yearSelect.innerHTML = '';
+        for (let y = calendarViewYear - 5; y <= calendarViewYear + 5; y++) {
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = (y + 543); // Thai year
+            yearSelect.appendChild(opt);
+        }
+        yearSelect.value = calendarViewYear;
+    }
+    
+    // Get calendar days
+    const calDays = generateCalendarDays(calendarViewYear, calendarViewMonth);
+    
+    // Populate summary
+    const monthlyData = getMonthlyTotals(calendarViewYear, calendarViewMonth);
+    const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+    const summaryDiv = document.getElementById("calendar-summary");
+    summaryDiv.innerHTML = `
+        <div style="background: rgba(255,107,107,0.2); padding: 10px; border-radius: 8px; text-align: center;">
+            <small style="color: rgba(255,255,255,0.6);">รายจ่ายรวม</small><br>
+            <strong style="color: #ff7675; font-size: 16px;">-${monthlyData.out.toLocaleString()}</strong>
+        </div>
+        <div style="background: rgba(0,184,148,0.2); padding: 10px; border-radius: 8px; text-align: center;">
+            <small style="color: rgba(255,255,255,0.6);">รายรับรวม</small><br>
+            <strong style="color: #00b894; font-size: 16px;">+${monthlyData.in.toLocaleString()}</strong>
+        </div>
+        <div style="background: rgba(100,200,255,0.2); padding: 10px; border-radius: 8px; text-align: center;">
+            <small style="color: rgba(255,255,255,0.6);">คงเหลือ</small><br>
+            <strong style="color: #64c8ff; font-size: 16px;">${monthlyData.balance.toLocaleString()}</strong>
+        </div>
+    `;
+    
+    // Populate calendar grid
+    const gridDiv = document.getElementById("calendar-grid");
+    calDays.forEach(day => {
+        const cell = document.createElement("div");
+        cell.style.cssText = `
+            aspect-ratio: 1;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 6px;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: rgba(255,255,255,0.03);
+        `;
+        
+        if (!day.date) {
+            cell.style.opacity = '0.2';
+            cell.style.background = 'transparent';
+        } else {
+            const expense = getExpenseForDate(calendarViewYear, calendarViewMonth, day.date);
+            cell.innerHTML = `
+                <strong style="font-size: 14px; margin-bottom: 4px;">${day.date}</strong>
+                <span style="color: #ff7675; font-size: 11px;">${expense.out > 0 ? `-${expense.out.toLocaleString()}` : '0'}</span>
+                <span style="color: #00b894; font-size: 11px;">${expense.in > 0 ? `+${expense.in.toLocaleString()}` : '0'}</span>
+            `;
+        }
+        gridDiv.appendChild(cell);
     });
     
     // 💰 เริ่มนับถอยหลังเมื่ออยู่ในหน้า Expense
@@ -3070,6 +3173,85 @@ window.delArchiveExpense = (i) => {
 /* ===== EXPENSE COUNTDOWN (เช่นเดียวกับ Daily Goals) ===== */
 let expenseCountdownTimer = null;
 let countdownTimer = null;
+
+/* ===== CALENDAR VIEW STATE ===== */
+let calendarViewMonth = new Date().getMonth(); // 0-11
+let calendarViewYear = new Date().getFullYear();
+
+/* ===== CALENDAR HELPER FUNCTIONS ===== */
+function generateCalendarDays(year, month) {
+    const firstDay = new Date(year, month, 1).getDay(); // 0-6 (Sun-Sat)
+    const lastDate = new Date(year, month + 1, 0).getDate(); // Days in month
+    const days = [];
+    
+    // Add previous month's trailing days
+    for (let i = firstDay - 1; i >= 0; i--) {
+        days.push({ date: null, type: 'prev' });
+    }
+    
+    // Add current month's days
+    for (let d = 1; d <= lastDate; d++) {
+        days.push({ date: d, type: 'current' });
+    }
+    
+    // Add next month's leading days
+    const remaining = (7 - (days.length % 7)) % 7;
+    for (let i = 0; i < remaining; i++) {
+        days.push({ date: null, type: 'next' });
+    }
+    
+    return days;
+}
+
+function getExpenseForDate(year, month, day) {
+    if (!day) return { in: 0, out: 0 };
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const record = myExpenseArchive.find(a => a.date === dateStr);
+    return record ? { in: record.totalIn || 0, out: record.totalOut || 0 } : { in: 0, out: 0 };
+}
+
+function getMonthlyTotals(year, month) {
+    let totalIn = 0, totalOut = 0;
+    const monthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+    myExpenseArchive.forEach(a => {
+        if (a.date.startsWith(monthStr)) {
+            totalIn += a.totalIn || 0;
+            totalOut += a.totalOut || 0;
+        }
+    });
+    return { in: totalIn, out: totalOut, balance: totalIn - totalOut };
+}
+
+window.prevCalendarMonth = () => {
+    calendarViewMonth--;
+    if (calendarViewMonth < 0) {
+        calendarViewMonth = 11;
+        calendarViewYear--;
+    }
+    currentPage = "expense";
+    render();
+};
+
+window.nextCalendarMonth = () => {
+    calendarViewMonth++;
+    if (calendarViewMonth > 11) {
+        calendarViewMonth = 0;
+        calendarViewYear++;
+    }
+    currentPage = "expense";
+    render();
+};
+
+window.selectCalendarMonth = () => {
+    const yearInput = document.getElementById("calendar-year-select");
+    const monthInput = document.getElementById("calendar-month-select");
+    if (yearInput && monthInput) {
+        calendarViewYear = parseInt(yearInput.value);
+        calendarViewMonth = parseInt(monthInput.value);
+        render();
+    }
+};
+
 function updateExpenseCountdown() {
     if (expenseCountdownTimer) {
         clearTimeout(expenseCountdownTimer);
