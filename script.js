@@ -2814,10 +2814,16 @@ window.applyPomoSettings = () => {
     updatePomoStatusUI();
 };
 
-window.startPomo = () => {
+window.startPomo = async () => {
     if (isPomoRunning) return;
+    const canNotify = await ensurePomoNotificationPermission();
     clearInterval(pomoInterval);
-    pomoSettings = getPomoSettings();
+    const previousFocusSeconds = getPomoSettings().focus * 60;
+    pomoSettings = readPomoSettingsFromInputs();
+    savePomoSettings();
+    if (pomoMode === "focus" && pomoTime === previousFocusSeconds) {
+        pomoTime = pomoSettings.focus * 60;
+    }
     pomoAlarm.play().then(() => {
         pomoAlarm.pause();
         pomoAlarm.currentTime = 0;
@@ -2825,6 +2831,7 @@ window.startPomo = () => {
     isPomoRunning = true;
     pomoEndAt = Date.now() + (pomoTime * 1000);
     pomoInterval = setInterval(tickPomo, 250);
+    if (canNotify) showPomoLocalNotification("Pomodoro เริ่มแล้ว", getPomoNotificationBody(), "pomo-running");
 };
 
 function tickPomo() {
@@ -2859,6 +2866,7 @@ function handlePomoFlow() {
     if (isPomoRunning) pomoEndAt = Date.now() + (pomoTime * 1000);
     updatePomoStatusUI();
     updatePomoDisplay();
+    showPomoLocalNotification(getPomoNotificationTitle(), getPomoNotificationBody(), "pomo-mode");
 }
 
 function updatePomoStatusUI() {
@@ -2894,6 +2902,79 @@ window.resetPomo = () => {
     updatePomoDisplay();
     updatePomoStatusUI();
 };
+
+async function ensurePomoNotificationPermission() {
+    if (!("Notification" in window)) {
+        showNotification("แจ้งเตือนไม่รองรับ", "เบราว์เซอร์นี้ยังไม่รองรับ Notification", "error");
+        return false;
+    }
+
+    if (Notification.permission === "granted") return true;
+
+    if (Notification.permission === "denied") {
+        showNotification("เปิดแจ้งเตือนไม่ได้", "กรุณาอนุญาต Notification จากการตั้งค่าเบราว์เซอร์ก่อน", "error");
+        return false;
+    }
+
+    if (typeof requestNotificationPermission === "function") {
+        await requestNotificationPermission();
+    } else {
+        await Notification.requestPermission();
+    }
+
+    const granted = Notification.permission === "granted";
+    if (!granted) {
+        showNotification("Pomodoro เริ่มได้", "ยังไม่ได้เปิด Notification ระบบจะจับเวลาต่อในหน้าแอป", "info");
+    }
+    return granted;
+}
+
+function getPomoNotificationTitle() {
+    if (pomoMode === "focus") return "ถึงเวลา Focus";
+    if (pomoMode === "long") return "พักยาวได้แล้ว";
+    return "พักสั้นได้แล้ว";
+}
+
+function getPomoNotificationBody() {
+    const minutes = Math.ceil(pomoTime / 60);
+    if (pomoMode === "focus") return `กำลังอยู่ในโหมด Focus เหลือประมาณ ${minutes} นาที`;
+    if (pomoMode === "long") return `พักยาว ${minutes} นาที แล้วค่อยกลับมา Focus`;
+    return `พักสั้น ${minutes} นาที แล้วค่อยกลับมา Focus`;
+}
+
+async function showPomoLocalNotification(title, body, tag = "pomo-status") {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+    const options = {
+        body,
+        icon: "./icon512_rounded.png",
+        badge: "./icon512_rounded.png",
+        tag,
+        renotify: true,
+        requireInteraction: false,
+        data: {
+            page: "pomodoro",
+            mode: pomoMode
+        }
+    };
+
+    try {
+        if ("serviceWorker" in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.showNotification(title, options);
+            return;
+        }
+        new Notification(title, options);
+    } catch (error) {
+        console.warn("Pomodoro notification failed:", error);
+    }
+}
+
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden && isPomoRunning) {
+        showPomoLocalNotification("Pomodoro ยังทำงานอยู่", getPomoNotificationBody(), "pomo-running");
+    }
+});
 
 /* ===== EXPENSE & ARCHIVE LOGIC ===== */
 function renderExpensePage() {
