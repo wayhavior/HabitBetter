@@ -3086,10 +3086,12 @@ app.appendChild(drawer);
     const yearSelect = document.getElementById("calendar-year-select");
     if (monthSelect) monthSelect.value = calendarViewMonth;
     
-    // Populate year dropdown with range
+    // Populate year dropdown with current year only
     if (yearSelect) {
         yearSelect.innerHTML = '';
-        for (let y = calendarViewYear - 5; y <= calendarViewYear + 5; y++) {
+        const currentYear = new Date().getFullYear();
+        // Show only current year and 1 year before/after for safety
+        for (let y = currentYear - 1; y <= currentYear + 1; y++) {
             const opt = document.createElement('option');
             opt.value = y;
             opt.textContent = (y + 543); // Thai year
@@ -3122,31 +3124,33 @@ app.appendChild(drawer);
     
     // Populate calendar grid
     const gridDiv = document.getElementById("calendar-grid");
+    gridDiv.innerHTML = ''; // Clear first
     calDays.forEach(day => {
         const cell = document.createElement("div");
         cell.style.cssText = `
             aspect-ratio: 1;
             border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 8px;
-            padding: 6px;
-            font-size: 12px;
+            border-radius: 6px;
+            padding: 4px 2px;
+            font-size: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
             background: rgba(255,255,255,0.03);
+            min-height: 0;
         `;
         
         if (!day.date) {
-            cell.style.opacity = '0.2';
+            cell.style.opacity = '0.15';
             cell.style.background = 'transparent';
         } else {
             const expense = getExpenseForDate(calendarViewYear, calendarViewMonth, day.date);
             cell.innerHTML = `
-                <strong style="font-size: 14px; margin-bottom: 4px;">${day.date}</strong>
-                <span style="color: #ff7675; font-size: 11px;">${expense.out > 0 ? `-${expense.out.toLocaleString()}` : '0'}</span>
-                <span style="color: #00b894; font-size: 11px;">${expense.in > 0 ? `+${expense.in.toLocaleString()}` : '0'}</span>
+                <strong style="font-size: 12px; line-height: 1; margin-bottom: 2px;">${day.date}</strong>
+                <span style="color: #ff7675; font-size: 9px; line-height: 1;">${expense.out > 0 ? `-${expense.out}` : '0'}</span>
+                <span style="color: #00b894; font-size: 9px; line-height: 1;">${expense.in > 0 ? `+${expense.in}` : '0'}</span>
             `;
         }
         gridDiv.appendChild(cell);
@@ -3220,6 +3224,20 @@ function getMonthlyTotals(year, month) {
         }
     });
     return { in: totalIn, out: totalOut, balance: totalIn - totalOut };
+}
+
+function cleanupOldYearData() {
+    // Remove archive data from previous years (keep only current year)
+    const currentYear = new Date().getFullYear();
+    const beforeCount = myExpenseArchive.length;
+    myExpenseArchive = myExpenseArchive.filter(a => {
+        const archiveYear = parseInt(a.date.split('-')[0]);
+        return archiveYear === currentYear;
+    });
+    if (myExpenseArchive.length < beforeCount) {
+        console.log(`🗑️ Cleaned up ${beforeCount - myExpenseArchive.length} old records from previous years`);
+        save();
+    }
 }
 
 window.prevCalendarMonth = () => {
@@ -4434,6 +4452,7 @@ function updateCountdown() {
     resetDailyGoalsIfNeeded();
     autoArchiveExpenseIfNeeded();  // 💰 เพิ่มการบันทึก expense อัตโนมัติ
     resetTrackerIfNeeded(); // 🔥 ใช้ฟังก์ชัน reset ใหม่ (เหมือน Daily Goals)
+    cleanupOldYearData(); // 🗑️ ลบข้อมูลเก่าจากปีที่แล้ว
 
     // 2. ถ้าหน้าจอมีตัวเลขตัวนับเวลา (id="timer") ให้คำนวณและแสดงผล
     const el = document.getElementById("timer");
