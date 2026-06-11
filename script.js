@@ -3179,7 +3179,8 @@ window.addExpense = (type) => {
                 totalOut: tout,
                 balance: balance,
                 total: balance,
-                type: "in"
+                type: "in",
+                items: [...myExpenses] // 📝 Store itemized list
             };
         } else {
             // Create new entry
@@ -3189,7 +3190,8 @@ window.addExpense = (type) => {
                 totalOut: tout,
                 balance: balance,
                 total: balance,
-                type: "in"
+                type: "in",
+                items: [...myExpenses] // 📝 Store itemized list
             });
         }
         
@@ -3202,7 +3204,119 @@ window.addExpense = (type) => {
         render(); 
     }
 };
-window.delExpense = (i) => { if(confirm("ลบ?")){ myExpenses.splice(i, 1); save(); render(); } };
+window.delExpense = (i) => { 
+    showDeleteExpenseModal(myExpenses[i], i);
+};
+
+/* ===== DELETE EXPENSE MODAL ===== */
+function showDeleteExpenseModal(expense, index) {
+    // สร้าง overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
+    // สร้าง modal
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 32px 24px;
+        max-width: 300px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    // เพิ่ม animation ถ้าไม่มี
+    const style = document.createElement("style");
+    style.textContent = `
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    if (!document.querySelector("style[data-modal-anim]")) {
+        style.setAttribute("data-modal-anim", "true");
+        document.head.appendChild(style);
+    }
+    
+    const typeEmoji = expense.type === "in" ? "💚" : "💔";
+    const typeText = expense.type === "in" ? "รับ" : "จ่าย";
+    const sign = expense.type === "in" ? "+" : "-";
+    
+    modal.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">ลบรายการ?</h3>
+            <p style="margin: 0 0 24px; color: rgba(255, 255, 255, 0.6); font-size: 13px;">คุณแน่ใจว่าต้องการลบ "<span style="font-weight: 600; color: rgba(255, 255, 255, 0.8);">${expense.note}</span>" (${typeEmoji} ${sign}${expense.amt.toLocaleString()}) หรือไม่</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="cancel-delete-exp" style="flex: 1; padding: 12px 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">ยกเลิก</button>
+                <button id="confirm-delete-exp" style="flex: 1; padding: 12px 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);">ลบ</button>
+            </div>
+        </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Event listeners
+    document.getElementById("cancel-delete-exp").onclick = () => {
+        overlay.remove();
+    };
+    
+    document.getElementById("confirm-delete-exp").onclick = () => {
+        myExpenses.splice(index, 1); 
+        
+        // Re-archive immediately after delete
+        let tin = 0; let tout = 0;
+        myExpenses.forEach(x => { if(x.type === "in") tin += x.amt; else tout += x.amt; });
+        
+        const today = getToday();
+        const existingIndex = myExpenseArchive.findIndex(a => a.date === today);
+        const balance = tin - tout;
+        
+        if (existingIndex >= 0) {
+            myExpenseArchive[existingIndex] = {
+                date: today,
+                totalIn: tin,
+                totalOut: tout,
+                balance: balance,
+                total: balance,
+                type: "in",
+                items: [...myExpenses]
+            };
+        }
+        
+        save(); 
+        overlay.remove();
+        render();
+        showNotification("✅ ลบสำเร็จ", `"${expense.note}" ถูกลบออก`, "success");
+    };
+    
+    // Close on overlay click
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
+}
 
 /* ===== EXPENSE DETAIL POPUP ===== */
 function showExpenseDetailModal(year, month, day) {
@@ -3247,6 +3361,33 @@ function showExpenseDetailModal(year, month, day) {
         animation: slideUp 0.3s ease-out;
     `;
     
+    // Build items list HTML
+    let itemsHTML = '';
+    if (archiveEntry.items && archiveEntry.items.length > 0) {
+        itemsHTML = `
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 16px 0; padding-top: 16px;">
+                <h4 style="margin: 0 0 12px; color: rgba(255,255,255,0.8); font-size: 13px;">📋 รายการบันทึก:</h4>
+                <div style="max-height: 200px; overflow-y: auto;">
+        `;
+        archiveEntry.items.forEach((item) => {
+            const color = item.type === 'in' ? '#00b894' : '#ff7675';
+            const sign = item.type === 'in' ? '+' : '-';
+            itemsHTML += `
+                <div style="background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; border-left: 3px solid ${color};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: white; font-size: 13px; flex: 1;">${item.note}</span>
+                        <span style="color: ${color}; font-weight: 600; font-size: 12px;">${sign}${item.amt.toLocaleString()}</span>
+                    </div>
+                    <small style="color: rgba(255,255,255,0.4); font-size: 10px;">${item.time}</small>
+                </div>
+            `;
+        });
+        itemsHTML += `
+                </div>
+            </div>
+        `;
+    }
+    
     let expenseHTML = `
         <div style="text-align: center; margin-bottom: 20px;">
             <div style="font-size: 40px; margin-bottom: 12px;">📅</div>
@@ -3254,7 +3395,7 @@ function showExpenseDetailModal(year, month, day) {
             <p style="margin: 0; color: rgba(255, 255, 255, 0.6); font-size: 13px;">${archiveEntry.autoArchived ? '🤖 บันทึกอัตโนมัติ' : '✋ บันทึกด้วยตนเอง'}</p>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
             <div style="background: rgba(255,107,107,0.2); padding: 12px; border-radius: 12px; text-align: center;">
                 <small style="color: rgba(255,255,255,0.6);">รับ</small><br>
                 <strong style="color: #00b894; font-size: 16px;">+${archiveEntry.totalIn.toLocaleString()}</strong>
@@ -3265,12 +3406,14 @@ function showExpenseDetailModal(year, month, day) {
             </div>
         </div>
         
-        <div style="background: rgba(100,200,255,0.2); padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+        <div style="background: rgba(100,200,255,0.2); padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 16px;">
             <small style="color: rgba(255,255,255,0.6);">คงเหลือ</small><br>
             <strong style="color: #64c8ff; font-size: 18px;">${(archiveEntry.totalIn - archiveEntry.totalOut).toLocaleString()}</strong>
         </div>
         
-        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+        ${itemsHTML}
+        
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; margin-top: 16px;">
             <button onclick="document.querySelector('[data-expense-modal]').parentNode.remove();" style="width: 100%; padding: 12px 20px; background: rgba(100,200,255,0.3); border: 1px solid rgba(100,200,255,0.5); border-radius: 10px; color: #64c8ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">ปิด</button>
         </div>
     `;
