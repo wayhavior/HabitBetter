@@ -5663,7 +5663,7 @@ function renderSummaryPage() {
     });
     jarHTML += `<div class="sum-row" style="border-top:1px solid rgba(255,255,255,0.2); padding-top:8px; margin-top:8px;"><span style="font-weight:bold;">💰 รวมทั้งหมด</span><span class="sum-val" style="color:#00b894; font-weight:bold;">${totalSavings.toLocaleString()} ฿</span></div>`;
 
-// ===== EXPENSE =====
+// ===== EXPENSE / INCOME SUMMARY =====
 const now = new Date();
 const todayStr = getToday();
 
@@ -5678,31 +5678,37 @@ weekStart.setHours(0, 0, 0, 0);
 const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 monthStart.setHours(0, 0, 0, 0);
 
+let todayIn = 0;
+let todayOut = 0;
 let weekOut = 0;
+let monthIn = 0;
 let monthOut = 0;
-const noteCount = {};
 
 // ✅ ใช้ archive เป็นหลัก เพื่อไม่ให้ยอดซ้ำกับ myExpenses
 myExpenseArchive.forEach(a => {
     const d = new Date(a.date || todayStr);
     d.setHours(0, 0, 0, 0);
 
+    const totalIn = Number(a.totalIn || 0);
     const totalOut = Number(a.totalOut || 0);
 
-    if (d >= weekStart) weekOut += totalOut;
-    if (d >= monthStart) monthOut += totalOut;
+    // วันนี้
+    if (a.date === todayStr) {
+        todayIn += totalIn;
+        todayOut += totalOut;
+    }
+
+    // สัปดาห์นี้
+    if (d >= weekStart) {
+        weekOut += totalOut;
+    }
+
+    // เดือนนี้
+    if (d >= monthStart) {
+        monthIn += totalIn;
+        monthOut += totalOut;
+    }
 });
-
-// ✅ ใช้ myExpenses แค่นับ "จ่ายบ่อยสุด" ไม่เอามาบวกยอดเงิน
-myExpenses.forEach(x => {
-    if (x.type !== "out") return;
-
-    const note = x.note || "ไม่ระบุ";
-    noteCount[note] = (noteCount[note] || 0) + 1;
-});
-
-const topNote = Object.entries(noteCount).sort((a, b) => b[1] - a[1])[0];
-
     // ===== GOALS =====
     const dailyTotal = myDailyGoals.length;
     const dailyDone = myDailyGoals.filter(g => g.done).length;
@@ -5723,11 +5729,13 @@ const topNote = Object.entries(noteCount).sort((a, b) => b[1] - a[1])[0];
         </div>
 
         <div class="summary-section-card">
-            <div class="sum-title">💰 Expense</div>
-            <div class="sum-row"><span>📆 สัปดาห์นี้จ่าย</span><span class="sum-val" style="color:#ff7675">${weekOut.toLocaleString()} ฿</span></div>
-            <div class="sum-row"><span>🗓️ เดือนนี้จ่าย</span><span class="sum-val" style="color:#ff7675">${monthOut.toLocaleString()} ฿</span></div>
-            <div class="sum-row"><span>🏆 จ่ายบ่อยสุด</span><span class="sum-val">${topNote ? topNote[0] + " ("+topNote[1]+"ครั้ง)" : "-"}</span></div>
-        </div>
+    <div class="sum-title">💰 Income / Expense</div>
+    <div class="sum-row"><span>💵 วันนี้รับ</span><span class="sum-val" style="color:#00b894">${todayIn.toLocaleString()} ฿</span></div>
+    <div class="sum-row"><span>💸 วันนี้จ่าย</span><span class="sum-val" style="color:#ff7675">${todayOut.toLocaleString()} ฿</span></div>
+    <div class="sum-row"><span>📆 สัปดาห์นี้จ่าย</span><span class="sum-val" style="color:#ff7675">${weekOut.toLocaleString()} ฿</span></div>
+    <div class="sum-row"><span>💰 เดือนนี้รับ</span><span class="sum-val" style="color:#00b894">${monthIn.toLocaleString()} ฿</span></div>
+    <div class="sum-row"><span>🗓️ เดือนนี้จ่าย</span><span class="sum-val" style="color:#ff7675">${monthOut.toLocaleString()} ฿</span></div>
+</div>
 
         <div class="summary-section-card">
             <div class="sum-title">🎯 Goals</div>
