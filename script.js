@@ -1146,37 +1146,10 @@ function resetDailyGoalsIfNeeded() {
     }
 }
 
-// 💰 AUTO ARCHIVE EXPENSE RESET (เช่นเดียวกับ Daily Goals)
-let lastExpenseAutoArchiveDate = localStorage.getItem("lastExpenseAutoArchiveDate") || getToday();
-if (lastExpenseAutoArchiveDate && !/^\d{4}-\d{2}-\d{2}$/.test(lastExpenseAutoArchiveDate)) {
-    const parsedArchiveDate = new Date(lastExpenseAutoArchiveDate);
-    if (!Number.isNaN(parsedArchiveDate.getTime())) {
-        lastExpenseAutoArchiveDate = getToday(parsedArchiveDate);
-    }
-}
-localStorage.setItem("lastExpenseAutoArchiveDate", lastExpenseAutoArchiveDate);
+// 💰 AUTO ARCHIVE EXPENSE ถูกปิดแล้ว
+// เพราะ finishAddExpense() บันทึกเข้า myExpenseArchive ทันทีอยู่แล้ว
 function autoArchiveExpenseIfNeeded() {
-    const today = getToday();
-    
-    // ถ้ายังไม่เคย auto archive วันนี้ AND มีรายการให้บันทึก
-    if (lastExpenseAutoArchiveDate !== today && myExpenses.length > 0) {
-        let tin = 0; let tout = 0;
-        myExpenses.forEach(x => { if(x.type === "in") tin += x.amt; else tout += x.amt; });
-        const balance = tin - tout; // ✅ คำนวณ balance
-        myExpenseArchive.unshift({
-            date: getToday(),
-            totalIn: tin,
-            totalOut: tout,
-            balance: balance, // ✅ เพิ่ม balance field
-            total: balance,
-            type: "in",
-            autoArchived: true  // 🚀 ทำเครื่องหมายว่าเป็นอัตโนมัติ
-        });
-        myExpenses = [];
-        lastExpenseAutoArchiveDate = today;
-        save();
-        console.log("💰 Expense auto-archived at midnight!");
-    }
+    // ไม่ต้องทำอะไร เพื่อกันบันทึกซ้ำตอนข้ามวัน
 }
 
 // 🔴 TRACKER RESET (ทำเหมือนกับ Daily Goals เด้ง!)
@@ -1685,7 +1658,7 @@ function getProfileCardHTML(displayName, displayImage, googleUser, userProfileDa
 
 function render() {
     resetDailyGoalsIfNeeded();
-    autoArchiveExpenseIfNeeded();  // 💰 เพิ่มการบันทึก expense อัตโนมัติ
+    //autoArchiveExpenseIfNeeded();  // 💰 เพิ่มการบันทึก expense อัตโนมัติ
     ensureCalendarViewIsWithin12Months(); // 📅 ตรวจสอบและรีเซ็ต calendar view เมื่อเข้าเดือนใหม่
     resetTrackerLockIfNeeded(); // 🔄 เพิ่มตรงนี้ให้เช็ครีเซ็ตตั้งแต่ต้น
     updateAchievements(); // เช็คและปลดล็อค badges
@@ -5521,7 +5494,7 @@ function updateCountdown() {
 
     // 1. เช็คและรีเซ็ตค่าเสมอไม่ว่าจะอยู่หน้าไหน
     resetDailyGoalsIfNeeded();
-    autoArchiveExpenseIfNeeded();  // 💰 เพิ่มการบันทึก expense อัตโนมัติ
+    //autoArchiveExpenseIfNeeded();  // 💰 เพิ่มการบันทึก expense อัตโนมัติ
     resetTrackerIfNeeded(); // 🔥 ใช้ฟังก์ชัน reset ใหม่ (เหมือน Daily Goals)
     resetExpenseIfNeeded(); // 📊 รีเซ็ตรายการรายรับรายจ่ายเมื่อข้ามวัน
     cleanupOldYearData(); // 🗑️ ลบข้อมูลเก่าจากปีที่แล้ว
