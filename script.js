@@ -1424,6 +1424,7 @@ function getProfileCardHTML(displayName, displayImage, googleUser, userProfileDa
 function render() {
     resetDailyGoalsIfNeeded();
     autoArchiveExpenseIfNeeded();  // 💰 เพิ่มการบันทึก expense อัตโนมัติ
+    ensureCalendarViewIsWithin12Months(); // 📅 ตรวจสอบและรีเซ็ต calendar view เมื่อเข้าเดือนใหม่
     resetTrackerLockIfNeeded(); // 🔄 เพิ่มตรงนี้ให้เช็ครีเซ็ตตั้งแต่ต้น
     updateAchievements(); // เช็คและปลดล็อค badges
     app.innerHTML = "";
@@ -3027,19 +3028,19 @@ app.appendChild(drawer);
         <div style="width:100%; margin-top: 25px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 style="margin: 0; font-size: 18px;">📅 รายเดือน</h2>
-                <button onclick="showMonthSelector()" style="padding: 8px 16px; background: linear-gradient(135deg, #f0ad4e 0%, #ec971f 100%); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; font-size: 12px;">เลือกเดือน</button>
+                <button id="month-selector-btn" onclick="showMonthSelector()" style="padding: 8px 16px; background: linear-gradient(135deg, #f0ad4e 0%, #ec971f 100%); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; font-size: 12px;">เลือกเดือน</button>
             </div>
             
             <div id="calendar-summary" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
             
             <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 8px;">
+                <div style="color: rgba(255,255,255,0.6);">อา.</div>
                 <div style="color: rgba(255,255,255,0.6);">จ.</div>
                 <div style="color: rgba(255,255,255,0.6);">อ.</div>
                 <div style="color: rgba(255,255,255,0.6);">พ.</div>
                 <div style="color: rgba(255,255,255,0.6);">พฤ.</div>
                 <div style="color: rgba(255,255,255,0.6);">ศ.</div>
                 <div style="color: rgba(255,255,255,0.6);">ส.</div>
-                <div style="color: rgba(255,255,255,0.6);">อา.</div>
             </div>
             
             <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;"></div>
@@ -3115,6 +3116,12 @@ app.appendChild(drawer);
         }
         gridDiv.appendChild(cell);
     });
+    
+    // 🔄 อัพเดทปุ่ม "เลือกเดือน" ให้แสดงเดือนปัจจุบัน
+    const monthSelectorBtn = document.getElementById("month-selector-btn");
+    if (monthSelectorBtn) {
+        monthSelectorBtn.textContent = `${monthNames[calendarViewMonth]} ${calendarViewYear + 543}`;
+    }
 }
 window.addExpense = (type) => {
     const note = document.getElementById("ex-note").value; 
@@ -3398,43 +3405,61 @@ let countdownTimer = null;
 /* ===== CALENDAR VIEW STATE ===== */
 let calendarViewMonth = new Date().getMonth(); // 0-11
 let calendarViewYear = new Date().getFullYear();
+let lastCheckedMonth = new Date().getMonth(); // 🔍 เก็บเดือนที่เช็คล่าสุดไว้ compare
+let lastCheckedYear = new Date().getFullYear();
 
 /* ===== MONTH MANAGEMENT ===== */
 let availableMonths = []; // Array of {year, month, label}
 
 function generateAvailableMonths() {
-    // Get unique year-months from archive
-    const monthSet = new Set();
-    myExpenseArchive.forEach(a => {
-        const [year, month] = a.date.split('-');
-        monthSet.add(`${year}-${month}`);
-    });
+    // Generate 12 months from past + 3 months ahead (total 15 months)
+    const months = [];
+    const today = new Date();
+    const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
     
-    // Convert to array and sort by date
-    availableMonths = Array.from(monthSet)
-        .map(ym => {
-            const [year, month] = ym.split('-');
-            const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-            return {
-                year: parseInt(year),
-                month: parseInt(month) - 1, // 0-based
-                label: `${monthNames[parseInt(month) - 1]} ${parseInt(year) + 543}`
-            };
-        })
-        .sort((a, b) => {
-            if (b.year !== a.year) return b.year - a.year;
-            return b.month - a.month;
-        })
-        .slice(0, 12); // Keep only last 12 months
+    // Start from 11 months ago and go to 3 months ahead (total 15 months)
+    for (let i = 11; i >= -3; i--) {
+        const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const year = date.getFullYear();
+        const month = date.getMonth(); // 0-11
+        
+        months.push({
+            year: year,
+            month: month,
+            label: `${monthNames[month]} ${year + 543}` // Thai year format
+        });
+    }
+    
+    availableMonths = months;
 }
+
+
+function ensureCalendarViewIsWithin12Months() {
+    // ตรวจสอบว่าเข้าเดือนใหม่ (เปรียบเทียบกับการเช็คล่าสุด)
+    generateAvailableMonths();
+    
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    
+    // ถ้าเดือนปัจจุบันเปลี่ยน (เข้าเดือนใหม่จริง ๆ) และ calendar view คือเดือนเก่า
+    if ((currentYear !== lastCheckedYear || currentMonth !== lastCheckedMonth) && 
+        (calendarViewYear === lastCheckedYear && calendarViewMonth === lastCheckedMonth)) {
+        // Auto-switch to current month เมื่อเข้าเดือนใหม่
+        console.log(`📅 New month detected! Auto-switching from ${lastCheckedMonth + 1}/${lastCheckedYear} to ${currentMonth + 1}/${currentYear}`);
+        calendarViewYear = currentYear;
+        calendarViewMonth = currentMonth;
+    }
+    
+    // อัพเดท lastChecked เสมอ
+    lastCheckedYear = currentYear;
+    lastCheckedMonth = currentMonth;
+}
+
+
 
 function showMonthSelector() {
     generateAvailableMonths();
-    
-    if (availableMonths.length === 0) {
-        showNotification("ไม่มีข้อมูล", "ยังไม่มีข้อมูลการบันทึก", "info");
-        return;
-    }
     
     // Create overlay
     const overlay = document.createElement("div");
@@ -3460,24 +3485,45 @@ function showMonthSelector() {
         padding: 20px;
         max-width: 280px;
         width: 90%;
-        max-height: 60vh;
+        max-height: 70vh;
         overflow-y: auto;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     `;
     
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    
     let monthsHTML = `
-        <h3 style="margin: 0 0 16px; color: white; text-align: center; font-size: 16px;">เลือกเดือน</h3>
+        <h3 style="margin: 0 0 16px; color: white; text-align: center; font-size: 16px; font-weight: bold;">📅 เลือกเดือน</h3>
     `;
     
     availableMonths.forEach((m, idx) => {
         const isSelected = m.year === calendarViewYear && m.month === calendarViewMonth;
-        const bgColor = isSelected ? 'linear-gradient(135deg, #f0ad4e 0%, #ec971f 100%)' : 'rgba(255,255,255,0.05)';
-        const textColor = isSelected ? 'white' : 'rgba(255,255,255,0.8)';
+        const isCurrent = m.year === currentYear && m.month === currentMonth;
+        const isFuture = (m.year > currentYear) || (m.year === currentYear && m.month > currentMonth);
+        
+        let bgColor = isSelected ? 'linear-gradient(135deg, #f0ad4e 0%, #ec971f 100%)' : 'rgba(255,255,255,0.05)';
+        let textColor = isSelected ? 'white' : 'rgba(255,255,255,0.8)';
+        let borderColor = isSelected ? 'rgba(255,192,61,0.5)' : 'rgba(255,255,255,0.1)';
+        
+        // ทำให้เดือนปัจจุบันมี highlight บาง ๆ
+        if (isCurrent && !isSelected) {
+            bgColor = 'rgba(0,184,148,0.15)';
+            borderColor = 'rgba(0,184,148,0.3)';
+        }
+        
+        // ทำให้เดือนอนาคตมี highlight บาง ๆ
+        if (isFuture && !isSelected && !isCurrent) {
+            bgColor = 'rgba(240,173,78,0.15)';
+            borderColor = 'rgba(240,173,78,0.3)';
+        }
+        
         const checkmark = isSelected ? ' ✓' : '';
         
         monthsHTML += `
             <button onclick="selectMonth(${m.year}, ${m.month}); document.querySelector('[data-month-selector]').parentNode.remove();" 
-                style="width: 100%; padding: 12px 16px; background: ${bgColor}; border: 1px solid ${isSelected ? 'rgba(255,192,61,0.5)' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; color: ${textColor}; font-weight: 600; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; text-align: left;"
+                style="width: 100%; padding: 12px 16px; background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 10px; color: ${textColor}; font-weight: 600; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; text-align: left; font-size: 14px;"
                 onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
                 ${m.label}${checkmark}
             </button>
@@ -3506,9 +3552,8 @@ window.selectMonth = (year, month) => {
 
 /* ===== CALENDAR HELPER FUNCTIONS ===== */
 function generateCalendarDays(year, month) {
-    let firstDay = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-    // Convert to Monday=0, Tuesday=1, ..., Sunday=6 (since we display Mon-Sun)
-    firstDay = (firstDay === 0) ? 6 : firstDay - 1;
+    let firstDay = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon, ..., 6=Sat (International standard)
+    // Keep as-is: Sunday=0, Monday=1, ..., Saturday=6
     
     const lastDate = new Date(year, month + 1, 0).getDate(); // Days in month
     const days = [];
