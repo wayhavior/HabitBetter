@@ -978,7 +978,7 @@ const BADGE_LIST = [
 /* ===== EXPENSE CATEGORIES ===== */
 const defaultIncomeCategories = [
   { id: 'salary', name: 'เงินเดือน', emoji: '💼' },
-  { id: 'overtime', name: 'ลวงเวลา', emoji: '⏰' },
+  { id: 'overtime', name: 'ล่วงเวลา', emoji: '⏰' },
   { id: 'online_sell', name: 'ขายออนไลน์', emoji: '👜' },
   { id: 'bonus', name: 'โบนัส', emoji: '🎁' },
   { id: 'interest', name: 'ดอกเบี้ย', emoji: '📈' },
@@ -1029,7 +1029,7 @@ const defaultExpenseCategories = [
   { id: 'hobby', name: 'งานอดิเรก', emoji: '🎨' },
   
   // 🏥 สุขภาพ
-  { id: 'medicine', name: 'ยา/โอษฐิ', emoji: '💊' },
+  { id: 'medicine', name: 'ยา/เวชภัณฑ์', emoji: '💊' },
   { id: 'hospital', name: 'โรงพยาบาล', emoji: '🏥' },
   
   // ✂️ บริการ
@@ -1042,6 +1042,71 @@ const defaultExpenseCategories = [
 
 let myIncomeCategories = JSON.parse(localStorage.getItem("my_income_categories")) || defaultIncomeCategories;
 let myExpenseCategories = JSON.parse(localStorage.getItem("my_expense_categories")) || defaultExpenseCategories;
+// ✅ แก้คำผิด / อัปเดตชื่อหมวดหมู่รายรับที่เคยถูกเซฟไว้ใน localStorage
+const incomeNameFixes = {
+    overtime: "ล่วงเวลา",
+    online_sell: "ขายออนไลน์",
+    salary: "เงินเดือน",
+    bonus: "โบนัส",
+    interest: "ดอกเบี้ย",
+    freelance: "งานพิเศษ",
+    gift: "ของขวัญ",
+    refund: "คืนเงิน"
+};
+
+myIncomeCategories = myIncomeCategories.map(cat => {
+    if (incomeNameFixes[cat.id]) {
+        return { ...cat, name: incomeNameFixes[cat.id] };
+    }
+    return cat;
+});
+
+localStorage.setItem("my_income_categories", JSON.stringify(myIncomeCategories));
+
+
+// ✅ แก้คำผิด / อัปเดตชื่อหมวดหมู่รายจ่ายที่เคยถูกเซฟไว้ใน localStorage
+const expenseNameFixes = {
+    food: "อาหาร",
+    coffee: "กาแฟ",
+    drink: "เครื่องดื่ม",
+    snack: "ขนมขบเคี้ยว",
+    alcohol: "เครื่องดื่มแอลกอฮอล์",
+    bus: "ค่าเดินทาง",
+    taxi: "แท็กซี่",
+    parking: "ค่าจอดรถ",
+    gas: "น้ำมันรถ",
+    online_shop: "ซื้อออนไลน์",
+    clothes: "เสื้อผ้า",
+    tools: "เครื่องมือ/อะไหล่",
+    rent: "ค่าเช่า",
+    electricity: "ค่าไฟ",
+    water: "ค่าน้ำ",
+    internet: "ค่าอินเทอร์เน็ต",
+    phone: "ค่าโทรศัพท์",
+    car_loan: "ผ่อนรถ",
+    house_loan: "ผ่อนบ้าน",
+    debt: "ผ่อนจ่ายอื่นๆ",
+    insurance: "ประกัน",
+    parents: "ส่งเงินพ่อแม่",
+    kids: "ลูกๆ",
+    gaming: "เกม",
+    movie: "หนัง",
+    hobby: "งานอดิเรก",
+    medicine: "ยา/เวชภัณฑ์",
+    hospital: "โรงพยาบาล",
+    haircut: "ตัดผม",
+    laundry: "ซักรีด",
+    savings: "เงินออม"
+};
+
+myExpenseCategories = myExpenseCategories.map(cat => {
+    if (expenseNameFixes[cat.id]) {
+        return { ...cat, name: expenseNameFixes[cat.id] };
+    }
+    return cat;
+});
+
+localStorage.setItem("my_expense_categories", JSON.stringify(myExpenseCategories));
 
 /* EXPENSE STATE (Manual Mode) */
 let myExpenses = JSON.parse(localStorage.getItem("my_expenses")) || [];
@@ -5598,29 +5663,45 @@ function renderSummaryPage() {
     });
     jarHTML += `<div class="sum-row" style="border-top:1px solid rgba(255,255,255,0.2); padding-top:8px; margin-top:8px;"><span style="font-weight:bold;">💰 รวมทั้งหมด</span><span class="sum-val" style="color:#00b894; font-weight:bold;">${totalSavings.toLocaleString()} ฿</span></div>`;
 
-    // ===== EXPENSE =====
-    const now = new Date();
-    const weekAgo = new Date(); weekAgo.setDate(now.getDate() - 7);
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+// ===== EXPENSE =====
+const now = new Date();
+const todayStr = getToday();
 
-    let weekOut = 0;
+// ✅ เริ่มสัปดาห์แบบ จันทร์-อาทิตย์
+const weekStart = new Date(now);
+const day = weekStart.getDay(); // อาทิตย์ = 0, จันทร์ = 1
+const diffToMonday = day === 0 ? -6 : 1 - day;
+weekStart.setDate(weekStart.getDate() + diffToMonday);
+weekStart.setHours(0, 0, 0, 0);
+
+// ✅ เริ่มเดือน วันที่ 1
+const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+monthStart.setHours(0, 0, 0, 0);
+
+let weekOut = 0;
 let monthOut = 0;
 const noteCount = {};
 
-// ใช้ archive เป็นหลัก เพื่อไม่ให้ยอดซ้ำกับ myExpenses
+// ✅ ใช้ archive เป็นหลัก เพื่อไม่ให้ยอดซ้ำกับ myExpenses
 myExpenseArchive.forEach(a => {
-    const d = new Date(a.date || getToday());
-    if (d >= weekAgo) weekOut += (Number(a.totalOut) || 0);
-    if (d >= monthStart) monthOut += (Number(a.totalOut) || 0);
+    const d = new Date(a.date || todayStr);
+    d.setHours(0, 0, 0, 0);
+
+    const totalOut = Number(a.totalOut || 0);
+
+    if (d >= weekStart) weekOut += totalOut;
+    if (d >= monthStart) monthOut += totalOut;
 });
 
-// ใช้ myExpenses แค่นับ "จ่ายบ่อยสุด" ไม่เอามาบวกยอดเงิน
+// ✅ ใช้ myExpenses แค่นับ "จ่ายบ่อยสุด" ไม่เอามาบวกยอดเงิน
 myExpenses.forEach(x => {
     if (x.type !== "out") return;
-    noteCount[x.note] = (noteCount[x.note] || 0) + 1;
+
+    const note = x.note || "ไม่ระบุ";
+    noteCount[note] = (noteCount[note] || 0) + 1;
 });
 
-    const topNote = Object.entries(noteCount).sort((a,b) => b[1]-a[1])[0];
+const topNote = Object.entries(noteCount).sort((a, b) => b[1] - a[1])[0];
 
     // ===== GOALS =====
     const dailyTotal = myDailyGoals.length;
