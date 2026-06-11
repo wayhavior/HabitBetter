@@ -2073,7 +2073,7 @@ function renderJarDetailPage() {
 
     const container = document.createElement('div');
     container.className = 'goals-page';
-    container.style.cssText = 'padding-top:40px;padding-bottom:40px;';
+    container.style.cssText = 'padding-top:40px;padding-bottom:calc(140px + env(safe-area-inset-bottom));';
 
     const pct = Math.min(jar.saved / jar.goal, 1);
     const ms = getCurrentJarMilestone(jar);
@@ -5654,7 +5654,8 @@ function renderAchievementsPage() {
     // 🗑️ ลบ pointsDiv - ไม่มีระบบ titanPoints อีกต่อไป
 
     const container = document.createElement("div");
-    container.className = "achievements-container";
+container.className = "achievements-container";
+container.style.paddingBottom = "calc(140px + env(safe-area-inset-bottom))";
 
     // แบ่งข้อมูล badges ตามหมวด
     const categories = {};
