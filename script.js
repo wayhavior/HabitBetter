@@ -884,51 +884,32 @@ const BADGE_LIST = [
     { id: "jar_100k", emoji: "👑", name: "Financial Legend", desc: "เก็บเงินในกระปุก ครบ 100,000 บาท", condition: () => getTotalSavingJarsAmount() >= 100000, category: "saving" },
     { id: "multi_jar", emoji: "🎯", name: "Multi-Goal Saver", desc: "สร้างกระปุก 5 อัน", condition: () => savingJars.length >= 5, category: "saving" },
     
-    // 💰 Expense Badges
-    { id: "first_expense", emoji: "💳", name: "Budget Starter", desc: "บันทึกรายการครั้งแรก", condition: () => myExpenses.length > 0, category: "expense" },
-    { id: "saver", emoji: "💰", name: "Saver", desc: "ออมเงินได้ 1000 บาท (1 ขีด = 300 ฿)", condition: () => calculateTrackerSavings() >= 1000, category: "expense" },
-
-    { 
-        id: "saver_2k", 
-        emoji: "🥈", 
-        name: "Silver Saver", 
-        desc: "ออมเงินสะสมครบ 2,000 บาท", 
-        condition: () => calculateTrackerSavings() >= 2000, 
-        category: "expense"
-    },
-    { 
-        id: "saver_5k", 
-        emoji: "🥇", 
-        name: "Gold Saver", 
-        desc: "ออมเงินสะสมครบ 5,000 บาท", 
-        condition: () => calculateTrackerSavings() >= 5000, 
-        category: "expense"
-    },
-    { 
-        id: "saver_10k", 
-        emoji: "💎", 
-        name: "Diamond Saver", 
-        desc: "ออมเงินสะสมครบ 10,000 บาท", 
-        condition: () => calculateTrackerSavings() >= 10000, 
-        category: "expense"
-    },
-    { 
-        id: "saver_50k", 
-        emoji: "🏆", 
-        name: "Wealth Builder", 
-        desc: "ออมเงินสะสมครบ 50,000 บาท", 
-        condition: () => calculateTrackerSavings() >= 50000, 
-        category: "expense"
-    },
-    { 
-        id: "saver_100k", 
-        emoji: "👑", 
-        name: "Millionaire Mindset", 
-        desc: "ออมเงินสะสมครบ 100,000 บาท", 
-        condition: () => calculateTrackerSavings() >= 100000, 
-        category: "expense"
-    },
-    { id: "expense_week", emoji: "📊", name: "Track Master", desc: "บันทึก expense ติดต่อ 7 วัน", condition: () => checkExpenseStreak(7), category: "expense" },
+    // 💰 Expense & Income Tracking Badges
+    { id: "first_expense", emoji: "💳", name: "Budget Starter", desc: "บันทึกรายการครั้งแรก", condition: () => myExpenses.length > 0 || myExpenseArchive.length > 0, category: "expense" },
+    
+    { id: "daily_logger", emoji: "📅", name: "Daily Logger", desc: "บันทึกรายการในวันนี้", condition: () => myExpenses.length > 0, category: "expense" },
+    
+    { id: "week_tracker", emoji: "📊", name: "Consistent Tracker", desc: "บันทึก expense ติดต่อ 7 วัน", condition: () => getExpenseStreak() >= 7, category: "expense" },
+    
+    { id: "fortnight_tracker", emoji: "🔥", name: "Fortnight Warrior", desc: "บันทึก expense ติดต่อ 14 วัน", condition: () => getExpenseStreak() >= 14, category: "expense" },
+    
+    { id: "month_tracker", emoji: "🎯", name: "Monthly Champion", desc: "บันทึก expense ติดต่อ 30 วัน", condition: () => getExpenseStreak() >= 30, category: "expense" },
+    
+    { id: "century_recorder", emoji: "💯", name: "Century Recorder", desc: "บันทึกได้ 100 รายการ", condition: () => getTotalExpenseRecords() >= 100, category: "expense" },
+    
+    { id: "record_keeper", emoji: "📚", name: "Record Keeper", desc: "บันทึกได้ 500 รายการ", condition: () => getTotalExpenseRecords() >= 500, category: "expense" },
+    
+    { id: "budget_master", emoji: "🎨", name: "Budget Master", desc: "บันทึกรายการในแต่ละหมวดหมู่ครบ 10 แบบ", condition: () => getUniqueCategories() >= 10, category: "expense" },
+    
+    { id: "expense_sentinel", emoji: "💸", name: "Expense Sentinel", desc: "บันทึกรายจ่ายสะสม ≥ 50,000 บาท", condition: () => getCurrentMonthExpenses() >= 50000, category: "expense" },
+    
+    { id: "income_warrior", emoji: "💰", name: "Income Warrior", desc: "บันทึกรายรับสะสม ≥ 100,000 บาท", condition: () => getCurrentMonthIncome() >= 100000, category: "expense" },
+    
+    { id: "balanced_life", emoji: "⚖️", name: "Balanced Life", desc: "รายรับ > รายจ่ายติดต่อ 7 วัน", condition: () => checkBalancedDays() >= 7, category: "expense" },
+    
+    { id: "night_owl", emoji: "🌙", name: "Night Owl", desc: "บันทึกหลัง 20:00 น. จำนวน 5 ครั้ง", condition: () => countNightLogs() >= 5, category: "expense" },
+    
+    { id: "early_bird", emoji: "🌅", name: "Early Bird", desc: "บันทึกตั้งแต่ 05:00-08:00 น. จำนวน 5 ครั้ง", condition: () => countEarlyBirdLogs() >= 5, category: "expense" },
     
     // 🍅 Pomodoro Badges
     { id: "first_pomo", emoji: "🍅", name: "Pomodoro Starter", desc: "Focus session ครั้งแรก", condition: () => parseInt(localStorage.getItem("pomoCount") || "0") > 0, category: "pomodoro" },
@@ -1265,6 +1246,154 @@ function checkExpenseStreak(days) {
         }
     }
     return streak >= days;
+}
+
+// 🆕 ได้ current streak วันติดต่อ
+function getExpenseStreak() {
+    if (myExpenseArchive.length === 0) return 0;
+    
+    const uniqueDates = [...new Set(myExpenseArchive.map(a => 
+        new Date(a.date).toDateString()
+    ))].sort().reverse(); // เรียงจากใหม่ไปเก่า
+    
+    let streak = 1;
+    for (let i = 1; i < uniqueDates.length; i++) {
+        const curr = new Date(uniqueDates[i-1]).getTime();
+        const prev = new Date(uniqueDates[i]).getTime();
+        const daysDiff = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff === 1) {
+            streak++;
+        } else {
+            break;
+        }
+    }
+    return streak;
+}
+
+// 🆕 ได้จำนวนรายการทั้งหมด
+function getTotalExpenseRecords() {
+    return myExpenses.length + myExpenseArchive.reduce((sum, record) => {
+        return sum + (record.items?.length || 0);
+    }, 0);
+}
+
+// 🆕 ได้รายจ่ายในเดือนนี้
+function getCurrentMonthExpenses() {
+    const now = new Date();
+    const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    let total = 0;
+    
+    myExpenseArchive.forEach(record => {
+        if (record.date.substring(0, 7) === currentMonth) {
+            total += record.totalOut || 0;
+        }
+    });
+    
+    return total;
+}
+
+// 🆕 ได้รายรับในเดือนนี้
+function getCurrentMonthIncome() {
+    const now = new Date();
+    const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    let total = 0;
+    
+    myExpenseArchive.forEach(record => {
+        if (record.date.substring(0, 7) === currentMonth) {
+            total += record.totalIn || 0;
+        }
+    });
+    
+    return total;
+}
+
+// 🆕 ได้จำนวนหมวดหมู่ที่บันทึกแล้ว
+function getUniqueCategories() {
+    const categories = new Set();
+    
+    myExpenses.forEach(expense => {
+        if (expense.categoryId) categories.add(expense.categoryId);
+    });
+    
+    myExpenseArchive.forEach(record => {
+        if (record.items) {
+            record.items.forEach(item => {
+                if (item.categoryId) categories.add(item.categoryId);
+            });
+        }
+    });
+    
+    return categories.size;
+}
+
+// 🆕 เช็คว่ารายรับ > รายจ่ายติดต่อกี่วัน
+function checkBalancedDays() {
+    if (myExpenseArchive.length === 0) return 0;
+    
+    const sorted = [...myExpenseArchive].sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    
+    let streak = 0;
+    for (const record of sorted) {
+        if ((record.totalIn || 0) > (record.totalOut || 0)) {
+            streak++;
+        } else {
+            break;
+        }
+    }
+    return streak;
+}
+
+// 🆕 นับการบันทึกหลัง 20:00 น.
+function countNightLogs() {
+    let count = 0;
+    
+    myExpenses.forEach(expense => {
+        if (expense.time) {
+            const hour = parseInt(expense.time.split(':')[0]);
+            if (hour >= 20) count++;
+        }
+    });
+    
+    myExpenseArchive.forEach(record => {
+        if (record.items) {
+            record.items.forEach(item => {
+                if (item.time) {
+                    const hour = parseInt(item.time.split(':')[0]);
+                    if (hour >= 20) count++;
+                }
+            });
+        }
+    });
+    
+    return count;
+}
+
+// 🆕 นับการบันทึก 05:00-08:00 น.
+function countEarlyBirdLogs() {
+    let count = 0;
+    
+    myExpenses.forEach(expense => {
+        if (expense.time) {
+            const hour = parseInt(expense.time.split(':')[0]);
+            if (hour >= 5 && hour < 8) count++;
+        }
+    });
+    
+    myExpenseArchive.forEach(record => {
+        if (record.items) {
+            record.items.forEach(item => {
+                if (item.time) {
+                    const hour = parseInt(item.time.split(':')[0]);
+                    if (hour >= 5 && hour < 8) count++;
+                }
+            });
+        }
+    });
+    
+    return count;
 }
 
 function checkPerfectDay() {
