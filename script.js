@@ -2000,7 +2000,101 @@ function showCreateJarPopup(editJarId = null) {
         else { activeJarId = savingJars[savingJars.length-1].id; currentPage = 'saving_jar_detail'; render(); }
     };
 }
+function showDeleteJarConfirmModal(jarId) {
+    const jar = savingJars.find(j => j.id === jarId);
+    if (!jar) return;
 
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 32px 24px;
+        max-width: 300px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: slideUp 0.3s ease-out;
+    `;
+
+    const style = document.createElement("style");
+    style.textContent = `
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    `;
+    if (!document.querySelector("style[data-modal-anim]")) {
+        style.setAttribute("data-modal-anim", "true");
+        document.head.appendChild(style);
+    }
+
+    modal.innerHTML = `
+        <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">ลบกระปุก?</h3>
+            <p style="margin: 0 0 24px; color: rgba(255, 255, 255, 0.6); font-size: 13px;">
+                คุณแน่ใจว่าต้องการลบ "<span style="font-weight: 600; color: rgba(255, 255, 255, 0.8);">${jar.name || "กระปุก"}</span>" หรือไม่<br>
+                <span style="color: rgba(255, 107, 107, 0.9);">ยอดออมและประวัติในกระปุกนี้จะถูกลบทั้งหมด</span>
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="cancel-delete-jar" style="flex: 1; padding: 12px 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">ยกเลิก</button>
+                <button id="confirm-delete-jar" style="flex: 1; padding: 12px 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);">ลบ</button>
+            </div>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById("cancel-delete-jar").onclick = () => {
+        overlay.remove();
+    };
+
+    document.getElementById("confirm-delete-jar").onclick = () => {
+        savingJars = savingJars.filter(j => j.id !== jarId);
+
+        if (activeJarId === jarId) {
+            activeJarId = savingJars.length > 0 ? savingJars[0].id : null;
+        }
+
+        save();
+        overlay.remove();
+        currentPage = "saving";
+        render();
+
+        showNotification(
+            "✅ ลบกระปุกสำเร็จ",
+            `"${jar.name || "กระปุก"}" ถูกลบออกแล้ว`,
+            "success"
+        );
+    };
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
+}
 function renderSavingJarsPage() {
     app.innerHTML = '';
     const bBtn = document.createElement('button'); bBtn.className = 'back-btn'; bBtn.innerText = '🏠';
@@ -2028,7 +2122,12 @@ function renderSavingJarsPage() {
             const glowColor = ms ? ms.glow : 'rgba(255,255,255,0.1)';
             const barColor = ms ? ms.color : '#555';
             html += `
-            <div onclick="openJar('${jar.id}')" style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:22px;padding:18px 20px;margin-bottom:14px;cursor:pointer;transition:0.2s;box-shadow:0 4px 20px ${glowColor};">
+            <div
+    data-jar-id="${jar.id}"
+    class="saving-jar-list-card"
+    onclick="openJar('${jar.id}')"
+    style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:22px;padding:18px 20px;margin-bottom:14px;cursor:pointer;transition:0.2s;box-shadow:0 4px 20px ${glowColor};"
+>
                 <div style="display:flex;align-items:center;gap:14px;">
                     <div style="font-size:40px;flex-shrink:0;">${jar.emoji || '💰'}</div>
                     <div style="flex:1;min-width:0;">
@@ -2046,6 +2145,45 @@ function renderSavingJarsPage() {
         html += `</div>`;
     }
     container.innerHTML = html;
+  let jarLongPressTimer = null;
+let jarLongPressTriggered = false;
+
+container.querySelectorAll(".saving-jar-list-card").forEach(card => {
+    const jarId = card.dataset.jarId;
+
+    const startPress = () => {
+        jarLongPressTriggered = false;
+
+        jarLongPressTimer = setTimeout(() => {
+            jarLongPressTriggered = true;
+            showDeleteJarConfirmModal(jarId);
+        }, 600);
+    };
+
+    const cancelPress = () => {
+        if (jarLongPressTimer) {
+            clearTimeout(jarLongPressTimer);
+            jarLongPressTimer = null;
+        }
+    };
+
+    card.addEventListener("touchstart", startPress, { passive: true });
+    card.addEventListener("touchend", cancelPress);
+    card.addEventListener("touchmove", cancelPress);
+    card.addEventListener("touchcancel", cancelPress);
+
+    card.addEventListener("mousedown", startPress);
+    card.addEventListener("mouseup", cancelPress);
+    card.addEventListener("mouseleave", cancelPress);
+
+    card.addEventListener("click", (e) => {
+        if (jarLongPressTriggered) {
+            e.preventDefault();
+            e.stopPropagation();
+            jarLongPressTriggered = false;
+        }
+    }, true);
+});
 
     const addBtn = document.createElement('button');
     addBtn.style.cssText = `width:90%;max-width:380px;padding:16px;border-radius:18px;border:none;background:linear-gradient(135deg,#f472b6,#a855f7);color:white;font-size:16px;font-weight:bold;cursor:pointer;margin-top:10px;box-shadow:0 6px 20px rgba(168,85,247,0.35);`;
@@ -2243,7 +2381,22 @@ function renderJarDetailPage() {
 
     // Expose functions
     window.jarSelectAmt = (amt) => {
-        jarPendingDeposit = amt;
+    const j = savingJars.find(x => x.id === activeJarId);
+    if (!j) return;
+
+    const remaining = Math.max((Number(j.goal) || 0) - (Number(j.saved) || 0), 0);
+
+    if (remaining <= 0) {
+        jarPendingDeposit = 0;
+        showNotification("🎉 กระปุกเต็มแล้ว", "คุณออมครบเป้าหมายนี้แล้ว", "success");
+        return;
+    }
+
+    if (amt > remaining) {
+        amt = remaining;
+    }
+
+    jarPendingDeposit = amt;
         const colorMap = { 10: '#22c55e', 50: '#eab308', 100: '#ef4444', 500: '#a855f7', 1000: '#6b7280' };
         const bgColorMap = { 10: 'rgba(34,197,94,0.2)', 50: 'rgba(234,179,8,0.2)', 100: 'rgba(239,68,68,0.2)', 500: 'rgba(168,85,247,0.2)', 1000: 'rgba(107,114,128,0.2)' };
         document.querySelectorAll('#jar-btn-row button').forEach(b => {
@@ -2259,12 +2412,33 @@ function renderJarDetailPage() {
         if (pb) { pb.style.display = 'flex'; document.getElementById('jar-pending-txt').innerText = `ฝาก +฿${amt.toLocaleString()} บาท?`; }
     };
     window.jarSelectCustom = () => {
-        const val = parseFloat(document.getElementById('jar-custom-input').value);
-        if (!val || val <= 0) { document.getElementById('jar-custom-input').style.borderColor='#ff7675'; return; }
-        jarPendingDeposit = val;
+    const input = document.getElementById('jar-custom-input');
+    const val = parseFloat(input.value);
+
+    if (!val || val <= 0) {
+        input.style.borderColor = '#ff7675';
+        return;
+    }
+
+    const j = savingJars.find(x => x.id === activeJarId);
+    if (!j) return;
+
+    const remaining = Math.max((Number(j.goal) || 0) - (Number(j.saved) || 0), 0);
+
+    if (remaining <= 0) {
+        jarPendingDeposit = 0;
+        input.style.borderColor = '#ff7675';
+        showNotification("🎉 กระปุกเต็มแล้ว", "คุณออมครบเป้าหมายนี้แล้ว", "success");
+        return;
+    }
+
+    const finalAmount = Math.min(val, remaining);
+
+    jarPendingDeposit = finalAmount;
+    input.style.borderColor = 'rgba(255,255,255,0.15)';
         document.getElementById('jar-custom-input').style.borderColor='rgba(255,255,255,0.15)';
         const pb = document.getElementById('jar-pending-bar');
-        if (pb) { pb.style.display = 'flex'; document.getElementById('jar-pending-txt').innerText = `ฝาก +฿${val.toLocaleString()} บาท?`; }
+        if (pb) { pb.style.display = 'flex'; document.getElementById('jar-pending-txt').innerText = `ฝาก +฿${finalAmount.toLocaleString()} บาท?`; }
     };
     window.jarCancelDeposit = () => {
         jarPendingDeposit = 0;
@@ -2276,17 +2450,31 @@ function renderJarDetailPage() {
         });
     };
     window.jarConfirmDeposit = () => {
-        if (!jarPendingDeposit || jarPendingDeposit <= 0) return;
-        const j = savingJars.find(x => x.id === activeJarId);
-        if (!j) return;
-        const prevMs = getCurrentJarMilestone(j);
-        j.saved = Math.min(j.saved + jarPendingDeposit, j.goal);
+    if (!jarPendingDeposit || jarPendingDeposit <= 0) return;
+
+    const j = savingJars.find(x => x.id === activeJarId);
+    if (!j) return;
+
+    const remaining = Math.max((Number(j.goal) || 0) - (Number(j.saved) || 0), 0);
+
+    if (remaining <= 0) {
+        jarPendingDeposit = 0;
+        showNotification("🎉 กระปุกเต็มแล้ว", "ไม่สามารถฝากเพิ่มได้ เพราะครบเป้าหมายแล้ว", "success");
+        currentPage = 'saving_jar_detail';
+        render();
+        return;
+    }
+
+    const depositAmount = Math.min(Number(jarPendingDeposit), remaining);
+    const prevMs = getCurrentJarMilestone(j);
+
+    j.saved = Math.min((Number(j.saved) || 0) + depositAmount, Number(j.goal) || 0);
         const today = new Date().toLocaleDateString('th-TH', { day:'numeric', month:'short' });
         if (!j.history) j.history = [];
-        j.history.unshift({ date: today, amount: jarPendingDeposit, ts: Date.now() });
+        j.history.unshift({ date: today, amount: depositAmount, ts: Date.now() });
         const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
         j.history = j.history.filter(h => h.ts >= cutoff).slice(0, 50);
-        const depositAmount = jarPendingDeposit;
+        
         jarPendingDeposit = 0;
         // 🗑️ ลบ addExp - ระบบ EXP ถูกลบแล้ว
         save();
