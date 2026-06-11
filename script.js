@@ -3229,12 +3229,6 @@ window.showAddExpenseModal = (type) => {
             window.closeExpenseModal();
         }
     };
-    
-    // Focus on name input
-    setTimeout(() => {
-        const nameInput = document.querySelector("#expense-name");
-        if (nameInput) nameInput.focus();
-    }, 100);
 };
 
 window.selectCategoryFromModal = (name, emoji) => {
@@ -3467,12 +3461,6 @@ window.showCustomCategoryModal = (type) => {
             window.showAddExpenseModal(type);
         }
     };
-    
-    // Focus on name input
-    setTimeout(() => {
-        const nameInput = document.querySelector("#custom-name");
-        if (nameInput) nameInput.focus();
-    }, 100);
 };
 
 window.selectCustomEmoji = (emoji) => {
