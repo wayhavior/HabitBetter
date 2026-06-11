@@ -1608,10 +1608,14 @@ homeContainer.appendChild(coachSection); // ใส่เข้าไปในห
         dbCard.className = "dashboard-card-big";
         
         let totalDays = 0; data.forEach(v => totalDays += v);
-        let expenseOut = myExpenses.filter(e => e.date === getToday() && e.type === "out")
-                             .reduce((s, e) => s + (e.amt || e.amount || 0), 0);
-        const todayArchive = myExpenseArchive.filter(a => a.date === getToday());
-        todayArchive.forEach(a => { expenseOut += (a.totalOut || 0); });
+        const today = getToday();
+        const todayArchive = myExpenseArchive.find(a => a.date === today);
+
+        let expenseOut = todayArchive
+        ? (todayArchive.totalOut || 0)
+        : myExpenses
+        .filter(e => e.date === today && e.type === "out")
+        .reduce((s, e) => s + (Number(e.amt || e.amount || 0)), 0);
         let goalsLeft = myDailyGoals.filter(g => !g.done).length;
 
         dbCard.style.cursor = "pointer";
@@ -5599,24 +5603,22 @@ function renderSummaryPage() {
     const weekAgo = new Date(); weekAgo.setDate(now.getDate() - 7);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    let weekOut = 0; let monthOut = 0;
-    const noteCount = {};
+    let weekOut = 0;
+let monthOut = 0;
+const noteCount = {};
 
-    // รวมจากรายการปัจจุบัน
-    myExpenses.forEach(x => {
-        if (x.type !== "out") return;
-        const d = new Date(x.date || today);
-        if (d >= weekAgo) weekOut += x.amt;
-        if (d >= monthStart) monthOut += x.amt;
-        noteCount[x.note] = (noteCount[x.note] || 0) + 1;
-    });
+// ใช้ archive เป็นหลัก เพื่อไม่ให้ยอดซ้ำกับ myExpenses
+myExpenseArchive.forEach(a => {
+    const d = new Date(a.date || getToday());
+    if (d >= weekAgo) weekOut += (Number(a.totalOut) || 0);
+    if (d >= monthStart) monthOut += (Number(a.totalOut) || 0);
+});
 
-    // รวมจาก archive ด้วย
-    myExpenseArchive.forEach(a => {
-        const d = new Date(a.date || today);
-        if (d >= weekAgo) weekOut += (a.totalOut || 0);
-        if (d >= monthStart) monthOut += (a.totalOut || 0);
-    });
+// ใช้ myExpenses แค่นับ "จ่ายบ่อยสุด" ไม่เอามาบวกยอดเงิน
+myExpenses.forEach(x => {
+    if (x.type !== "out") return;
+    noteCount[x.note] = (noteCount[x.note] || 0) + 1;
+});
 
     const topNote = Object.entries(noteCount).sort((a,b) => b[1]-a[1])[0];
 
