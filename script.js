@@ -2343,82 +2343,49 @@ function cropImageFromBase64(base64Image, coords) {
 
 /* ===== JAR IMAGE UPLOAD & CROP ===== */
 function openJarImageUploader(jarId) {
-    // ✨ Priority 1: ใช้ Photo Picker API (Android 13+, Chrome 123+)
-    // ดีที่สุดสำหรับการเลือกรูป เพราะ UX ที่ดี
-    if (window.showPicker) {
-        window.showPicker({
-            types: [{
-                description: 'รูปภาพ',
-                accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.gif'] }
-            }],
-            multiple: false
-        }).then(async (handles) => {
-            const file = await handles[0].getFile();
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                showImageCropper(jarId, event.target.result);
-            };
-            reader.readAsDataURL(file);
-        }).catch(err => {
-            // ถ้า Photo Picker ไม่รองรับหรือ user ยกเลิก
-            if (err.name !== 'AbortError') {
-                console.log('Photo Picker not available, trying File Picker...');
-                useFilePickerFallback(jarId);
-            }
-            // ถ้า user ยกเลิก (AbortError) ไม่ต้องทำอะไร
-        });
-    } else {
-        // Priority 2: ลองใช้ File Picker API ถัดมา
-        useFilePickerFallback(jarId);
-    }
-}
-
-function useFilePickerFallback(jarId) {
-    // ✨ Priority 2: ใช้ File Picker API (Chrome 86+, Edge 86+)
-    if (window.showOpenFilePicker) {
-        window.showOpenFilePicker({
-            types: [{
-                description: 'รูปภาพ',
-                accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.gif'] }
-            }],
-            multiple: false
-        }).then(async (handles) => {
-            const file = await handles[0].getFile();
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                showImageCropper(jarId, event.target.result);
-            };
-            reader.readAsDataURL(file);
-        }).catch(err => {
-            // ถ้า File Picker ไม่รองรับหรือ user ยกเลิก
-            if (err.name !== 'AbortError') {
-                console.log('File Picker not available, using input file fallback...');
-                fallbackImageUploader(jarId);
-            }
-            // ถ้า user ยกเลิก ไม่ต้องทำอะไร
-        });
-    } else {
-        // Priority 3: Fallback เป็น <input type="file"> (ทุก browser รองรับ)
-        fallbackImageUploader(jarId);
-    }
-}
-
-function fallbackImageUploader(jarId) {
+    // ✅ ใช้วิธีเดียวกับหน้า My Profile
+    // ใช้ input type="file" + accept="image/*" ให้มือถือเปิด Photo Picker / Gallery
     const fileInput = document.createElement('input');
+
     fileInput.type = 'file';
     fileInput.accept = 'image/*';
-    
+    fileInput.multiple = false;
+
+    // ซ่อนไว้ ไม่ให้โผล่ในหน้า
+    fileInput.style.position = 'fixed';
+    fileInput.style.left = '-9999px';
+    fileInput.style.opacity = '0';
+
+    document.body.appendChild(fileInput);
+
     fileInput.onchange = (e) => {
-        const file = e.target.files[0];
+        const file = e.target.files && e.target.files[0];
+
+        // ลบ input ทิ้งหลังเลือกเสร็จ
+        fileInput.remove();
+
         if (!file) return;
-        
+
+        // ✅ กันพลาด เลือกได้เฉพาะรูปภาพ
+        if (!file.type || !file.type.startsWith('image/')) {
+            showNotification(
+                "⚠️ ไฟล์ไม่ถูกต้อง",
+                "กรุณาเลือกรูปภาพเท่านั้น",
+                "error"
+            );
+            return;
+        }
+
         const reader = new FileReader();
+
         reader.onload = (event) => {
+            // ✅ ใช้ cropper เดิมของกระปุก
             showImageCropper(jarId, event.target.result);
         };
+
         reader.readAsDataURL(file);
     };
-    
+
     fileInput.click();
 }
 
