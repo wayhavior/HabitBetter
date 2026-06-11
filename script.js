@@ -975,6 +975,74 @@ const BADGE_LIST = [
     { id: "hidden_secret", emoji: "🎁", name: "Secret Achievement", desc: "ปลดล็อคเมื่อปลดล็อค 10 badge", condition: () => unlockedBadges.length >= 10, category: "hidden" }
 ]; 
 
+/* ===== EXPENSE CATEGORIES ===== */
+const defaultIncomeCategories = [
+  { id: 'salary', name: 'เงินเดือน', emoji: '💼' },
+  { id: 'overtime', name: 'ลวงเวลา', emoji: '⏰' },
+  { id: 'online_sell', name: 'ขายออนไลน์', emoji: '👜' },
+  { id: 'bonus', name: 'โบนัส', emoji: '🎁' },
+  { id: 'interest', name: 'ดอกเบี้ย', emoji: '📈' },
+  { id: 'freelance', name: 'งานพิเศษ', emoji: '💻' },
+  { id: 'gift', name: 'ของขวัญ', emoji: '🎀' },
+  { id: 'refund', name: 'คืนเงิน', emoji: '💳' },
+];
+
+const defaultExpenseCategories = [
+  // 🍽️ อาหาร & เครื่องดื่ม
+  { id: 'food', name: 'อาหาร', emoji: '🍜' },
+  { id: 'coffee', name: 'กาแฟ', emoji: '☕' },
+  { id: 'drink', name: 'เครื่องดื่ม', emoji: '🥤' },
+  { id: 'snack', name: 'ขนมขบเคี้ยว', emoji: '🍿' },
+  { id: 'alcohol', name: 'เครื่องดื่มแอลกอฮอล์', emoji: '🍺' },
+  
+  // 🚗 การเดินทาง
+  { id: 'bus', name: 'ค่าเดินทาง', emoji: '🚌' },
+  { id: 'taxi', name: 'แท็กซี่', emoji: '🚕' },
+  { id: 'parking', name: 'ค่าจอดรถ', emoji: '🅿️' },
+  { id: 'gas', name: 'น้ำมันรถ', emoji: '⛽' },
+  
+  // 🛍️ ช้อปปิ้ง & ของใช้
+  { id: 'online_shop', name: 'ซื้อออนไลน์', emoji: '🛍️' },
+  { id: 'clothes', name: 'เสื้อผ้า', emoji: '👕' },
+  { id: 'tools', name: 'เครื่องมือ/อะไหล่', emoji: '🔧' },
+  
+  // 🏠 ที่อยู่ & สาธารณูปโภค
+  { id: 'rent', name: 'ค่าเช่า', emoji: '🏠' },
+  { id: 'electricity', name: 'ค่านำ้ไฟ', emoji: '⚡' },
+  { id: 'water', name: 'ค่าน้ำ', emoji: '💧' },
+  { id: 'internet', name: 'ค่าอินเทอร์เน็ต', emoji: '📡' },
+  { id: 'phone', name: 'ค่าโทรศัพท์', emoji: '📱' },
+  
+  // 💰 การเงิน & ผ่อนชำระ
+  { id: 'car_loan', name: 'ผ่อนรถ', emoji: '🚗' },
+  { id: 'house_loan', name: 'ผ่อนบ้าน', emoji: '🏡' },
+  { id: 'debt', name: 'ผ่อนจ่ายอื่นๆ', emoji: '💳' },
+  { id: 'insurance', name: 'ประกัน', emoji: '📋' },
+  
+  // 👨‍👩‍👧 ครอบครัว
+  { id: 'parents', name: 'ส่งเงินพ่อแม่', emoji: '👨‍👩‍👧' },
+  { id: 'kids', name: 'ลูกๆ', emoji: '👶' },
+  
+  // 🎮 ความบันเทิง
+  { id: 'gaming', name: 'เกม', emoji: '🎮' },
+  { id: 'movie', name: 'หนัง', emoji: '🎬' },
+  { id: 'hobby', name: 'งานอดิเรก', emoji: '🎨' },
+  
+  // 🏥 สุขภาพ
+  { id: 'medicine', name: 'ยา/โอษฐิ', emoji: '💊' },
+  { id: 'hospital', name: 'โรงพยาบาล', emoji: '🏥' },
+  
+  // ✂️ บริการ
+  { id: 'haircut', name: 'ตัดผม', emoji: '✂️' },
+  { id: 'laundry', name: 'ซักรีด', emoji: '👔' },
+  
+  // 🐷 เงินออม
+  { id: 'savings', name: 'เงินออม', emoji: '🐷' },
+];
+
+let myIncomeCategories = JSON.parse(localStorage.getItem("my_income_categories")) || defaultIncomeCategories;
+let myExpenseCategories = JSON.parse(localStorage.getItem("my_expense_categories")) || defaultExpenseCategories;
+
 /* EXPENSE STATE (Manual Mode) */
 let myExpenses = JSON.parse(localStorage.getItem("my_expenses")) || [];
 let myExpenseArchive = JSON.parse(localStorage.getItem("my_expense_archive")) || [];
@@ -2989,6 +3057,466 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
+/* ===== EXPENSE MODAL - SIMPLIFIED VERSION ===== */
+window.showAddExpenseModal = (type) => {
+    const categories = type === 'in' ? myIncomeCategories : myExpenseCategories;
+    const categoryColor = type === 'in' ? '#00b894' : '#ff7675';
+    const defaultEmoji = type === 'in' ? '💰' : '💸';
+    
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 24px;
+        max-width: 380px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    let modalHTML = `
+        <h3 style="margin: 0 0 20px; color: white; text-align: center; font-size: 18px; font-weight: bold;">
+            ${type === 'in' ? '📥 บันทึกรายรับ' : '📤 บันทึกรายจ่าย'}
+        </h3>
+        
+        <label style="color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 600; display: block; margin-bottom: 8px;">รายการ</label>
+        <input type="text" id="expense-name" placeholder="พิมชื่อรายการ เช่น กาแฟ" 
+            style="
+                width: 100%;
+                padding: 12px;
+                background: rgba(255,255,255,0.1);
+                border: 1px solid rgba(255,255,255,0.2);
+                border-radius: 8px;
+                color: white;
+                font-size: 14px;
+                margin-bottom: 16px;
+                box-sizing: border-box;
+            "
+        >
+        
+        <label style="color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 600; display: block; margin-bottom: 8px;">จำนวนเงิน</label>
+        <input type="number" id="expense-amount" placeholder="0" 
+            style="
+                width: 100%;
+                padding: 12px;
+                background: rgba(255,255,255,0.1);
+                border: 1px solid rgba(255,255,255,0.2);
+                border-radius: 8px;
+                color: white;
+                font-size: 14px;
+                margin-bottom: 20px;
+                box-sizing: border-box;
+            "
+        >
+        
+        <label style="color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 600; display: block; margin-bottom: 10px;">📋 รายการแนะนำ (กดเพื่อใส่ชื่อและ emoji)</label>
+        <div id="category-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; max-height: 280px; overflow-y: auto;">
+    `;
+    
+    categories.forEach(cat => {
+        modalHTML += `
+            <button onclick="window.selectCategoryFromModal('${cat.name}', '${cat.emoji}')" 
+                style="
+                    padding: 10px 6px;
+                    background: rgba(255,255,255,0.05);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 8px;
+                    color: white;
+                    cursor: pointer;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 4px;
+                    font-size: 11px;
+                    transition: all 0.2s;
+                    font-weight: 600;
+                "
+                onmouseover="this.style.background='rgba(${type === 'in' ? '0,184,148' : '255,118,117'},0.15)'; this.style.borderColor='${categoryColor}';"
+                onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)';"
+            >
+                <span style="font-size: 20px;">${cat.emoji}</span>
+                <span>${cat.name}</span>
+            </button>
+        `;
+    });
+    
+    modalHTML += `
+        </div>
+        
+        <button onclick="window.showCustomCategoryModal('${type}')" 
+            style="
+                width: 100%;
+                padding: 10px;
+                background: rgba(200,200,200,0.2);
+                border: 1px dashed rgba(255,255,255,0.3);
+                border-radius: 8px;
+                color: rgba(255,255,255,0.7);
+                cursor: pointer;
+                font-weight: 600;
+                margin-bottom: 16px;
+                transition: all 0.2s;
+                font-size: 13px;
+            "
+            onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='white';"
+            onmouseout="this.style.background='rgba(200,200,200,0.2)'; this.style.color='rgba(255,255,255,0.7)';"
+        >
+            ➕ เพิ่มรายการใหม่
+        </button>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button onclick="window.closeExpenseModal();" 
+                style="
+                    padding: 10px;
+                    background: rgba(255,255,255,0.1);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 8px;
+                    color: white;
+                    cursor: pointer;
+                    font-weight: 600;
+                    transition: all 0.2s;
+                    font-size: 14px;
+                "
+                onmouseover="this.style.background='rgba(255,255,255,0.15)';"
+                onmouseout="this.style.background='rgba(255,255,255,0.1)';"
+            >
+                ยกเลิก
+            </button>
+            <button onclick="window.finishAddExpense('${type}')" 
+                style="
+                    padding: 10px;
+                    background: ${categoryColor};
+                    border: none;
+                    border-radius: 8px;
+                    color: white;
+                    cursor: pointer;
+                    font-weight: 600;
+                    transition: all 0.2s;
+                    font-size: 14px;
+                "
+                onmouseover="this.style.opacity='0.9';"
+                onmouseout="this.style.opacity='1';"
+            >
+                บันทึก
+            </button>
+        </div>
+    `;
+    
+    modal.innerHTML = modalHTML;
+    modal.setAttribute("data-expense-modal", "true");
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            window.closeExpenseModal();
+        }
+    };
+    
+    // Focus on name input
+    setTimeout(() => {
+        const nameInput = document.querySelector("#expense-name");
+        if (nameInput) nameInput.focus();
+    }, 100);
+};
+
+window.selectCategoryFromModal = (name, emoji) => {
+    const nameInput = document.querySelector("#expense-name");
+    if (nameInput) {
+        nameInput.value = name;
+        nameInput.dataset.emoji = emoji;
+    }
+    
+    // Focus on amount input
+    setTimeout(() => {
+        const amountInput = document.querySelector("#expense-amount");
+        if (amountInput) amountInput.focus();
+    }, 50);
+};
+
+window.closeExpenseModal = () => {
+    const modal = document.querySelector("[data-expense-modal]");
+    if (modal) {
+        modal.parentNode.remove();
+    }
+};
+
+window.finishAddExpense = (type) => {
+    const nameInput = document.querySelector("#expense-name");
+    const amountInput = document.querySelector("#expense-amount");
+    
+    const name = nameInput?.value?.trim();
+    const amount = parseFloat(amountInput?.value);
+    const emoji = nameInput?.dataset?.emoji || (type === 'in' ? '💰' : '💸');
+    
+    if (!name) {
+        alert("กรุณาพิมชื่อรายการ");
+        return;
+    }
+    
+    if (!amount || amount <= 0) {
+        alert("กรุณาใส่จำนวนเงิน");
+        return;
+    }
+    
+    // Add expense
+    myExpenses.unshift({
+        note: name,
+        amt: amount,
+        type: type,
+        time: new Date().toLocaleTimeString('th-TH'),
+        date: getToday(),
+        emoji: emoji
+    });
+    
+    // Auto-archive
+    let tin = 0, tout = 0;
+    myExpenses.forEach(x => { if(x.type === "in") tin += x.amt; else tout += x.amt; });
+    
+    const today = getToday();
+    const existingIndex = myExpenseArchive.findIndex(a => a.date === today);
+    const balance = tin - tout;
+    
+    if (existingIndex >= 0) {
+        myExpenseArchive[existingIndex] = {
+            date: today,
+            totalIn: tin,
+            totalOut: tout,
+            balance: balance,
+            total: balance,
+            type: "in",
+            items: [...myExpenses]
+        };
+    } else {
+        myExpenseArchive.unshift({
+            date: today,
+            totalIn: tin,
+            totalOut: tout,
+            balance: balance,
+            total: balance,
+            type: "in",
+            items: [...myExpenses]
+        });
+    }
+    
+    save();
+    window.closeExpenseModal();
+    render();
+};
+
+window.showCustomCategoryModal = (type) => {
+    // Close existing modal first
+    window.closeExpenseModal();
+    
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 24px;
+        max-width: 380px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        animation: slideUp 0.3s ease-out;
+    `;
+    
+    modal.innerHTML = `
+        <h3 style="margin: 0 0 20px; color: white; font-size: 18px; font-weight: bold;">➕ เพิ่มรายการใหม่</h3>
+        
+        <label style="color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;">ชื่อรายการ</label>
+        <input type="text" id="custom-name" placeholder="เช่น ค่าเที่ยว" 
+            style="
+                width: 100%;
+                padding: 12px;
+                background: rgba(255,255,255,0.1);
+                border: 1px solid rgba(255,255,255,0.2);
+                border-radius: 8px;
+                color: white;
+                font-size: 14px;
+                margin-bottom: 16px;
+                box-sizing: border-box;
+            "
+        >
+        
+        <label style="color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;">เลือก Emoji</label>
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 16px; max-height: 280px; overflow-y: auto;">
+    `;
+    
+    const emojiList = [
+        // 💰 เงิน/การเงิน
+        '💰', '💵', '💴', '💶', '💷', '💸', '💳', '🏦', '💎', '🪙',
+        // 😀 ความสุข/อารมณ์
+        '😀', '😊', '😄', '😂', '🤗', '💯', '👍', '❤️', '🔥', '✨',
+        // 🏃 กิจกรรม
+        '🏃', '🚴', '🏊', '🧘', '🎮', '🎨', '🎭', '🎬', '🎤', '🎸', '📚',
+        // 🍕 อาหาร
+        '🍕', '🍔', '🍟', '🍗', '🌮', '🌯', '🍝', '🍜', '🍲', '🥗', '🍱', '🍛', '🍰', '🍦',
+        // 🚗 เดินทาง
+        '🚗', '🚕', '🚙', '🚌', '🚎', '🏍️', '🛴', '🚲', '✈️', '🚁', '🚂', '🚆', '🚊', '🚇',
+        // 📱 สิ่งของ
+        '📱', '💻', '⌚', '🎧', '👜', '👝', '🧳', '📷', '📹', '⚽', '🎾', '🎯', '🎁',
+        // 🐶 สัตว์
+        '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮',
+        // 🌟 อื่นๆ
+        '🌟', '⭐', '🌙', '☀️', '🌈', '🎊', '🎉', '🔔', '📖', '✏️', '⚡', '🌺', '🌸', '🌼'
+    ];
+    
+    emojiList.forEach(emoji => {
+        modal.innerHTML += `
+            <button onclick="window.selectCustomEmoji('${emoji}')" 
+                style="
+                    padding: 8px;
+                    background: rgba(255,255,255,0.05);
+                    border: 1px solid rgba(255,255,255,0.1);
+                    border-radius: 8px;
+                    font-size: 18px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                "
+                onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='scale(1.15)';"
+                onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.transform='scale(1)';"
+            >
+                ${emoji}
+            </button>
+        `;
+    });
+    
+    modal.innerHTML += `
+        </div>
+        
+        <div id="selected-emoji-display" style="text-align: center; font-size: 32px; margin-bottom: 16px; color: rgba(255,255,255,0.5);">-</div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button onclick="document.querySelector('[data-custom-modal]').parentNode.remove(); window.showAddExpenseModal('${type}');" 
+                style="
+                    padding: 10px;
+                    background: rgba(255,255,255,0.1);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 8px;
+                    color: white;
+                    cursor: pointer;
+                    font-weight: 600;
+                    transition: all 0.2s;
+                    font-size: 14px;
+                "
+                onmouseover="this.style.background='rgba(255,255,255,0.15)';"
+                onmouseout="this.style.background='rgba(255,255,255,0.1)';"
+            >
+                ยกเลิก
+            </button>
+            <button onclick="window.saveCustomCategory('${type}')" 
+                style="
+                    padding: 10px;
+                    background: #22c55e;
+                    border: none;
+                    border-radius: 8px;
+                    color: white;
+                    cursor: pointer;
+                    font-weight: 600;
+                    transition: all 0.2s;
+                    font-size: 14px;
+                "
+                onmouseover="this.style.opacity='0.9';"
+                onmouseout="this.style.opacity='1';"
+            >
+                บันทึก
+            </button>
+        </div>
+    `;
+    
+    modal.setAttribute("data-custom-modal", "true");
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+            window.showAddExpenseModal(type);
+        }
+    };
+    
+    // Focus on name input
+    setTimeout(() => {
+        const nameInput = document.querySelector("#custom-name");
+        if (nameInput) nameInput.focus();
+    }, 100);
+};
+
+window.selectCustomEmoji = (emoji) => {
+    window.selectedCustomEmoji = emoji;
+    const display = document.querySelector("#selected-emoji-display");
+    if (display) {
+        display.innerHTML = emoji;
+        display.style.color = "white";
+    }
+};
+
+window.saveCustomCategory = (type) => {
+    const name = document.querySelector("#custom-name").value.trim();
+    const emoji = window.selectedCustomEmoji || '🎯';
+    
+    if (!name) {
+        alert("กรุณาใส่ชื่อรายการ");
+        return;
+    }
+    
+    const newCategory = {
+        id: `custom_${Date.now()}`,
+        name: name,
+        emoji: emoji
+    };
+    
+    if (type === 'in') {
+        myIncomeCategories.push(newCategory);
+        localStorage.setItem("my_income_categories", JSON.stringify(myIncomeCategories));
+    } else {
+        myExpenseCategories.push(newCategory);
+        localStorage.setItem("my_expense_categories", JSON.stringify(myExpenseCategories));
+    }
+    
+    // Close custom modal and go back to add expense modal
+    const customModal = document.querySelector("[data-custom-modal]");
+    if (customModal) {
+        customModal.parentNode.remove();
+    }
+    
+    // Reopen the add expense modal with the new category visible
+    window.showAddExpenseModal(type);
+};
+
 /* ===== EXPENSE & ARCHIVE LOGIC ===== */
 function renderExpensePage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
@@ -3012,11 +3540,9 @@ app.appendChild(drawer);
                 <div class="summary-box balance-box">${(totalIn - totalOut).toLocaleString()}</div>
             </div>
             <div class="add-box" style="width:100%; max-width:none;">
-                <input type="text" id="ex-note" placeholder="รายการ เช่น ค่าข้าว">
-                <input type="number" id="ex-amt" placeholder="จำนวนเงิน">
                 <div style="display:flex; gap:10px;">
-                    <button onclick="addExpense('in')" style="flex:1; background:#00b894;">＋ รับ</button>
-                    <button onclick="addExpense('out')" style="flex:1; background:#ff7675;">－ จ่าย</button>
+                    <button onclick="window.showAddExpenseModal('in')" style="flex:1; background:#00b894; padding:14px; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer; font-size:16px; transition:all 0.2s;">＋ รับ</button>
+                    <button onclick="window.showAddExpenseModal('out')" style="flex:1; background:#ff7675; padding:14px; border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer; font-size:16px; transition:all 0.2s;">－ จ่าย</button>
                 </div>
             </div>
         </div>
@@ -3051,7 +3577,14 @@ app.appendChild(drawer);
     myExpenses.forEach((x, i) => {
         const item = document.createElement("div");
         item.className = `expense-item ${x.type === 'in' ? 'ex-type-in' : 'ex-type-out'}`;
-        item.innerHTML = `<div><div style="font-weight:bold;">${x.note}</div><div class="ex-date">${x.time}</div></div>
+        const emoji = x.emoji || '📝';
+        item.innerHTML = `<div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">${emoji}</span>
+            <div>
+                <div style="font-weight:bold;">${x.note}</div>
+                <div class="ex-date">${x.time}</div>
+            </div>
+        </div>
             <div class="ex-amt" style="color:${x.type === 'in' ? '#00b894' : '#ff7675'}">${x.type === 'in' ? '+' : '-'}${x.amt.toLocaleString()}
             <span style="margin-left:10px; cursor:pointer; opacity:0.3;" onclick="delExpense(${i})">🗑️</span></div>`;
         listDiv.appendChild(item);
