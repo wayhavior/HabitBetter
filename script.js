@@ -3027,27 +3027,7 @@ app.appendChild(drawer);
         <div style="width:100%; margin-top: 25px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 style="margin: 0; font-size: 18px;">📅 รายเดือน</h2>
-                <button onclick="prevCalendarMonth()" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 14px;">◀</button>
-                <button onclick="nextCalendarMonth()" style="padding: 6px 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; cursor: pointer; font-size: 14px;">▶</button>
-            </div>
-                
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <select id="calendar-month-select" onchange="selectCalendarMonth()" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white;">
-                    <option value="0">มกราคม</option>
-                    <option value="1">กุมภาพันธ์</option>
-                    <option value="2">มีนาคม</option>
-                    <option value="3">เมษายน</option>
-                    <option value="4">พฤษภาคม</option>
-                    <option value="5">มิถุนายน</option>
-                    <option value="6">กรกฎาคม</option>
-                    <option value="7">สิงหาคม</option>
-                    <option value="8">กันยายน</option>
-                    <option value="9">ตุลาคม</option>
-                    <option value="10">พฤศจิกายน</option>
-                    <option value="11">ธันวาคม</option>
-                </select>
-                <select id="calendar-year-select" onchange="selectCalendarMonth()" style="flex: 0.6; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white;">
-                </select>
+                <button onclick="showMonthSelector()" style="padding: 8px 16px; background: linear-gradient(135deg, #f0ad4e 0%, #ec971f 100%); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; font-size: 12px;">เลือกเดือน</button>
             </div>
             
             <div id="calendar-summary" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;"></div>
@@ -3077,25 +3057,6 @@ app.appendChild(drawer);
     });
     
     // 📅 CALENDAR RENDERING
-    // Set month/year dropdowns
-    const monthSelect = document.getElementById("calendar-month-select");
-    const yearSelect = document.getElementById("calendar-year-select");
-    if (monthSelect) monthSelect.value = calendarViewMonth;
-    
-    // Populate year dropdown with current year only
-    if (yearSelect) {
-        yearSelect.innerHTML = '';
-        const currentYear = new Date().getFullYear();
-        // Show only current year and 1 year before/after for safety
-        for (let y = currentYear - 1; y <= currentYear + 1; y++) {
-            const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = (y + 543); // Thai year
-            yearSelect.appendChild(opt);
-        }
-        yearSelect.value = calendarViewYear;
-    }
-    
     // Get calendar days
     const calDays = generateCalendarDays(calendarViewYear, calendarViewMonth);
     
@@ -3438,6 +3399,111 @@ let countdownTimer = null;
 let calendarViewMonth = new Date().getMonth(); // 0-11
 let calendarViewYear = new Date().getFullYear();
 
+/* ===== MONTH MANAGEMENT ===== */
+let availableMonths = []; // Array of {year, month, label}
+
+function generateAvailableMonths() {
+    // Get unique year-months from archive
+    const monthSet = new Set();
+    myExpenseArchive.forEach(a => {
+        const [year, month] = a.date.split('-');
+        monthSet.add(`${year}-${month}`);
+    });
+    
+    // Convert to array and sort by date
+    availableMonths = Array.from(monthSet)
+        .map(ym => {
+            const [year, month] = ym.split('-');
+            const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+            return {
+                year: parseInt(year),
+                month: parseInt(month) - 1, // 0-based
+                label: `${monthNames[parseInt(month) - 1]} ${parseInt(year) + 543}`
+            };
+        })
+        .sort((a, b) => {
+            if (b.year !== a.year) return b.year - a.year;
+            return b.month - a.month;
+        })
+        .slice(0, 12); // Keep only last 12 months
+}
+
+function showMonthSelector() {
+    generateAvailableMonths();
+    
+    if (availableMonths.length === 0) {
+        showNotification("ไม่มีข้อมูล", "ยังไม่มีข้อมูลการบันทึก", "info");
+        return;
+    }
+    
+    // Create overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    `;
+    
+    // Create modal
+    const modal = document.createElement("div");
+    modal.style.cssText = `
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 20px;
+        max-width: 280px;
+        width: 90%;
+        max-height: 60vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    `;
+    
+    let monthsHTML = `
+        <h3 style="margin: 0 0 16px; color: white; text-align: center; font-size: 16px;">เลือกเดือน</h3>
+    `;
+    
+    availableMonths.forEach((m, idx) => {
+        const isSelected = m.year === calendarViewYear && m.month === calendarViewMonth;
+        const bgColor = isSelected ? 'linear-gradient(135deg, #f0ad4e 0%, #ec971f 100%)' : 'rgba(255,255,255,0.05)';
+        const textColor = isSelected ? 'white' : 'rgba(255,255,255,0.8)';
+        const checkmark = isSelected ? ' ✓' : '';
+        
+        monthsHTML += `
+            <button onclick="selectMonth(${m.year}, ${m.month}); document.querySelector('[data-month-selector]').parentNode.remove();" 
+                style="width: 100%; padding: 12px 16px; background: ${bgColor}; border: 1px solid ${isSelected ? 'rgba(255,192,61,0.5)' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; color: ${textColor}; font-weight: 600; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; text-align: left;"
+                onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                ${m.label}${checkmark}
+            </button>
+        `;
+    });
+    
+    modal.innerHTML = monthsHTML;
+    modal.setAttribute("data-month-selector", "true");
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Close on overlay click
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    };
+}
+
+window.selectMonth = (year, month) => {
+    calendarViewYear = year;
+    calendarViewMonth = month;
+    render();
+};
+
 /* ===== CALENDAR HELPER FUNCTIONS ===== */
 function generateCalendarDays(year, month) {
     let firstDay = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
@@ -3498,36 +3564,6 @@ function cleanupOldYearData() {
         save();
     }
 }
-
-window.prevCalendarMonth = () => {
-    calendarViewMonth--;
-    if (calendarViewMonth < 0) {
-        calendarViewMonth = 11;
-        calendarViewYear--;
-    }
-    currentPage = "expense";
-    render();
-};
-
-window.nextCalendarMonth = () => {
-    calendarViewMonth++;
-    if (calendarViewMonth > 11) {
-        calendarViewMonth = 0;
-        calendarViewYear++;
-    }
-    currentPage = "expense";
-    render();
-};
-
-window.selectCalendarMonth = () => {
-    const yearInput = document.getElementById("calendar-year-select");
-    const monthInput = document.getElementById("calendar-month-select");
-    if (yearInput && monthInput) {
-        calendarViewYear = parseInt(yearInput.value);
-        calendarViewMonth = parseInt(monthInput.value);
-        render();
-    }
-};
 
 function updateExpenseCountdown() {
     if (expenseCountdownTimer) {
