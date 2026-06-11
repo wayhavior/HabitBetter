@@ -3389,32 +3389,30 @@ function showExpenseDetailModal(year, month, day) {
     }
     
     let expenseHTML = `
-        <div style="text-align: center; margin-bottom: 20px;">
-            <div style="font-size: 40px; margin-bottom: 12px;">📅</div>
-            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">${day} ${monthNames[month]} ${year}</h3>
-            <p style="margin: 0; color: rgba(255, 255, 255, 0.6); font-size: 13px;">${archiveEntry.autoArchived ? '🤖 บันทึกอัตโนมัติ' : '✋ บันทึกด้วยตนเอง'}</p>
+        <div style="text-align: center; margin-bottom: 16px;">
+            <h3 style="margin: 0 0 6px; font-size: 16px; font-weight: 700; color: white;">${day} ${monthNames[month]} ${year}</h3>
+            <p style="margin: 0; color: rgba(255, 255, 255, 0.6); font-size: 11px;">${archiveEntry.autoArchived ? '🤖 อัตโนมัติ' : '✋ บันทึกเอง'}</p>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-            <div style="background: rgba(255,107,107,0.2); padding: 12px; border-radius: 12px; text-align: center;">
-                <small style="color: rgba(255,255,255,0.6);">รับ</small><br>
-                <strong style="color: #00b894; font-size: 16px;">+${archiveEntry.totalIn.toLocaleString()}</strong>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+            <div style="background: rgba(0,184,148,0.2); padding: 8px; border-radius: 8px; text-align: center;">
+                <small style="color: rgba(255,255,255,0.6); font-size: 10px;">รับ</small><br>
+                <strong style="color: #00b894; font-size: 13px;">+${archiveEntry.totalIn.toLocaleString()}</strong>
             </div>
-            <div style="background: rgba(255,107,107,0.2); padding: 12px; border-radius: 12px; text-align: center;">
-                <small style="color: rgba(255,255,255,0.6);">จ่าย</small><br>
-                <strong style="color: #ff7675; font-size: 16px;">-${archiveEntry.totalOut.toLocaleString()}</strong>
+            <div style="background: rgba(255,107,107,0.2); padding: 8px; border-radius: 8px; text-align: center;">
+                <small style="color: rgba(255,255,255,0.6); font-size: 10px;">จ่าย</small><br>
+                <strong style="color: #ff7675; font-size: 13px;">-${archiveEntry.totalOut.toLocaleString()}</strong>
             </div>
-        </div>
-        
-        <div style="background: rgba(100,200,255,0.2); padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 16px;">
-            <small style="color: rgba(255,255,255,0.6);">คงเหลือ</small><br>
-            <strong style="color: #64c8ff; font-size: 18px;">${(archiveEntry.totalIn - archiveEntry.totalOut).toLocaleString()}</strong>
+            <div style="background: rgba(100,200,255,0.2); padding: 8px; border-radius: 8px; text-align: center;">
+                <small style="color: rgba(255,255,255,0.6); font-size: 10px;">คงเหลือ</small><br>
+                <strong style="color: #64c8ff; font-size: 13px;">${(archiveEntry.totalIn - archiveEntry.totalOut).toLocaleString()}</strong>
+            </div>
         </div>
         
         ${itemsHTML}
         
-        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; margin-top: 16px;">
-            <button onclick="document.querySelector('[data-expense-modal]').parentNode.remove();" style="width: 100%; padding: 12px 20px; background: rgba(100,200,255,0.3); border: 1px solid rgba(100,200,255,0.5); border-radius: 10px; color: #64c8ff; font-weight: 600; cursor: pointer; transition: all 0.2s;">ปิด</button>
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: 12px;">
+            <button onclick="document.querySelector('[data-expense-modal]').parentNode.remove();" style="width: 100%; padding: 10px 16px; background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4); font-size: 13px;">ปิด</button>
         </div>
     `;
     
