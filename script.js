@@ -1465,7 +1465,7 @@ function save() {
     localStorage.setItem("my_expenses", JSON.stringify(myExpenses));
     localStorage.setItem("my_expense_archive", JSON.stringify(myExpenseArchive));
     localStorage.setItem("lastExpenseResetDate", lastExpenseResetDate);
-    localStorage.setItem("lastExpenseAutoArchiveDate", lastExpenseAutoArchiveDate);
+    
     localStorage.setItem("lastGoalResetDate", lastGoalResetDate);
     localStorage.setItem("lastTrackerResetDate", lastTrackerResetDate);
     localStorage.setItem("zoomLevel", zoomLevel);
@@ -3482,8 +3482,9 @@ window.finishAddExpense = (type) => {
     }
     
     save();
-    window.closeExpenseModal();
-    render();
+window.closeExpenseModal();
+currentPage = "expense";
+render();
 };
 
 window.showCustomCategoryModal = (type) => {
