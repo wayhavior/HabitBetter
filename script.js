@@ -3642,7 +3642,7 @@ window.showAddExpenseModal = (type) => {
         </h3>
         
         <label style="color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 600; display: block; margin-bottom: 8px;">รายการ</label>
-        <input type="text" id="expense-name" placeholder="พิมชื่อรายการ เช่น กาแฟ" 
+        <input type="text" id="expense-name" placeholder="พิมชื่อรายการ เช่น ค่าข้าว" 
             style="
                 width: 100%;
                 padding: 12px;
@@ -3671,7 +3671,7 @@ window.showAddExpenseModal = (type) => {
             "
         >
         
-        <label style="color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 600; display: block; margin-bottom: 10px;">📋 รายการแนะนำ (กดเพื่อใส่ชื่อและ emoji)</label>
+        <label style="color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 600; display: block; margin-bottom: 10px;">📋 รายการแนะนำ </label>
         <div id="category-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; max-height: 280px; overflow-y: auto;">
     `;
     
@@ -3722,7 +3722,7 @@ window.showAddExpenseModal = (type) => {
             onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='white';"
             onmouseout="this.style.background='rgba(200,200,200,0.2)'; this.style.color='rgba(255,255,255,0.7)';"
         >
-            ➕ เพิ่มรายการใหม่
+            ➕ เพิ่มรายการแนะนำใหม่
         </button>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -5349,7 +5349,7 @@ const computedTextColor = brightness > 128 ? '#000000' : '#ffffff';
     `;
     titleSection.innerHTML = `
         <div style="flex: 1;">
-            <input type="text" id="note-title" placeholder="หัวข้อ" value="${note ? note.title : ''}" ${isNewNote ? '' : 'readonly'} style="background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 28px; font-weight: 500; line-height: 1.3; width: 100%;">
+            <input type="text" id="note-title" placeholder="ชื่อหัวเรื่อง" value="${note ? note.title : ''}" ${isNewNote ? '' : 'readonly'} style="background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 28px; font-weight: 500; line-height: 1.3; width: 100%;">
         </div>
         <button style="background: none; border: none; font-size: 22px; cursor: pointer; color: #666; padding: 4px 8px; margin-left: 12px;">📝</button>
     `;
@@ -5363,7 +5363,7 @@ const computedTextColor = brightness > 128 ? '#000000' : '#ffffff';
         overflow-y: auto;
         background: rgba(0, 0, 0, 0.2);
     `;
-    contentArea.innerHTML = `<textarea id="note-content" placeholder="ธรรมชาติสไนอาทีที่นี่..." ${isNewNote ? '' : 'readonly'} style="width: 100%; background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 15px; resize: none; line-height: 1.7; min-height: 400px; padding: 0;">${note ? note.body : ''}</textarea>`;
+    contentArea.innerHTML = `<textarea id="note-content" placeholder="เนื้อหาโน้ต..." ${isNewNote ? '' : 'readonly'} style="width: 100%; background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 15px; resize: none; line-height: 1.7; min-height: 400px; padding: 0;">${note ? note.body : ''}</textarea>`;
     container.appendChild(contentArea);
     
     app.appendChild(container);
@@ -5903,7 +5903,7 @@ function updateCountdown() {
             const h = Math.floor(diff / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
-            el.innerText = `Auto Reset in: ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            el.innerText = `รีเซ็ตใหม่ในอีก: ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
     }
 
