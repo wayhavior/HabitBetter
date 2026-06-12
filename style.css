@@ -11,13 +11,13 @@ html, body {
 
 /* กำหนดสีแยกตาม ID (ย้ายไปไหนสีก็ไม่เปลี่ยน) */
 .menu-item[data-id="tracker"] { border-left: 5px solid #a855f7 !important; }
-.menu-item[data-id="routine"] { border-left: 5px solid #00b894 !important; }
+.menu-item[data-id="routine"] { border-left: 5px solid #ff9f43 !important; }
 .menu-item[data-id="daily"]   { border-left: 5px solid #ff7675 !important; }
-.menu-item[data-id="pomodoro"] { border-left: 5px solid #ff9f43 !important; }
+.menu-item[data-id="pomodoro"] { border-left: 5px solid #ff3b30 !important; }
 .menu-item[data-id="expense"] { border-left: 5px solid #00b894 !important; }
 .menu-item[data-id="longterm"] { border-left: 5px solid #f1c40f !important; }
 .menu-item[data-id="notes"]    { border-left: 5px solid #5f27cd !important; }
-.menu-item[data-id="tvm"]      { border-left: 5px solid #badc58 !important; }
+.menu-item[data-id="tvm"]      { border-left: 5px solid #00d2ff !important; }
 
 /* ===== MASTER CSS: WAYCHECKER 2.4 (อิงตามชุดเดิมของคุณ) ===== */
 body {
@@ -236,7 +236,11 @@ body.dark-mode .custom-quote { color: #bbb; }
 .long-term-item { border-left: 5px solid #f1c40f; }
 .del-btn { position: absolute; top: 10px; right: 10px; color: #ff3b30; cursor: pointer; opacity: 0.3; }
 body.dark-mode .goal-item, body.dark-mode .note-card { background: #2a2a2a; color: white; }
-
+/* ลดช่องว่างรายการ Daily Goals / Long-term Goals */
+.goals-page .goal-item {
+    margin: 5px 0 !important;
+    padding: 16px 18px !important;
+}
 /* ===== CLOCK DESIGN ===== */
 .datetime-container {
     text-align: center; margin-bottom: 20px; padding: 15px 30px; background: white;
@@ -2706,11 +2710,9 @@ h1 + .goals-page:has([onclick*="addRoutine"]) {
 }
 /* =======================================================
    HOME ONLY: บล็อกการดึงรีเฟรชเฉพาะหน้าแรก (Home Page)
-   ======================================================= */
-/* =======================================================
+   /* =======================================================
    HOME LOCK + BLOCK PULL REFRESH
-   ล็อคเฉพาะหน้า Home
-   กัน pull-to-refresh เฉพาะหน้า Home
+   ล็อคเฉพาะหน้า Home เท่านั้น
 ======================================================= */
 
 html:has(body.home-lock),
