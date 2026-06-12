@@ -48,34 +48,35 @@ h1 {
     margin-top: 100px;
 }
 
-/* ✅ Responsive padding-bottom สำหรับหน้า home */
+/* ✅ Responsive spacing สำหรับหน้า home */
 @media (max-width: 320px) {
     .home-container {
-        padding-bottom: 150px;
+        padding-bottom: 0;
         gap: 6px;
     }
 }
 
 @media (min-width: 321px) and (max-width: 480px) {
     .home-container {
-        padding-bottom: 140px;
+        padding-bottom: 0;
         gap: 7px;
     }
 }
 
 @media (min-width: 481px) and (max-width: 768px) {
     .home-container {
-        padding-bottom: 130px;
+        padding-bottom: 0;
         gap: 8px;
     }
 }
 
 @media (min-width: 769px) {
     .home-container {
-        padding-bottom: 120px;
+        padding-bottom: 0;
         gap: 8px;
     }
 }
+
 .home-container {
     display: flex;
     flex-direction: column;
@@ -83,8 +84,8 @@ h1 {
     justify-content: center;
     min-height: auto;
     gap: 8px;
-    padding-bottom: 130px;  /* ✅ สำรองพื้นที่ให้ navbar ด้านล่าง */
-    padding-top: 20px;      /* ✅ เพิ่มเว้นว่างด้านบน */
+    padding-bottom: 0;   /* ✅ แก้จาก 130px */
+    padding-top: 20px;
 }
 .menu-item {
     width: 90%;
