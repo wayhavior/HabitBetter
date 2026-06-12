@@ -6,27 +6,6 @@ async function hashPassword(password) {
 }
 const app = document.getElementById("app");
 
-// ========== 🎨 FIX NAVBAR OVERLAP WITH FLEXBOX ==========
-// ✨ ตั้งค่า viewport ให้ app ปรับตามขนาด navbar อัตโนมัติ
-document.documentElement.style.height = "100vh";
-document.body.style.cssText = `
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-`;
-
-app.style.cssText = `
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-bottom: env(safe-area-inset-bottom);
-    -webkit-overflow-scrolling: touch;
-`;
-// ======================================================
-
 /* ===== CONFIGURATION ===== */
 // ✅ ลบ CLOUD_API_URL - ไม่ส่งข้อมูลขึ้น Google Sheets อีกต่อไป
 // 🗑️ ลบ EXP_PER_LEVEL - ระบบ EXP ถูกลบแล้ว
