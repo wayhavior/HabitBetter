@@ -47,13 +47,44 @@ h1 {
 .home-container h1 {
     margin-top: 100px;
 }
+
+/* ✅ Responsive padding-bottom สำหรับหน้า home */
+@media (max-width: 320px) {
+    .home-container {
+        padding-bottom: 150px;
+        gap: 6px;
+    }
+}
+
+@media (min-width: 321px) and (max-width: 480px) {
+    .home-container {
+        padding-bottom: 140px;
+        gap: 7px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .home-container {
+        padding-bottom: 130px;
+        gap: 8px;
+    }
+}
+
+@media (min-width: 769px) {
+    .home-container {
+        padding-bottom: 120px;
+        gap: 8px;
+    }
+}
 .home-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: auto;
-    gap: 4px;
+    gap: 8px;
+    padding-bottom: 130px;  /* ✅ สำรองพื้นที่ให้ navbar ด้านล่าง */
+    padding-top: 20px;      /* ✅ เพิ่มเว้นว่างด้านบน */
 }
 .menu-item {
     width: 90%;
@@ -67,6 +98,34 @@ h1 {
     font-size: 18px;
     font-weight: bold;
     transition: 0.2s;
+}
+
+/* ✅ Responsive menu sizing สำหรับขนาดจอต่าง ๆ */
+@media (max-width: 320px) {
+    .menu-item {
+        width: 88%;
+        max-width: 280px;
+        padding: 14px 12px;
+        font-size: 16px;
+    }
+}
+
+@media (min-width: 321px) and (max-width: 480px) {
+    .menu-item {
+        width: 90%;
+        max-width: 320px;
+        padding: 16px 14px;
+        font-size: 17px;
+    }
+}
+
+@media (min-width: 481px) {
+    .menu-item {
+        width: 90%;
+        max-width: 350px;
+        padding: 18px 15px;
+        font-size: 18px;
+    }
 }
 .menu-item:active { transform: scale(0.95); }
 body.dark-mode .menu-item { background: #2a2a2a; color: white; }
@@ -1799,50 +1858,58 @@ body {
     margin: 0;
     padding: 0;
 }
-/* ===== COMPREHENSIVE HOME PAGE OPTIMIZATION ===== */
-/* Only optimize menu sizing - keep other sections original */
+/* ==========================================
+   TITAN UI TIGHTEN-UP (บีบระยะห่างหน้า HOME)
+   วางต่อท้าย v2 ได้เลยครับ
+   ========================================== */
 
-.home-container {
-    padding-top: 0 !important;
+/* 1. บีบ Level Bar (บนสุด) */
+.exp-container {
+    padding: 6px !important;
+    margin-bottom: 0px !important;
 }
 
-/* Keep Profile, Quote, Achievement, Dashboard as original */
-/* Only reduce menu to fit all screens without navbar overlap */
-
-/* Menu Grid - Responsive sizing only */
-.home-menu-grid {
-    margin-bottom: 20px !important;
+/* 2. บีบส่วน โค้ชและคำคม */
+.home-coach-card {
+    margin-top: 0px !important;
+    margin-bottom: 2px !important;
+    padding: 8px !important; 
+}
+.home-coach-img {
+    width: 60px !important; /* ลดขนาดรูปโค้ช */
+    height: 60px !important;
+}
+.home-quote-bubble {
+    font-size: 14px !important; /* ลดขนาดตัวหนังสือคำคม */
+    padding: 8px !important;
+    line-height: 1.4 !important;
 }
 
+/* 3. บีบส่วน Achievement (เหรียญรางวัล) */
+.home-badge-container {
+    margin-top: 0px !important;
+    margin-bottom: 2px !important;
+    padding: 10px !important;
+}
+.badge-label { font-size: 13px !important; }
+.home-badge-item { padding: 8px !important; min-height: 50px !important; }
+
+/* 4. บีบส่วน Dashboard (สรุปตัวเลข) */
+.dashboard-card-big {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    padding: 12px !important;
+}
+.db-big-value { font-size: 16px !important; }
+
+/* --- แถม: ปรับเมนูหลักให้เตี้ยลงนิดนึง เพื่อช่วยดันให้เมนูโชว์ครบ --- */
 .home-container .menu-item {
-    padding: 14px 12px !important;
-    font-size: 0.95rem !important;
-    min-height: 48px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    margin-bottom: 8px !important;
-}
-
-/* Small Mobile (max 480px) - More compact */
-@media (max-width: 480px) {
-    .home-container .menu-item {
-        padding: 12px 10px !important;
-        font-size: 0.9rem !important;
-        min-height: 44px !important;
-        margin-bottom: 6px !important;
-    }
-}
-
-/* Very Small Mobile (max 360px) - Extra compact */
-@media (max-width: 360px) {
-    .home-container .menu-item {
-        padding: 10px 8px !important;
-        font-size: 0.85rem !important;
-        min-height: 40px !important;
-        margin-bottom: 5px !important;
-    }
+    padding: 13px 13px !important;
+    margin-bottom: 0px !important;
+    font-size: 1rem !important; 
+    border-radius: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 /* ===== FIX: ลด gap บนสุด home ===== */
 #app {
