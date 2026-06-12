@@ -4393,131 +4393,48 @@ select {
   font-family: inherit !important;
 }
 /* =====================================================
-   HOME FIT NAVBAR v2
-   ทำให้หน้า Home ลงมาใกล้ navbar มากขึ้น
-   แต่ยังไม่ชน และยังไม่ scroll
+   HOME MENU SIZE ONLY FIX
+   ลดเฉพาะขนาดปุ่มเมนูหน้า Home
+   ไม่ยุ่ง navbar / dashboard / achievement / container
 ===================================================== */
 
-body:has(.home-container) {
-    height: 100dvh !important;
-    overflow: hidden !important;
-}
-
-body:has(.home-container) #app {
-    height: 100dvh !important;
-    overflow: hidden !important;
-    padding: 6px 10px !important;
-    box-sizing: border-box !important;
-}
-
-/* ลดพื้นที่กัน navbar จากเดิม 105px เหลือ 78px */
-.home-container {
-    height: calc(100dvh - 78px) !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-
-    justify-content: flex-start !important;
-    gap: 6px !important;
-
-    padding-top: 4px !important;
-    padding-bottom: 0 !important;
-    box-sizing: border-box !important;
-}
-
-/* ให้กลุ่มเมนูใช้พื้นที่มากขึ้น ไม่ลอยสูงเกิน */
+/* กล่อง grid ของเมนู */
 .home-menu-grid {
-    width: 92% !important;
-    max-width: 390px !important;
-    gap: 9px !important;
-    margin: 6px auto 0 auto !important;
+    gap: 7px !important;
+    margin-top: 4px !important;
 }
 
-/* เพิ่มความสูงปุ่มกลับมานิดนึง ให้กินพื้นที่พอดี */
-.home-menu-grid .menu-item,
-.home-container .menu-item {
-    min-height: 58px !important;
-    padding: 12px 10px !important;
-    font-size: 1rem !important;
+/* ลดเฉพาะปุ่มเมนูในหน้า Home */
+.home-menu-grid .menu-item {
+    min-height: 48px !important;
+    padding: 10px 8px !important;
+    font-size: 0.92rem !important;
     line-height: 1.15 !important;
-    border-radius: 17px !important;
+    border-radius: 15px !important;
     margin: 0 !important;
+    box-sizing: border-box !important;
 }
 
-/* ปุ่มเต็มแถว 2 อันแรก */
+/* ปุ่มเต็มแถว เช่น Savings Tracker / Daily Routine */
 .home-menu-grid .menu-item.full-row {
-    min-height: 60px !important;
-}
-
-/* Dashboard ให้ไม่เตี้ยเกิน */
-.dashboard-card-big {
-    padding: 13px 16px !important;
-    margin-top: 0 !important;
-    margin-bottom: 8px !important;
-    gap: 9px !important;
-    border-radius: 22px !important;
-}
-
-.db-big-row {
-    min-height: 25px !important;
-}
-
-.db-big-label {
-    font-size: 13px !important;
-}
-
-.db-big-value {
-    font-size: 15px !important;
-}
-
-/* Achievement ไม่ต้องบีบมากเกิน */
-.home-badge-container {
-    padding: 10px !important;
-    margin-top: 3px !important;
-    margin-bottom: 8px !important;
-    gap: 8px !important;
-    max-height: 135px !important;
-    overflow: hidden !important;
-}
-
-.home-badge-item {
     min-height: 50px !important;
-    padding: 8px 10px !important;
+    padding: 11px 8px !important;
 }
 
-/* navbar คงตำแหน่งไว้ ไม่ต้องดันขึ้น */
-.floating-navbar {
-    bottom: max(18px, env(safe-area-inset-bottom)) !important;
-}
-
-/* สำหรับจอเตี้ยมาก ค่อยบีบนิดเดียว */
+/* จอเตี้ยมาก ค่อยบีบ menu ลงอีกนิด */
 @media (max-height: 760px) {
-    .home-container {
-        height: calc(100dvh - 74px) !important;
-        gap: 5px !important;
-    }
-
     .home-menu-grid {
-        gap: 8px !important;
+        gap: 6px !important;
     }
 
-    .home-menu-grid .menu-item,
-    .home-container .menu-item {
-        min-height: 54px !important;
-        padding: 10px 9px !important;
-        font-size: 0.95rem !important;
+    .home-menu-grid .menu-item {
+        min-height: 44px !important;
+        padding: 8px 7px !important;
+        font-size: 0.86rem !important;
     }
 
     .home-menu-grid .menu-item.full-row {
-        min-height: 56px !important;
-    }
-
-    .home-badge-container {
-        max-height: 125px !important;
-        margin-bottom: 6px !important;
-    }
-
-    .dashboard-card-big {
-        padding: 11px 14px !important;
-        gap: 7px !important;
+        min-height: 46px !important;
+        padding: 9px 7px !important;
     }
 }
