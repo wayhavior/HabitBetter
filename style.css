@@ -54,7 +54,6 @@ h1 {
     justify-content: center;
     min-height: auto;
     gap: 8px;
-    padding-bottom: 120px !important;
 }
 .menu-item {
     width: 90%;
@@ -2595,10 +2594,6 @@ body.cyberpunk-mode #jar-pig-canvas {
         width: 22px;
         height: 22px;
         font-size: 18px;
-    }
-    
-    .home-container {
-        padding-bottom: 110px !important;
     }
 }
 
