@@ -2709,7 +2709,7 @@ h1 + .goals-page:has([onclick*="addRoutine"]) {
    ======================================================= */
 
 /* สั่งบล็อกการ Pull-to-Refresh เฉพาะเวลาที่อยู่หน้าที่มีคลาส .home-container */
-body:has(.home-container) {
+/*body:has(.home-container) {
     overscroll-behavior-y: contain !important;
 }
 /* ===== SETTINGS PAGE CSS ===== */
