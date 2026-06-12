@@ -1659,7 +1659,7 @@ function getProfileCardHTML(displayName, displayImage, googleUser, userProfileDa
                     <div style="font-size: 11px; color: rgba(255,255,255,0.6); white-space: nowrap;">${statusText}</div>
                 </div>
             </div>
-            <div style="background: linear-gradient(135deg, #ffd89b 0%, #ff9a56 100%); padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; color: white; flex-shrink: 0; white-space: nowrap;">9 badges</div>
+            <div style="background: linear-gradient(135deg, #ffd89b 0%, #ff9a56 100%); padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; color: white; flex-shrink: 0; white-space: nowrap;">FREE</div>
         </div>
     </div>`;
 }
@@ -6850,7 +6850,7 @@ function renderProfilePage() {
         <div style="display:flex; gap:24px; align-items:flex-start; padding:0 10px;">
             <!-- Left: Profile Picture -->
             <div style="flex-shrink:0;">
-                <p style="font-size:11px; color:rgba(255,255,255,0.5); margin:0 0 8px 0; text-transform:uppercase; letter-spacing:0.5px;">📸 Picture</p>
+                <p style="font-size:11px; color:rgba(255,255,255,0.5); margin:0 0 8px 0; text-transform:uppercase; letter-spacing:0.5px;">📸 รูปโปรไฟล์</p>
                 
                 <div id="profile-image-container" style="
                     width:140px; height:140px;
@@ -6865,8 +6865,8 @@ function renderProfilePage() {
                 
                 <div style="display:flex; gap:8px; margin-top:10px;">
                     ${!isGoogleLogin ? `
-                        <button id="profile-change-btn" style="flex:1; padding:8px; background:rgba(255,140,0,0.2); border:2px solid #ff8c00; border-radius:8px; color:#ff8c00; font-weight:600; font-size:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,140,0,0.3)'" onmouseout="this.style.background='rgba(255,140,0,0.2)'">Change</button>
-                        <button id="profile-delete-btn" style="flex:1; padding:8px; background:rgba(255,50,50,0.2); border:2px solid #ff3232; border-radius:8px; color:#ff3232; font-weight:600; font-size:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,50,50,0.3)'" onmouseout="this.style.background='rgba(255,50,50,0.2)'">Delete</button>
+                        <button id="profile-change-btn" style="flex:1; padding:8px; background:rgba(255,140,0,0.2); border:2px solid #ff8c00; border-radius:8px; color:#ff8c00; font-weight:600; font-size:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,140,0,0.3)'" onmouseout="this.style.background='rgba(255,140,0,0.2)'">เพิ่มรูป</button>
+                        <button id="profile-delete-btn" style="flex:1; padding:8px; background:rgba(255,50,50,0.2); border:2px solid #ff3232; border-radius:8px; color:#ff3232; font-weight:600; font-size:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,50,50,0.3)'" onmouseout="this.style.background='rgba(255,50,50,0.2)'">รีเซ็ต</button>
                     ` : `<div style="opacity:0.5; font-size:11px; text-align:center; width:100%; color:rgba(255,165,0,0.8);">🔒 Google</div>`}
                 </div>
                 
@@ -6877,20 +6877,20 @@ function renderProfilePage() {
             <div style="flex:1; min-width:0;">
                 <!-- Username Section -->
                 <div style="margin-bottom:20px;">
-                    <p style="font-size:11px; color:rgba(255,255,255,0.5); margin:0 0 8px 0; text-transform:uppercase;">📝 Username</p>
+                    <p style="font-size:11px; color:rgba(255,255,255,0.5); margin:0 0 8px 0; text-transform:uppercase;">📝 ชื่อผู้ใช้</p>
                     ${isGoogleLogin ? `
                         <div style="padding:10px; background:rgba(0,184,148,0.1); border:2px solid rgba(0,184,148,0.4); border-radius:8px; color:#00b894; font-size:13px; font-weight:600; text-align:center;">
                             ${googleUser?.name || 'User'}<br/><span style="font-size:11px; opacity:0.7;">From Google</span>
                         </div>
                     ` : `
-                        <input type="text" id="username-input" maxlength="16" placeholder="Enter username" value="${userProfileData.username || ''}" style="width:100%; padding:10px; background:rgba(255,255,255,0.08); border:2px solid rgba(0,184,148,0.4); border-radius:8px; color:white; font-size:13px; outline:none; box-sizing:border-box; font-family:inherit;" onfocus="this.style.borderColor='#00b894'" onblur="this.style.borderColor='rgba(0,184,148,0.4)'">
+                        <input type="text" id="username-input" maxlength="16" placeholder="ตั้งชื่อของคุณ" value="${userProfileData.username || ''}" style="width:100%; padding:10px; background:rgba(255,255,255,0.08); border:2px solid rgba(0,184,148,0.4); border-radius:8px; color:white; font-size:13px; outline:none; box-sizing:border-box; font-family:inherit;" onfocus="this.style.borderColor='#00b894'" onblur="this.style.borderColor='rgba(0,184,148,0.4)'">
                         <button id="save-username-btn" style="width:100%; margin-top:8px; padding:10px; background:linear-gradient(135deg, #00b894, #00d2ff); color:white; border:none; border-radius:8px; font-weight:600; font-size:12px; cursor:pointer; transition:transform 0.2s; font-family:inherit;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">✅ Save</button>
                     `}
                 </div>
                 
                 <!-- Google Account Section -->
                 <div>
-                    <p style="font-size:11px; color:rgba(255,255,255,0.5); margin:0 0 8px 0; text-transform:uppercase;">🔐 Account</p>
+                    <p style="font-size:11px; color:rgba(255,255,255,0.5); margin:0 0 8px 0; text-transform:uppercase;">🔐 บัญชี</p>
                     ${isGoogleLogin ? `
                         <div style="padding:10px; background:rgba(0,184,148,0.1); border:2px solid rgba(0,184,148,0.4); border-radius:8px; text-align:center;">
                             <div style="font-size:12px; color:#00b894; margin-bottom:8px;">✅ Logged in</div>
@@ -6921,7 +6921,7 @@ function renderProfilePage() {
                                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                             </svg>
-                            Sign in with Google
+                            ลงชื่อเข้าใช้ด้วย Google
                         </button>
                     `}
                 </div>
@@ -6984,8 +6984,8 @@ function showDeleteProfilePictureModal(onConfirm) {
     modal.innerHTML = `
         <div style="text-align: center;">
             <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
-            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">ลบรูปโปรไฟล์?</h3>
-            <p style="margin: 0 0 24px; color: rgba(255, 255, 255, 0.6); font-size: 13px;">คุณแน่ใจว่าต้องการลบรูปโปรไฟล์หรือไม่</p>
+            <h3 style="margin: 0 0 8px; font-size: 18px; font-weight: 700; color: white;">รีเซ็ตโปรไฟล์?</h3>
+            <p style="margin: 0 0 24px; color: rgba(255, 255, 255, 0.6); font-size: 13px;">คุณแน่ใจว่าต้องการรีเซ็ตโปรไฟล์หรือไม่</p>
             <div style="display: flex; gap: 12px; justify-content: center;">
                 <button id="cancel-delete-profile" style="flex: 1; padding: 12px 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s;">ยกเลิก</button>
                 <button id="confirm-delete-profile" style="flex: 1; padding: 12px 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);">ลบ</button>
