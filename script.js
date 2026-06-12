@@ -6396,11 +6396,11 @@ function showCalcToolsModal() {
             
             <div style="display:flex; flex-direction:column; gap:14px; width:100%;">
                 <button id="btn-choice-standard" style="padding:16px; border-radius:16px; border:none; background:#00d2ff; color:black; font-size:15px; font-weight:bold; cursor:pointer; font-family:inherit; box-shadow: 0 4px 15px rgba(0,210,255,0.3); transition: all 0.1s ease; outline:none;">
-                    🧮 Standard Calculator
+                    🧮 เครื่องคิดเลขทั่วไป
                 </button>
                 
                 <button id="btn-choice-tvm" style="padding:16px; border-radius:16px; border: none; background: #e74c3c; color: white; font-size:15px; font-weight:bold; cursor:pointer; font-family:inherit; transition: all 0.1s ease; box-shadow: 0 2px 10px rgba(0,210,255,0.1); outline:none;">
-                    📈 TVM Calculator
+                    📈 เครื่องคิดเลขการเงิน
                 </button>
                 
                 <button id="btn-choice-close" style="padding:10px; border-radius:14px; border:none; background:transparent; color:#666; font-size:13px; cursor:pointer; font-family:inherit; margin-top:8px; text-decoration:underline; transition: color 0.2s;">
