@@ -2709,9 +2709,29 @@ h1 + .goals-page:has([onclick*="addRoutine"]) {
    ======================================================= */
 
 /* =======================================================
+   MOBILE ONLY: ปิด Pull-to-refresh ทุกหน้าเฉพาะมือถือ
+   แต่คอมยังใช้ลูกกลิ้ง scroll ได้ปกติ
+======================================================= */
+
+@media (hover: none) and (pointer: coarse) {
+    html,
+    body {
+        overscroll-behavior-y: contain !important;
+        overscroll-behavior-x: none !important;
+    }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    html,
+    body {
+        overscroll-behavior-y: auto !important;
+        overscroll-behavior-x: auto !important;
+    }
+}
+
+/* =======================================================
    HOME ONLY: FIX SPACE AFTER PULL REFRESH
-   ให้หน้า Home สูงพอดีจอหลัง pull refresh
-   แต่ไม่บล็อก pull-to-refresh
+   หน้า Home ล็อคความสูงและไม่ให้ scroll
 ======================================================= */
 
 html:has(.home-container),
@@ -2720,7 +2740,6 @@ body:has(.home-container) {
     min-height: 100dvh !important;
     max-height: 100dvh !important;
     overflow: hidden !important;
-    overscroll-behavior-y: auto !important;
 }
 
 body:has(.home-container) #app {
