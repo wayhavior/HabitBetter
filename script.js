@@ -496,6 +496,14 @@ function showNotification(title, message, type = "success") {
 }
 
 
+// =====================================
+// 🔄 UPDATED BACKUP & RESTORE FUNCTIONS
+// =====================================
+
+/**
+ * ✅ UPDATED: Backup ข้อมูลให้ครอบคลุมทั้งแอป
+ * รวมข้อมูล: Profile, Financial, Pomodoro, Badge, UI Settings, และอื่นๆ
+ */
 async function backupToGoogleDrive() {
     try {
         // 1. ดักเช็กก่อนเลยว่า เคยผ่านการกดปุ่ม Login ด้วย Gmail มาหรือยัง
@@ -547,18 +555,46 @@ async function backupToGoogleDrive() {
             }
         }
 
+        // ✅ UPDATED: เพิ่มข้อมูลที่จำเป็นเท่านั้น (ลบข้อมูลเก่าและไม่ใช้)
         const backupData = {
-            tracker: localStorage.getItem("tracker"),
-            way_piggy: localStorage.getItem("way_piggy"),
-            saving_jars: localStorage.getItem("saving_jars"),
-            titanPoints: localStorage.getItem("titanPoints"),
+            // === Core Data: Goals & Tasks ===
             notes: localStorage.getItem("notes"),
-            expenses: localStorage.getItem("expenses"),
             tasks: localStorage.getItem("tasks"),
-            routines: localStorage.getItem("routines"),
             my_daily_goals: localStorage.getItem("my_daily_goals"),
             my_longterm_goals: localStorage.getItem("my_longterm_goals"),
-            timestamp: new Date().toISOString()
+            
+            // === Notes & Routines (New Format) ===
+            my_notes: localStorage.getItem("my_notes"),
+            my_routines: localStorage.getItem("my_routines"),
+            
+            // === Financial Data ===
+            saving_jars: localStorage.getItem("saving_jars"),
+            my_expenses: localStorage.getItem("my_expenses"),
+            my_expense_archive: localStorage.getItem("my_expense_archive"),
+            my_income_categories: localStorage.getItem("my_income_categories"),
+            my_expense_categories: localStorage.getItem("my_expense_categories"),
+            active_jar_id: localStorage.getItem("active_jar_id"),
+            
+            // === Pomodoro Data ===
+            pomoSettings: localStorage.getItem("pomoSettings"),
+            pomoCount: localStorage.getItem("pomoCount"),
+            pomoFocusMinutes: localStorage.getItem("pomoFocusMinutes"),
+            pomoCompletedFocusInCycle: localStorage.getItem("pomoCompletedFocusInCycle"),
+            
+            // === Badge & Achievement ===
+            unlockedBadges: localStorage.getItem("unlockedBadges"),
+            badgeLastCheckDate: localStorage.getItem("badgeLastCheckDate"),
+            goalsCompleted: localStorage.getItem("goalsCompleted"),
+            
+            // === Reset Dates (จำเป็น - ห้ามลบ!) ===
+            lastExpenseResetDate: localStorage.getItem("lastExpenseResetDate"),
+            lastTrackerResetDate: localStorage.getItem("lastTrackerResetDate"),
+            lastGoalResetDate: localStorage.getItem("lastGoalResetDate"),
+            last_routine_reset: localStorage.getItem("last_routine_reset"),
+            
+            // === Metadata ===
+            timestamp: new Date().toISOString(),
+            appVersion: "HabitBetter v2.0"
         };
 
         const metadata = {
@@ -607,19 +643,12 @@ async function backupToGoogleDrive() {
         if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
         showNotification("❌ Backup ล้มเหลว", err.message, "error");
     } finally {
-        // 🌟 แก้ตรงจุดนี้: เราจะลบการเคลียร์ค่าทิ้งออกไป เพื่อให้ตัวแปร accessToken อยู่ตลอดการใช้งานจนกว่าจะล็อกเอาต์
         console.log("บันทึกข้อมูลเสร็จสิ้นโดยคงสิทธิ์ Drive เอาไว้ในระบบ");
     }
 }
 
-// ===== RESTORE FUNCTION =====
-/* 
- * 📝 BUG FIXES:
- * 1. เปลี่ยนจาก if statement แต่ละอัน → loop ด้วย array เพื่อให้ครบทุก key
- * 2. เพิ่มการเช็ค !== undefined && !== null เพื่อหลีกเลี่ยงค่า falsy ที่ถูกต้อง (เช่น empty array)
- * 3. เพิ่ม error handling สำหรับ HTTP response
- * 4. แสดงจำนวนรายการที่ restore ได้
- * 5. บันทึก lastBackupFileId เพื่ออ้างอิงครั้งต่อไป
+/**
+ * ✅ UPDATED: Restore ข้อมูลให้ครบถ้วนจาก Google Drive
  */
 async function restoreFromGoogleDrive() {
     try {
@@ -630,12 +659,12 @@ async function restoreFromGoogleDrive() {
             return;
         }
 
-        // 🌟 2. ดักเช็กสิทธิ์ Drive: บังคับอ้างอิงผ่านตัวแปรหลักเท่านั้น
+        // 🌟 2. ดักเช็กสิทธิ์ Drive
         if (!accessToken) {
             requestOnlyDrivePermission(() => {
                 restoreFromGoogleDrive();
             });
-            return; // หยุดโค้ดรอบแรกไว้ตรงนี้
+            return;
         }
 
         // 🌟 3. ส่งตัวแปรสิทธิ์ที่ถูกต้องให้ระบบดึงข้อมูล
@@ -690,8 +719,27 @@ async function restoreFromGoogleDrive() {
         progress.updateProgress(70);
         await new Promise(r => setTimeout(r, 300));
 
-        // ✅ FIX: restore data ด้วย array ของ keys เพื่อให้แน่ใจว่าทุก key ถูก restore
-        const keysToRestore = ['tracker', 'way_piggy', 'saving_jars', 'notes', 'expenses', 'tasks', 'routines', 'my_daily_goals', 'my_longterm_goals'];
+        // ✅ UPDATED: restore data ด้วย keys ที่จำเป็นเท่านั้น
+        const keysToRestore = [
+            // === Core Data: Goals & Tasks ===
+            'notes', 'tasks', 'my_daily_goals', 'my_longterm_goals',
+            
+            // === Notes & Routines (New Format) ===
+            'my_notes', 'my_routines',
+            
+            // === Financial Data ===
+            'saving_jars', 'my_expenses', 'my_expense_archive',
+            'my_income_categories', 'my_expense_categories', 'active_jar_id',
+            
+            // === Pomodoro Data ===
+            'pomoSettings', 'pomoCount', 'pomoFocusMinutes', 'pomoCompletedFocusInCycle',
+            
+            // === Badge & Achievement ===
+            'unlockedBadges', 'badgeLastCheckDate', 'goalsCompleted',
+            
+            // === Reset Dates (จำเป็น!) ===
+            'lastExpenseResetDate', 'lastTrackerResetDate', 'lastGoalResetDate', 'last_routine_reset'
+        ];
         
         let restoredCount = 0;
         keysToRestore.forEach(key => {
@@ -701,7 +749,7 @@ async function restoreFromGoogleDrive() {
             }
         });
 
-        // ✅ FIX: บันทึก file ID เพื่อ restore ได้เร็วครั้งต่อไป
+        // ✅ บันทึก file ID เพื่อ restore ได้เร็วครั้งต่อไป
         localStorage.setItem("lastBackupFileId", latestFile.id);
         localStorage.setItem("lastBackupFileName", latestFile.name);
 
@@ -716,24 +764,63 @@ async function restoreFromGoogleDrive() {
             "success"
         );
 
-        // ✅ Update UI ทันที (ไม่ reload page)
+        // ✅ Reload page หลังจาก 1 วินาที
         setTimeout(() => {
-            window.location.reload(); 
+            window.location.reload();
         }, 1000);
 
-    } catch (error) {
-
-        console.error("Restore error:", error);
-
-        // ปิด progress modal
+    } catch (err) {
+        console.error('❌ Restore error:', err);
         const modal = document.getElementById("progress-modal");
         if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
-        
-        // ✅ แสดง notification error
-        showNotification("❌ Restore ล้มเหลว", error.message, "error");
+        showNotification(
+            "❌ Restore ล้มเหลว",
+            err.message || "เกิดข้อผิดพลาด กรุณาลองใหม่",
+            "error"
+        );
     }
 }
 
+// =====================================================
+// 🔧 HELPER FUNCTION: ตรวจสอบจำนวนข้อมูลที่ Restore ได้
+// =====================================================
+
+/**
+ * ฟังก์ชันนี้ใช้สำหรับ debug - ตรวจสอบว่าข้อมูลไหนที่ restore สำเร็จและไหนที่ขาดหาย
+ */
+function debugRestoreData(backupData) {
+    const keysToRestore = [
+        'notes', 'tasks', 'my_daily_goals', 'my_longterm_goals',
+        'my_notes', 'my_routines',
+        'saving_jars', 'my_expenses', 'my_expense_archive',
+        'my_income_categories', 'my_expense_categories', 'active_jar_id',
+        'pomoSettings', 'pomoCount', 'pomoFocusMinutes', 'pomoCompletedFocusInCycle',
+        'unlockedBadges', 'badgeLastCheckDate', 'goalsCompleted',
+        'lastExpenseResetDate', 'lastTrackerResetDate', 'lastGoalResetDate', 'last_routine_reset'
+    ];
+    
+    console.group("📊 Restore Data Debug Report");
+    console.log("🔍 ข้อมูลที่ Restore ได้:");
+    
+    let available = 0;
+    let missing = 0;
+    
+    keysToRestore.forEach(key => {
+        if (backupData[key] !== undefined && backupData[key] !== null) {
+            console.log(`✅ ${key}:`, backupData[key]);
+            available++;
+        } else {
+            console.warn(`❌ ${key}: MISSING`);
+            missing++;
+        }
+    });
+    
+    console.log(`\n📈 สรุป:`);
+    console.log(`✅ ข้อมูลที่มี: ${available} items`);
+    console.log(`❌ ข้อมูลที่ขาด: ${missing} items`);
+    console.log(`📊 ร้อยละ: ${Math.round((available / keysToRestore.length) * 100)}%`);
+    console.groupEnd();
+}
 /* ===== GOOGLE DRIVE API FUNCTIONS ===== */
 /* ===== FLOATING NAVBAR FUNCTION (UPDATED - NO RECREATION) ===== */
 function renderFloatingNavbar() {
@@ -6709,10 +6796,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.9</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.4</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.9</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.4</div>
                     </div>
                 </div>
             </div>
