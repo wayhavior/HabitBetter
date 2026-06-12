@@ -5902,8 +5902,38 @@ function updateCountdown() {
     // 3. หัวใจสำคัญ: สั่งให้รันตัวเองซ้ำทุก 1 วินาทีเสมอ (ถาวร)
     countdownTimer = setTimeout(updateCountdown, 1000);
 }
+/* =====================================================
+   BLOCK PULL-TO-REFRESH ONLY
+   กันรีเฟรชตอนดึงลงจากขอบบน
+   แต่ยังให้ scroll หน้าอื่นได้ปกติ
+===================================================== */
 
-// 4. บังคับให้หัวใจเริ่มเต้นครั้งแรกทันทีที่เปิดแอป (วางไว้บรรทัดสุดท้ายของไฟล์เลยครับ)
+let pullRefreshStartY = 0;
+
+document.addEventListener("touchstart", function (e) {
+    if (e.touches.length !== 1) return;
+
+    pullRefreshStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener("touchmove", function (e) {
+    if (e.touches.length !== 1) return;
+
+    const touchY = e.touches[0].clientY;
+    const pullingDown = touchY > pullRefreshStartY;
+
+    const scrollEl = document.scrollingElement || document.documentElement;
+    const atTop = scrollEl.scrollTop <= 0;
+
+    // กันเฉพาะตอนอยู่บนสุดแล้วดึงลง
+    // แต่ถ้าเลื่อนอ่านเนื้อหาปกติ จะไม่บล็อก
+    if (pullingDown && atTop) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+
+// 4. บังคับให้หัวใจเริ่มเต้นครั้งแรกทันทีที่เปิดแอป
 updateCountdown();
 
 /* ===== CSS FOR NEW SYSTEMS ===== */
