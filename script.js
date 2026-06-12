@@ -6660,8 +6660,8 @@ function renderSettingsPage() {
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #a8edea, #fed6e3); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">🔔</div>
                             <div>
-                                <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">Push Notification</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">เปิดการแจ้งเตือนแบบ Push</p>
+                                <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">การแจ้งเตือน</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">เปิดรับการแจ้งเตือน</p>
                             </div>
                         </div>
                         <button id="enable-notification-btn" style="padding: 0.5rem 1.2rem; background: linear-gradient(135deg, #a8edea, #fed6e3); color: #333; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.3s; font-family: inherit;" onclick="requestNotificationPermission()">เปิด</button>
