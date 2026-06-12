@@ -6179,7 +6179,7 @@ function renderSummaryPage() {
     });
 
     // สร้าง HTML สำหรับแต่ละกระปุก
-    let jarHTML = `<div class="sum-title">🏺 Saving Jars</div>`;
+    let jarHTML = `<div class="sum-title">🏺 กระปุกออมเงิน</div>`;
     savingJars.forEach(jar => {
         jarHTML += `<div class="sum-row"><span>${jar.emoji} ${jar.name}</span><span class="sum-val" style="color:#00b894">${(jar.saved || 0).toLocaleString()} ฿</span></div>`;
     });
@@ -6251,7 +6251,7 @@ myExpenseArchive.forEach(a => {
         </div>
 
         <div class="summary-section-card">
-    <div class="sum-title">💰 Income / Expense</div>
+    <div class="sum-title">💰 รายรับ / รายจ่าย</div>
     <div class="sum-row"><span>💵 วันนี้รับ</span><span class="sum-val" style="color:#00b894">${todayIn.toLocaleString()} ฿</span></div>
     <div class="sum-row"><span>💸 วันนี้จ่าย</span><span class="sum-val" style="color:#ff7675">${todayOut.toLocaleString()} ฿</span></div>
     <div class="sum-row"><span>📆 สัปดาห์นี้จ่าย</span><span class="sum-val" style="color:#ff7675">${weekOut.toLocaleString()} ฿</span></div>
@@ -6260,10 +6260,10 @@ myExpenseArchive.forEach(a => {
 </div>
 
         <div class="summary-section-card">
-            <div class="sum-title">🎯 Goals</div>
-            <div class="sum-row"><span>📋 Daily Goals</span><span class="sum-val">${dailyDone}/${dailyTotal} (${dailyPct}%)</span></div>
+            <div class="sum-title">🎯 เป้าหมาย</div>
+            <div class="sum-row"><span>📋 เป้าประจำวัน</span><span class="sum-val">${dailyDone}/${dailyTotal} (${dailyPct}%)</span></div>
             <div class="sum-row"><span>⏳ ค้างอยู่</span><span class="sum-val" style="color:#fdcb6e">${dailyTotal - dailyDone} รายการ</span></div>
-            <div class="sum-row"><span>🏆 Long-term</span><span class="sum-val">${longDone}/${longTotal} (${longPct}%)</span></div>
+            <div class="sum-row"><span>🏆 เป้าระยะยาว</span><span class="sum-val">${longDone}/${longTotal} (${longPct}%)</span></div>
         </div>
 
         <div class="summary-section-card">
