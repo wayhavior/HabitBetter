@@ -4320,3 +4320,16 @@ button[style*="color: #888"]:hover {
 #custom-popup-modal > div {
     animation: slideUp 0.3s ease !important;
 }
+html,
+body,
+#app,
+#app * {
+  font-family: "Kanit", sans-serif !important;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit !important;
+}
