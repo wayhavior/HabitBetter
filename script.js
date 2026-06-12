@@ -746,11 +746,11 @@ function renderFloatingNavbar() {
         navbar.className = "floating-navbar";
         
         const navItems = [
-            { id: "home", icon: "house", label: "หน้าหลัก", page: "home" },
-            { id: "notes", icon: "document", label: "บันทึก", page: "notes" },
-            { id: "dashboard", icon: "grid", label: "สรุป", page: "summary" },
-            { id: "savings", icon: "wallet", label: "การออม", page: "saving" },
-            { id: "settings", icon: "gear", label: "ตั้งค่า", page: "settings" }
+            { id: "home", icon: "house", label: "Home", page: "home" },
+            { id: "notes", icon: "document", label: "Notes", page: "notes" },
+            { id: "dashboard", icon: "grid", label: "Dashboard", page: "summary" },
+            { id: "savings", icon: "wallet", label: "Savings", page: "saving" },
+            { id: "settings", icon: "gear", label: "Settings", page: "settings" }
         ];
         
         navItems.forEach((item, index) => {
