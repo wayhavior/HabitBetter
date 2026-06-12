@@ -1657,6 +1657,7 @@ function getProfileCardHTML(displayName, displayImage, googleUser, userProfileDa
 }
 
 function render() {
+    document.body.classList.toggle("home-lock", currentPage === "home");
     resetDailyGoalsIfNeeded();
     //autoArchiveExpenseIfNeeded();  // 💰 เพิ่มการบันทึก expense อัตโนมัติ
     ensureCalendarViewIsWithin12Months(); // 📅 ตรวจสอบและรีเซ็ต calendar view เมื่อเข้าเดือนใหม่
