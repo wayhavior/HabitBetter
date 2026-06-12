@@ -2707,42 +2707,20 @@ h1 + .goals-page:has([onclick*="addRoutine"]) {
 /* =======================================================
    HOME ONLY: บล็อกการดึงรีเฟรชเฉพาะหน้าแรก (Home Page)
    ======================================================= */
-
 /* =======================================================
-   MOBILE ONLY: ปิด Pull-to-refresh ทุกหน้าเฉพาะมือถือ
-   แต่คอมยังใช้ลูกกลิ้ง scroll ได้ปกติ
+   HOME LOCK ONLY
+   ล็อคเฉพาะหน้า Home เท่านั้น
+   หน้าอื่น scroll ได้ปกติ
 ======================================================= */
 
-@media (hover: none) and (pointer: coarse) {
-    html,
-    body {
-        overscroll-behavior-y: contain !important;
-        overscroll-behavior-x: none !important;
-    }
-}
-
-@media (hover: hover) and (pointer: fine) {
-    html,
-    body {
-        overscroll-behavior-y: auto !important;
-        overscroll-behavior-x: auto !important;
-    }
-}
-
-/* =======================================================
-   HOME ONLY: FIX SPACE AFTER PULL REFRESH
-   หน้า Home ล็อคความสูงและไม่ให้ scroll
-======================================================= */
-
-html:has(.home-container),
-body:has(.home-container) {
+body.home-lock {
     height: 100dvh !important;
     min-height: 100dvh !important;
     max-height: 100dvh !important;
     overflow: hidden !important;
 }
 
-body:has(.home-container) #app {
+body.home-lock #app {
     height: 100dvh !important;
     min-height: 100dvh !important;
     max-height: 100dvh !important;
@@ -2750,8 +2728,7 @@ body:has(.home-container) #app {
     box-sizing: border-box !important;
 }
 
-/* ตัวหน้า Home เอง ไม่ให้สร้างพื้นที่เกินหลัง refresh */
-.home-container {
+body.home-lock .home-container {
     height: calc(100dvh - 96px) !important;
     min-height: 0 !important;
     max-height: calc(100dvh - 96px) !important;
@@ -2760,6 +2737,7 @@ body:has(.home-container) #app {
     margin-bottom: 0 !important;
     box-sizing: border-box !important;
 }
+
 /* ===== SETTINGS PAGE CSS ===== */
 .settings-page {
     width: 100%;
