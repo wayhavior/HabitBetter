@@ -1640,7 +1640,15 @@ function showTrackerModal() {
 /* ===== MAIN RENDER ===== */
 function getProfileCardHTML(displayName, displayImage, googleUser, userProfileData) {
     const imageHTML = displayImage ? `<img src="${displayImage}" style="width:100%; height:100%; object-fit:cover;">` : `<img src="icon512_rounded.png" style="width:100%; height:100%; object-fit:cover;">`;
-    const statusText = googleUser ? '✅ Active • Google Sync' : '✅ Active • Local Profile';
+    
+    let statusText;
+    if (googleUser) {
+        statusText = '✅ Active • Google Sync';
+    } else if (userProfileData?.username) {
+        statusText = '✅ Active • Local Profile';
+    } else {
+        statusText = '👆 แตะเพื่อตั้งค่าโปรไฟล์';
+    }
     
     return `<div style="background: transparent; border: 0.5px solid var(--color-border-tertiary); border-radius: 16px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);">
         <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between;">
@@ -7027,7 +7035,8 @@ function setupProfilePageEvents(isGoogleLogin, googleUser) {
             deleteBtn.onclick = () => {
                 showDeleteProfilePictureModal(() => {
                     localStorage.removeItem("userProfileImage");
-                    showNotification("✅ Deleted", "Profile picture removed", "success");
+                    localStorage.removeItem("userProfile");
+                    showNotification("✅ Deleted", "Profile reset successfully", "success");
                     render();
                 });
             };
