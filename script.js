@@ -6625,7 +6625,7 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">☁️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">สำรองข้อมูล</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">บันทึกลงคลาว</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">บันทึกข้อมูลทั้งหมดของคุณ</p>
                             </div>
                         </div>
                         <button style="padding: 0.5rem 1.2rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer;" id="backup-btn">สำรอง</button>
@@ -6635,7 +6635,7 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #f093fb, #f5576c); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">↩️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">กู้คืนข้อมูล</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">คืนข้อมูลเก่า</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">คืนข้อมูลเก่าทั้งหมด</p>
                             </div>
                         </div>
                         <button style="padding: 0.5rem 1.2rem; background: linear-gradient(135deg, #f093fb, #f5576c); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer;" id="restore-btn">กู้คืนข้อมูล</button>
