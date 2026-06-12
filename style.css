@@ -11,7 +11,7 @@ html, body {
 
 /* กำหนดสีแยกตาม ID (ย้ายไปไหนสีก็ไม่เปลี่ยน) */
 .menu-item[data-id="tracker"] { border-left: 5px solid #a855f7 !important; }
-.menu-item[data-id="routine"] { border-left: 5px solid #00d2ff !important; }
+.menu-item[data-id="routine"] { border-left: 5px solid #ff9f43 !important; }
 .menu-item[data-id="daily"]   { border-left: 5px solid #ff7675 !important; }
 .menu-item[data-id="pomodoro"] { border-left: 5px solid #ff9f43 !important; }
 .menu-item[data-id="expense"] { border-left: 5px solid #00b894 !important; }
@@ -2708,9 +2708,38 @@ h1 + .goals-page:has([onclick*="addRoutine"]) {
    HOME ONLY: บล็อกการดึงรีเฟรชเฉพาะหน้าแรก (Home Page)
    ======================================================= */
 
-/* สั่งบล็อกการ Pull-to-Refresh เฉพาะเวลาที่อยู่หน้าที่มีคลาส .home-container */
+/* =======================================================
+   HOME ONLY: FIX SPACE AFTER PULL REFRESH
+   ให้หน้า Home สูงพอดีจอหลัง pull refresh
+   แต่ไม่บล็อก pull-to-refresh
+======================================================= */
+
+html:has(.home-container),
 body:has(.home-container) {
-    overscroll-behavior-y: contain !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    overscroll-behavior-y: auto !important;
+}
+
+body:has(.home-container) #app {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* ตัวหน้า Home เอง ไม่ให้สร้างพื้นที่เกินหลัง refresh */
+.home-container {
+    height: calc(100dvh - 96px) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 96px) !important;
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    box-sizing: border-box !important;
 }
 /* ===== SETTINGS PAGE CSS ===== */
 .settings-page {
