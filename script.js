@@ -4166,6 +4166,11 @@ app.appendChild(drawer);
     let totalIn = 0; let totalOut = 0;
     myExpenses.forEach(x => { if(x.type === "in") totalIn += x.amt; else totalOut += x.amt; });
     const container = document.createElement("div"); container.className = "goals-page";
+    const todayText = new Date().toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+});
     container.innerHTML = `
         <h1>Daily Expense</h1>
         <div class="expense-card">
@@ -4182,7 +4187,9 @@ app.appendChild(drawer);
             </div>
         </div>
         <div style="width:100%; max-width:380px;">
-            <h3 style="margin-left:10px;text-align:left;">รายการวันนี้</h3>
+            <h3 style="margin-left:10px;text-align:left; font-size:21px;">
+    รายการวันนี้ <span style="opacity:0.65; font-size:13px;">(${todayText})</span>
+</h3>
             <div id="expense-list"></div>
         </div>
             
