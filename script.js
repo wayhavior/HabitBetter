@@ -4251,6 +4251,11 @@ app.appendChild(drawer);
     // Populate calendar grid
     const gridDiv = document.getElementById("calendar-grid");
     gridDiv.innerHTML = ''; // Clear first
+    const todayObj = new Date();
+const todayYear = todayObj.getFullYear();
+const todayMonth = todayObj.getMonth();
+const todayDate = todayObj.getDate();
+  
     calDays.forEach(day => {
         const cell = document.createElement("div");
         cell.style.cssText = `
@@ -4272,16 +4277,35 @@ app.appendChild(drawer);
             cell.style.opacity = '0.15';
             cell.style.background = 'transparent';
         } else {
-            const expense = getExpenseForDate(calendarViewYear, calendarViewMonth, day.date);
-            cell.innerHTML = `
-                <strong style="font-size: 12px; line-height: 1; margin-bottom: 2px;">${day.date}</strong>
-                <span style="color: #ff7675; font-size: 9px; line-height: 1;">${expense.out > 0 ? `-${expense.out}` : '0'}</span>
-                <span style="color: #00b894; font-size: 9px; line-height: 1;">${expense.in > 0 ? `+${expense.in}` : '0'}</span>
-            `;
-            // Make clickable
-            cell.style.cursor = 'pointer';
-            cell.onclick = () => showExpenseDetailModal(calendarViewYear, calendarViewMonth, day.date);
-        }
+    // ✅ เช็กว่าช่องนี้คือ "วันนี้" หรือไม่
+    const isToday =
+        calendarViewYear === todayYear &&
+        calendarViewMonth === todayMonth &&
+        day.date === todayDate;
+
+    const expense = getExpenseForDate(calendarViewYear, calendarViewMonth, day.date);
+
+    // ✅ ถ้าเป็นวันนี้ ให้เปลี่ยนพื้นหลัง + ขอบ + เงา
+    if (isToday) {
+    cell.style.background = 'rgba(240, 173, 78, 0.12)';
+    cell.style.border = '1px solid rgba(240, 173, 78, 0.55)';
+    cell.style.boxShadow = 'inset 0 0 0 1px rgba(255,255,255,0.08)';
+}
+
+    cell.innerHTML = `
+        <strong style="font-size: 12px; line-height: 1; margin-bottom: 2px; color:${isToday ? '#fff' : 'inherit'};">
+            ${day.date}
+        </strong>
+
+
+        <span style="color: #ff7675; font-size: 9px; line-height: 1;">${expense.out > 0 ? `-${expense.out}` : '0'}</span>
+        <span style="color: #00b894; font-size: 9px; line-height: 1;">${expense.in > 0 ? `+${expense.in}` : '0'}</span>
+    `;
+
+    // Make clickable
+    cell.style.cursor = 'pointer';
+    cell.onclick = () => showExpenseDetailModal(calendarViewYear, calendarViewMonth, day.date);
+}
         gridDiv.appendChild(cell);
     });
     
