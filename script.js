@@ -878,6 +878,12 @@ let navigationHistory = [];
 const MAX_HISTORY = 50;
 
 function navigateToPage(pageName, skipHistory = false) {
+    // 🆕 ถ้า page เดิมกับปัจจุบัน ไม่ต้องเพิ่ม history ซ้ำ
+    if (currentPage === pageName) {
+        console.log(`Already on ${pageName}, skipping navigation`);
+        return;
+    }
+    
     // 🆕 เมื่อไป Home ให้เคลียร์ history ทั้งหมด (Home = หน้าแรก)
     if (pageName === "home") {
         navigationHistory = [];
@@ -5398,6 +5404,14 @@ function goHome() { unlockedNotes = []; settingsOpen = false; clearNavigationHis
 
 // ==================== NEW NOTE EDITOR (IMPROVED) ====================
 function openNoteEditor(noteId) {
+    // 🆕 เพิ่ม: push 'notes' เข้า history เพื่อ browser back button
+    if (navigationHistory.length === 0 || navigationHistory[navigationHistory.length - 1].page !== 'notes') {
+        navigationHistory.push({
+            page: currentPage,
+            timestamp: Date.now()
+        });
+    }
+    
     const note = noteId ? myNotes.find(n => n.id === noteId) : null;
     const isNewNote = noteId === null;
     
@@ -6871,10 +6885,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.1</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.2</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.1</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.2</div>
                     </div>
                 </div>
             </div>
