@@ -6922,10 +6922,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.4</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.6</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.4</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.6</div>
                     </div>
                 </div>
             </div>
