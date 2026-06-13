@@ -4184,10 +4184,10 @@ app.appendChild(drawer);
         </div>
         <div style="width:100%; max-width:380px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin:0 10px 12px 10px;">
-    <h3 style="margin:0; text-align:left; font-size:20px;">
+    <h3 style="margin:0; text-align:left; font-size:18px;">
         รายการวันนี้
     </h3>
-    <span style="font-size:18px; opacity:0.65;">
+    <span style="font-size:15px; opacity:0.65;">
         ${todayText}
     </span>
 </div>
