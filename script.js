@@ -846,8 +846,7 @@ function renderFloatingNavbar() {
             btn.setAttribute("data-page", item.page);
             btn.innerHTML = `<span class="navbar-icon" data-icon="${item.icon}"></span><span class="navbar-label">${item.label}</span>`;
             btn.onclick = () => {
-                currentPage = item.page;
-                render();
+                navigateTo(item.page);
             };
             
             navbar.appendChild(btn);
@@ -872,6 +871,95 @@ let currentPage = "home";
 let data = JSON.parse(localStorage.getItem("tracker")) || Array(144).fill(0);
 let lastClickDate = localStorage.getItem("lastClickDate") || "";
 let history = [];
+
+// ===== NAVIGATION STACK SYSTEM =====
+let navigationStack = ["home"]; // เก็บประวัติการเปลี่ยนหน้า เริ่มจาก "home"
+let isTransitioning = false;    // ป้องกันการ navigate ซ้ำๆ ขณะ render
+
+/**
+ * 🚀 ฟังก์ชันสำหรับนำทางไปหน้าใหม่
+ * ใช้นี้แทน currentPage = "xxx"; render();
+ */
+function navigateTo(pageName) {
+    if (isTransitioning || !pageName) return;
+    
+    isTransitioning = true;
+    
+    if (currentPage !== pageName) {
+        if (navigationStack[navigationStack.length - 2] === pageName && navigationStack.length > 1) {
+            navigationStack.pop();
+        } else {
+            navigationStack.push(pageName);
+        }
+    }
+    
+    currentPage = pageName;
+    render();
+    
+    setTimeout(() => { isTransitioning = false; }, 100);
+}
+
+/**
+ * 🔙 ฟังก์ชันสำหรับย้อนกลับหน้า
+ */
+function goBack() {
+    if (isTransitioning || navigationStack.length <= 1) return;
+    
+    isTransitioning = true;
+    navigationStack.pop();
+    currentPage = navigationStack[navigationStack.length - 1];
+    render();
+    
+    setTimeout(() => { isTransitioning = false; }, 100);
+}
+
+/**
+ * 📱 ตรวจจับ Back Button ของโทรศัพท์
+ */
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+        e.preventDefault();
+        goBack();
+    }
+});
+
+/**
+ * 👆 ตรวจจับ Swipe Left
+ */
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    
+    const diffX = touchStartX - touchEndX;
+    const diffY = touchStartY - touchEndY;
+    
+    if (diffX > 50 && Math.abs(diffY) < 50) {
+        console.log("🔙 Swipe left detected → going back");
+        goBack();
+    }
+}, { passive: true });
+
+/**
+ * 🔧 Cordova back button support
+ */
+if (typeof device !== 'undefined') {
+    document.addEventListener('deviceready', () => {
+        document.addEventListener('backbutton', () => {
+            goBack();
+        }, false);
+    });
+}
+
+window.logNavStack = () => console.log("📚 Navigation Stack:", navigationStack);
+
 let adminMode = false;
 let soundEnabled = localStorage.getItem("sound") !== "false";
 let zoomLevel = parseFloat(localStorage.getItem("zoomLevel")) || 1.0;
@@ -1720,7 +1808,7 @@ window.manualArchiveExpense = () => {
 /* ===== TRACKER MODAL ===== */
 function showTrackerModal() {
     // 720 Day Tracker ลบแล้ว → เปิด Saving Jars โดยตรง
-    currentPage = "saving";
+    navigateTo("saving");
     render();
 }
 
@@ -1779,7 +1867,7 @@ function render() {
         // ดึง unlocked badges สำหรับแสดง
         const unlockedList = getUnlockedBadgesForDisplay();
         levelBox.style.cursor = "pointer"; 
-        levelBox.onclick = () => { currentPage = "profile"; render(); };
+        levelBox.onclick = () => { navigateTo("profile"); };
         
         // ดึงข้อมูล profile
         const userProfileData = JSON.parse(localStorage.getItem("userProfile")) || {};
@@ -1828,7 +1916,7 @@ homeContainer.appendChild(coachSection); // ใส่เข้าไปในห
             const badgeContainer = document.createElement("div");
             badgeContainer.className = "home-badge-container"
             badgeContainer.style.cursor = "pointer"; 
-            badgeContainer.onclick = () => { currentPage = "achievements"; render(); };
+            badgeContainer.onclick = () => { navigateTo("achievements"); };
             
             const badgeLabel = document.createElement("div");
             badgeLabel.className = "badge-label";
@@ -1882,7 +1970,7 @@ homeContainer.appendChild(coachSection); // ใส่เข้าไปในห
         let goalsLeft = myDailyGoals.filter(g => !g.done).length;
 
         dbCard.style.cursor = "pointer";
-dbCard.onclick = () => { currentPage = "summary"; render(); };
+dbCard.onclick = () => { navigateTo("summary"); };
         const totalSavings = getTotalSavingsFromAllJars();
         dbCard.innerHTML = `
             <div class="db-big-row"><span class="db-big-label">💰 สะสมรวม:</span><span class="db-big-value">${totalSavings.toLocaleString()} ฿</span></div>
@@ -1926,7 +2014,7 @@ dbCard.onclick = () => { currentPage = "summary"; render(); };
                         
                         showCalcToolsModal();  
                     } else {
-                        currentPage = id; 
+                        navigateTo(id); 
                         render();
                     }
                 } 
@@ -2093,7 +2181,7 @@ function showCreateJarPopup(editJarId = null) {
         updateAchievements(); // 🔥 เช็ค badge "first_jar"
         overlay.remove();
         if (existing) { renderSavingJarsPage(); }
-        else { activeJarId = savingJars[savingJars.length-1].id; currentPage = 'saving_jar_detail'; render(); }
+        else { activeJarId = savingJars[savingJars.length-1].id; navigateTo('saving_jar_detail'); }
     };
 }
 function showDeleteJarConfirmModal(jarId) {
@@ -2175,7 +2263,7 @@ function showDeleteJarConfirmModal(jarId) {
 
         save();
         overlay.remove();
-        currentPage = "saving";
+        navigateTo("saving");
         render();
 
         showNotification(
@@ -2194,7 +2282,7 @@ function showDeleteJarConfirmModal(jarId) {
 function renderSavingJarsPage() {
     app.innerHTML = '';
     const bBtn = document.createElement('button'); bBtn.className = 'back-btn'; bBtn.innerText = '🏠';
-    bBtn.onclick = () => { currentPage = 'home'; render(); };
+    bBtn.onclick = () => { navigateTo('home'); };
     const drawer = makeDrawer(); drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
 
@@ -2290,18 +2378,18 @@ container.querySelectorAll(".saving-jar-list-card").forEach(card => {
 
     window.openJar = (id) => {
         activeJarId = id;
-        currentPage = 'saving_jar_detail';
+        navigateTo('saving_jar_detail');
         render();
     };
 }
 
 function renderJarDetailPage() {
     const jar = savingJars.find(j => j.id === activeJarId);
-    if (!jar) { currentPage = 'saving'; render(); return; }
+    if (!jar) { navigateTo('saving'); return; }
 
     app.innerHTML = '';
     const bBtn = document.createElement('button'); bBtn.className = 'back-btn'; bBtn.innerText = '←';
-    bBtn.onclick = () => { currentPage = 'saving'; render(); };
+    bBtn.onclick = () => { navigateTo('saving'); };
     const drawer = makeDrawer(); drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
 
@@ -2350,7 +2438,7 @@ function renderJarDetailPage() {
         removeBtn.onclick = () => {
             jar.image = null;
             save();
-            currentPage = 'saving_jar_detail';
+            navigateTo('saving_jar_detail');
             render();
         };
         pigWrap.appendChild(removeBtn);
@@ -2556,7 +2644,7 @@ function renderJarDetailPage() {
     if (remaining <= 0) {
         jarPendingDeposit = 0;
         showNotification("🎉 กระปุกเต็มแล้ว", "ไม่สามารถฝากเพิ่มได้ เพราะครบเป้าหมายแล้ว", "success");
-        currentPage = 'saving_jar_detail';
+        navigateTo('saving_jar_detail');
         render();
         return;
     }
@@ -2579,7 +2667,7 @@ function renderJarDetailPage() {
         if (newMs && (!prevMs || newMs.label !== prevMs.label)) {
             showMilestonePopup(j, newMs);
         } else {
-            currentPage = 'saving_jar_detail';
+            navigateTo('saving_jar_detail');
             render();
         }
     };
@@ -3029,7 +3117,7 @@ function showImageCropper(jarId, imageSrc) {
         jar.image = croppedImage;
         save();
         overlay.remove();
-        currentPage = 'saving_jar_detail';
+        navigateTo('saving_jar_detail');
         render();
     };
 }
@@ -3310,7 +3398,7 @@ function drawJarPig(canvas, fillRatio, ms, savedAmount) {
 /* === ฟังก์ชันย่อย Routine === */
 function renderRoutinePage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { settingsOpen = false; currentPage = "home"; render(); };
+    bBtn.onclick = () => { settingsOpen = false; navigateTo("home"); };
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
@@ -3384,7 +3472,7 @@ window.delRoutine = (i) => {
 /* ===== POMODORO LOGIC ===== */
 function renderPomoPage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { clearInterval(pomoInterval); isPomoRunning = false; settingsOpen = false; currentPage = "home"; render(); };
+    bBtn.onclick = () => { clearInterval(pomoInterval); isPomoRunning = false; settingsOpen = false; navigateTo("home"); };
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
@@ -3475,7 +3563,7 @@ function renderPomoPage() {
     bBtn.onclick = () => {
         stopPomo();
         settingsOpen = false;
-        currentPage = "home";
+        navigateTo("home");
         render();
     };
 
@@ -3944,7 +4032,7 @@ window.finishAddExpense = (type) => {
     
     save();
 window.closeExpenseModal();
-currentPage = "expense";
+navigateTo("expense");
 render();
 };
 
@@ -4155,7 +4243,7 @@ window.saveCustomCategory = (type) => {
 /* ===== EXPENSE & ARCHIVE LOGIC ===== */
 function renderExpensePage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { settingsOpen = false; currentPage = "home"; render(); };
+    bBtn.onclick = () => { settingsOpen = false; navigateTo("home"); };
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
@@ -4812,7 +4900,7 @@ function updateExpenseCountdown() {
 /* ===== TVM CALCULATOR ===== */
 function renderTVMPage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { settingsOpen = false; currentPage = "home"; render(); };
+    bBtn.onclick = () => { settingsOpen = false; navigateTo("home"); };
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
@@ -4859,7 +4947,7 @@ window.calcTVM = (target) => {
 /* ===== GOALS LOGIC (With EXP) ===== */
 function renderGoalsPage(type) {
     app.innerHTML = ""; const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { settingsOpen = false; currentPage = "home"; render(); };
+    bBtn.onclick = () => { settingsOpen = false; navigateTo("home"); };
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
@@ -5316,7 +5404,7 @@ function showUnsavedChangesModal() {
 
 function handleNoteClick(noteId) { openNoteEditor(noteId); }
 function handleNoteDelete(index) { if (confirm("ต้องการลบโน้ตนี้หรือไม่?")) { myNotes.splice(index, 1); save(); renderNotesPageNew(); } }
-function goHome() { unlockedNotes = []; settingsOpen = false; currentPage = "home"; notesCurrentFilter = "all"; render(); }
+function goHome() { unlockedNotes = []; settingsOpen = false; navigateTo("home"); notesCurrentFilter = "all"; }
 
 // ==================== NEW NOTE EDITOR ====================
 
@@ -6176,7 +6264,7 @@ function triggerPiggyCelebration(callback) {
 /* ===== ACHIEVEMENTS PAGE ===== */
 function renderAchievementsPage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { settingsOpen = false; currentPage = "home"; render(); };
+    bBtn.onclick = () => { settingsOpen = false; navigateTo("home"); };
     const drawer = makeDrawer();
     drawer.appendChild(themeBtn);
     drawer.appendChild(zoomBtn);
@@ -6251,7 +6339,7 @@ function renderSummaryPage() {
     app.innerHTML = "";
     const bBtn = document.createElement("button");
     bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { currentPage = "home"; render(); };
+    bBtn.onclick = () => { navigateTo("home"); };
     const drawer = makeDrawer();
     drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
@@ -6505,7 +6593,7 @@ function showCalcToolsModal() {
     };
     overlay.querySelector("#btn-choice-tvm").onclick = () => {
         overlay.remove();
-        currentPage = "tvm"; // เปลี่ยนหน้าแอปหลักไปที่หน้าทีวีเอ็มดั้งเดิม
+        navigateTo("tvm"); // เปลี่ยนหน้าแอปหลักไปที่หน้าทีวีเอ็มดั้งเดิม
         render(); // สั่งวาดหน้าใหม่
     };
     overlay.querySelector("#btn-choice-close").onclick = () => overlay.remove();
@@ -6575,7 +6663,7 @@ function renderSavingsPage() {
     app.innerHTML = "";
     const bBtn = document.createElement("button"); 
     bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { currentPage = "home"; render(); };
+    bBtn.onclick = () => { navigateTo("home"); };
     app.appendChild(bBtn);
     const drawer = makeDrawer();
     drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
@@ -6821,7 +6909,7 @@ function renderSettingsPage() {
 
         if (backBtn) {
             backBtn.onclick = () => {
-                currentPage = "home";
+                navigateTo("home");
                 render();
             };
         }
@@ -6917,7 +7005,7 @@ function renderProfilePage() {
     const bBtn = document.createElement("button"); 
     bBtn.className = "back-btn"; 
     bBtn.innerText = "🏠";
-    bBtn.onclick = () => { currentPage = "home"; render(); };
+    bBtn.onclick = () => { navigateTo("home"); };
     
     const drawer = makeDrawer();
     drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
