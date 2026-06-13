@@ -2383,7 +2383,7 @@ function renderJarDetailPage() {
 
     app.innerHTML = '';
     const bBtn = document.createElement('button'); bBtn.className = 'back-btn'; bBtn.innerText = '←';
-    bBtn.onclick = () => { navigateToPage('saving'); };
+    bBtn.onclick = () => { navigateBack(); };  // 🆕 เปลี่ยน: ใช้ navigateBack() แทน navigateToPage('saving')
     const drawer = makeDrawer(); drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
 
@@ -5995,7 +5995,7 @@ function goNotesBack() {
     
     notesCurrentFilter = "all";  
     unlockedNotes = [];
-    renderNotesPageNew();
+    navigateBack();  // 🆕 เปลี่ยน: renderNotesPageNew() → navigateBack()
 }
 
 // ======================================================
