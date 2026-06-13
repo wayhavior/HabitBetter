@@ -846,7 +846,8 @@ function renderFloatingNavbar() {
             btn.setAttribute("data-page", item.page);
             btn.innerHTML = `<span class="navbar-icon" data-icon="${item.icon}"></span><span class="navbar-label">${item.label}</span>`;
             btn.onclick = () => {
-                navigateTo(item.page);
+                currentPage = item.page;
+                render();
             };
             
             navbar.appendChild(btn);
@@ -868,111 +869,6 @@ function renderFloatingNavbar() {
 
 /* ===== GLOBAL STATE ===== */
 let currentPage = "home"; 
-
-/* ===== NAVIGATION HISTORY STACK ===== */
-let navigationHistory = ["home"]; // Stack เก็บประวัติหน้า
-let lastPage = "home"; // เก็บหน้าก่อนหน้า สำหรับ notes editor
-
-// ฟังก์ชัน Navigate ไปหน้าใหม่ (เพิ่มลงใน history)
-function navigateTo(pageName, replace = false) {
-    if (replace) {
-        navigationHistory[navigationHistory.length - 1] = pageName;
-    } else {
-        if (navigationHistory[navigationHistory.length - 1] !== pageName) {
-            navigationHistory.push(pageName);
-        }
-    }
-    lastPage = currentPage;
-    currentPage = pageName;
-    render();
-}
-
-// ฟังก์ชัน Go back ตามสัดส่วน
-function goBack() {
-    // Mapping ตรงตามความต้องการ
-    const backNavigation = {
-        "home": null,                      // 0. ออกแอพ
-        "routine": "home",                 // 2. routine → home
-        "saving": "home",                  // 1. list jars → home
-        "saving_jar_detail": "saving",     // 1.1 detail jar → list jars
-        "pomodoro": "home",                // 5. pomodoro → home
-        "expense": "home",                 // 3. expense → home
-        "tvm": "home",                     // 6. long term goals → home
-        "daily": "home",                   // 4. daily goals → home
-        "notes": "home",                   // 7. mynotes → home
-        "achievements": "home",            // 10. achievement → home
-        "summary": "home",                 // 9. summary → home
-        "settings": "home",                // 8. settings → home
-        "profile": "home"                  // 11. my profile → home
-    };
-    
-    const targetPage = backNavigation[currentPage];
-    
-    if (targetPage === null) {
-        // Home = ออกแอพ
-        if (confirm("ออกจากแอปพลิเคชันหรือไม่?")) {
-            window.close();
-        }
-    } else if (targetPage) {
-        // ย้อนกลับไปหน้าที่กำหนด
-        currentPage = targetPage;
-        // ลบหน้าปัจจุบันออกจาก history
-        if (navigationHistory.length > 1) {
-            navigationHistory.pop();
-        }
-        render();
-    } else {
-        // Fallback: ถ้าไม่มีการกำหนด ให้กลับหน้าก่อนหน้า
-        if (navigationHistory.length > 1) {
-            navigationHistory.pop();
-            currentPage = navigationHistory[navigationHistory.length - 1];
-            render();
-        }
-    }
-}
-
-// ฟังก์ชัน Handle hardware back button & swipe
-function handleBackButton() {
-    // ตรวจสอบว่า note editor เปิดอยู่หรือไม่
-    if (window.noteEditing) {
-        goNotesBack();
-        return;
-    }
-    
-    goBack();
-}
-
-// ฟังก์ชัน Handle swipe left/right (สำหรับมือถือ)
-let touchStartX = 0;
-let touchEndX = 0;
-
-function handleSwipe() {
-    // ถ้า swipe จากซ้ายไปขวา = back
-    if (touchEndX < touchStartX - 50) {
-        // swipe left - forward (ปล่อยไว้ก่อน ไม่ใช้ในแอปนี้)
-        return;
-    }
-    if (touchEndX > touchStartX + 50) {
-        // swipe right - back
-        handleBackButton();
-    }
-}
-
-// Event listeners สำหรับ back button & swipe
-document.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-}, false);
-
-document.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-}, false);
-
-// Hardware back button (สำหรับ Android WebView)
-document.addEventListener('backbutton', handleBackButton, false);
-
-// Browser back button
-window.addEventListener('popstate', handleBackButton); 
 let data = JSON.parse(localStorage.getItem("tracker")) || Array(144).fill(0);
 let lastClickDate = localStorage.getItem("lastClickDate") || "";
 let history = [];
@@ -1824,7 +1720,8 @@ window.manualArchiveExpense = () => {
 /* ===== TRACKER MODAL ===== */
 function showTrackerModal() {
     // 720 Day Tracker ลบแล้ว → เปิด Saving Jars โดยตรง
-    navigateTo("saving");
+    currentPage = "saving";
+    render();
 }
 
 /* ===== MAIN RENDER ===== */
@@ -1882,7 +1779,7 @@ function render() {
         // ดึง unlocked badges สำหรับแสดง
         const unlockedList = getUnlockedBadgesForDisplay();
         levelBox.style.cursor = "pointer"; 
-        levelBox.onclick = () => { navigateTo("profile"); };
+        levelBox.onclick = () => { currentPage = "profile"; render(); };
         
         // ดึงข้อมูล profile
         const userProfileData = JSON.parse(localStorage.getItem("userProfile")) || {};
@@ -1931,7 +1828,7 @@ homeContainer.appendChild(coachSection); // ใส่เข้าไปในห
             const badgeContainer = document.createElement("div");
             badgeContainer.className = "home-badge-container"
             badgeContainer.style.cursor = "pointer"; 
-            badgeContainer.onclick = () => { navigateTo("achievements"); };
+            badgeContainer.onclick = () => { currentPage = "achievements"; render(); };
             
             const badgeLabel = document.createElement("div");
             badgeLabel.className = "badge-label";
@@ -1985,7 +1882,7 @@ homeContainer.appendChild(coachSection); // ใส่เข้าไปในห
         let goalsLeft = myDailyGoals.filter(g => !g.done).length;
 
         dbCard.style.cursor = "pointer";
-dbCard.onclick = () => { navigateTo("summary"); };
+dbCard.onclick = () => { currentPage = "summary"; render(); };
         const totalSavings = getTotalSavingsFromAllJars();
         dbCard.innerHTML = `
             <div class="db-big-row"><span class="db-big-label">💰 สะสมรวม:</span><span class="db-big-value">${totalSavings.toLocaleString()} ฿</span></div>
@@ -2029,7 +1926,8 @@ dbCard.onclick = () => { navigateTo("summary"); };
                         
                         showCalcToolsModal();  
                     } else {
-                        navigateTo(id);
+                        currentPage = id; 
+                        render();
                     }
                 } 
             };
@@ -2195,7 +2093,7 @@ function showCreateJarPopup(editJarId = null) {
         updateAchievements(); // 🔥 เช็ค badge "first_jar"
         overlay.remove();
         if (existing) { renderSavingJarsPage(); }
-        else { activeJarId = savingJars[savingJars.length-1].id; navigateTo('saving_jar_detail'); }
+        else { activeJarId = savingJars[savingJars.length-1].id; currentPage = 'saving_jar_detail'; render(); }
     };
 }
 function showDeleteJarConfirmModal(jarId) {
@@ -2277,7 +2175,8 @@ function showDeleteJarConfirmModal(jarId) {
 
         save();
         overlay.remove();
-        navigateTo("saving");
+        currentPage = "saving";
+        render();
 
         showNotification(
             "✅ ลบกระปุกสำเร็จ",
@@ -2295,7 +2194,7 @@ function showDeleteJarConfirmModal(jarId) {
 function renderSavingJarsPage() {
     app.innerHTML = '';
     const bBtn = document.createElement('button'); bBtn.className = 'back-btn'; bBtn.innerText = '🏠';
-    bBtn.onclick = () => { navigateTo('home'); };
+    bBtn.onclick = () => { currentPage = 'home'; render(); };
     const drawer = makeDrawer(); drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
 
@@ -2391,17 +2290,18 @@ container.querySelectorAll(".saving-jar-list-card").forEach(card => {
 
     window.openJar = (id) => {
         activeJarId = id;
-        navigateTo('saving_jar_detail');
+        currentPage = 'saving_jar_detail';
+        render();
     };
 }
 
 function renderJarDetailPage() {
     const jar = savingJars.find(j => j.id === activeJarId);
-    if (!jar) { navigateTo('saving'); return; }
+    if (!jar) { currentPage = 'saving'; render(); return; }
 
     app.innerHTML = '';
     const bBtn = document.createElement('button'); bBtn.className = 'back-btn'; bBtn.innerText = '←';
-    bBtn.onclick = () => { navigateTo('saving'); };
+    bBtn.onclick = () => { currentPage = 'saving'; render(); };
     const drawer = makeDrawer(); drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
 
@@ -2450,7 +2350,8 @@ function renderJarDetailPage() {
         removeBtn.onclick = () => {
             jar.image = null;
             save();
-            navigateTo('saving_jar_detail');
+            currentPage = 'saving_jar_detail';
+            render();
         };
         pigWrap.appendChild(removeBtn);
     } else {
@@ -2655,7 +2556,8 @@ function renderJarDetailPage() {
     if (remaining <= 0) {
         jarPendingDeposit = 0;
         showNotification("🎉 กระปุกเต็มแล้ว", "ไม่สามารถฝากเพิ่มได้ เพราะครบเป้าหมายแล้ว", "success");
-        navigateTo('saving_jar_detail');
+        currentPage = 'saving_jar_detail';
+        render();
         return;
     }
 
@@ -2677,7 +2579,8 @@ function renderJarDetailPage() {
         if (newMs && (!prevMs || newMs.label !== prevMs.label)) {
             showMilestonePopup(j, newMs);
         } else {
-            navigateTo('saving_jar_detail');
+            currentPage = 'saving_jar_detail';
+            render();
         }
     };
     window.resetJar = (id) => {
@@ -3126,7 +3029,8 @@ function showImageCropper(jarId, imageSrc) {
         jar.image = croppedImage;
         save();
         overlay.remove();
-        navigateTo('saving_jar_detail');
+        currentPage = 'saving_jar_detail';
+        render();
     };
 }
 
@@ -3138,7 +3042,7 @@ function showMilestonePopup(jar, ms) {
             <div style="font-size:64px;margin-bottom:8px;animation:celebShake 0.3s ease-in-out infinite;">🎉</div>
             <h2 style="margin:0 0 8px;color:${ms.color};font-size:22px;">${ms.badge}</h2>
             <p style="color:rgba(255,255,255,0.7);font-size:14px;margin:0 0 24px;">กระปุก "${jar.name}"<br>ถึง Milestone แล้ว!</p>
-            <button onclick="this.closest('div').parentElement.remove();navigateTo('saving_jar_detail');" style="width:100%;padding:14px;border-radius:14px;border:none;background:${ms.color};color:black;font-size:15px;font-weight:bold;cursor:pointer;font-family:inherit;">ยอดเยี่ยม! ✨</button>
+            <button onclick="this.closest('div').parentElement.remove();currentPage='saving_jar_detail';render();" style="width:100%;padding:14px;border-radius:14px;border:none;background:${ms.color};color:black;font-size:15px;font-weight:bold;cursor:pointer;font-family:inherit;">ยอดเยี่ยม! ✨</button>
         </div>
     `;
     triggerConfetti();
@@ -3406,7 +3310,7 @@ function drawJarPig(canvas, fillRatio, ms, savedAmount) {
 /* === ฟังก์ชันย่อย Routine === */
 function renderRoutinePage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { settingsOpen = false; navigateTo("home"); };
+    bBtn.onclick = () => { settingsOpen = false; currentPage = "home"; render(); };
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
@@ -3480,7 +3384,7 @@ window.delRoutine = (i) => {
 /* ===== POMODORO LOGIC ===== */
 function renderPomoPage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { clearInterval(pomoInterval); isPomoRunning = false; settingsOpen = false; navigateTo("home"); };
+    bBtn.onclick = () => { clearInterval(pomoInterval); isPomoRunning = false; settingsOpen = false; currentPage = "home"; render(); };
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
@@ -3571,7 +3475,8 @@ function renderPomoPage() {
     bBtn.onclick = () => {
         stopPomo();
         settingsOpen = false;
-        navigateTo("home");
+        currentPage = "home";
+        render();
     };
 
     const drawer = makeDrawer();
@@ -4039,7 +3944,8 @@ window.finishAddExpense = (type) => {
     
     save();
 window.closeExpenseModal();
-navigateTo("expense");
+currentPage = "expense";
+render();
 };
 
 window.showCustomCategoryModal = (type) => {
@@ -4249,7 +4155,7 @@ window.saveCustomCategory = (type) => {
 /* ===== EXPENSE & ARCHIVE LOGIC ===== */
 function renderExpensePage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { settingsOpen = false; navigateTo("home"); };
+    bBtn.onclick = () => { settingsOpen = false; currentPage = "home"; render(); };
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
@@ -4938,7 +4844,7 @@ function updateExpenseCountdown() {
 /* ===== TVM CALCULATOR ===== */
 function renderTVMPage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { settingsOpen = false; navigateTo("home"); };
+    bBtn.onclick = () => { settingsOpen = false; currentPage = "home"; render(); };
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
@@ -4985,7 +4891,7 @@ window.calcTVM = (target) => {
 /* ===== GOALS LOGIC (With EXP) ===== */
 function renderGoalsPage(type) {
     app.innerHTML = ""; const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { settingsOpen = false; navigateTo("home"); };
+    bBtn.onclick = () => { settingsOpen = false; currentPage = "home"; render(); };
     const drawer = makeDrawer();
 drawer.appendChild(themeBtn);
 drawer.appendChild(zoomBtn);
@@ -5442,7 +5348,7 @@ function showUnsavedChangesModal() {
 
 function handleNoteClick(noteId) { openNoteEditor(noteId); }
 function handleNoteDelete(index) { if (confirm("ต้องการลบโน้ตนี้หรือไม่?")) { myNotes.splice(index, 1); save(); renderNotesPageNew(); } }
-function goHome() { unlockedNotes = []; settingsOpen = false; navigateTo("home"); notesCurrentFilter = "all"; }
+function goHome() { unlockedNotes = []; settingsOpen = false; currentPage = "home"; notesCurrentFilter = "all"; render(); }
 
 // ==================== NEW NOTE EDITOR ====================
 
@@ -6302,7 +6208,7 @@ function triggerPiggyCelebration(callback) {
 /* ===== ACHIEVEMENTS PAGE ===== */
 function renderAchievementsPage() {
     const bBtn = document.createElement("button"); bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { settingsOpen = false; navigateTo("home"); };
+    bBtn.onclick = () => { settingsOpen = false; currentPage = "home"; render(); };
     const drawer = makeDrawer();
     drawer.appendChild(themeBtn);
     drawer.appendChild(zoomBtn);
@@ -6377,7 +6283,7 @@ function renderSummaryPage() {
     app.innerHTML = "";
     const bBtn = document.createElement("button");
     bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { navigateTo("home"); };
+    bBtn.onclick = () => { currentPage = "home"; render(); };
     const drawer = makeDrawer();
     drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
     app.appendChild(bBtn); app.appendChild(settingsBtn); app.appendChild(drawer);
@@ -6701,7 +6607,7 @@ function renderSavingsPage() {
     app.innerHTML = "";
     const bBtn = document.createElement("button"); 
     bBtn.className = "back-btn"; bBtn.innerText = "🏠";
-    bBtn.onclick = () => { navigateTo("home"); };
+    bBtn.onclick = () => { currentPage = "home"; render(); };
     app.appendChild(bBtn);
     const drawer = makeDrawer();
     drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
@@ -6922,10 +6828,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.6</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.4</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.6</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.4</div>
                     </div>
                 </div>
             </div>
@@ -6947,7 +6853,8 @@ function renderSettingsPage() {
 
         if (backBtn) {
             backBtn.onclick = () => {
-                navigateTo("home");
+                currentPage = "home";
+                render();
             };
         }
 
@@ -7042,7 +6949,7 @@ function renderProfilePage() {
     const bBtn = document.createElement("button"); 
     bBtn.className = "back-btn"; 
     bBtn.innerText = "🏠";
-    bBtn.onclick = () => { navigateTo("home"); };
+    bBtn.onclick = () => { currentPage = "home"; render(); };
     
     const drawer = makeDrawer();
     drawer.appendChild(themeBtn); drawer.appendChild(zoomBtn); 
