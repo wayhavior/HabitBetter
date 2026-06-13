@@ -378,8 +378,7 @@ function logout() {
     accessToken = null;
     
     showNotification("✅ Logout สำเร็จ", "ออกจากระบบแล้ว", "success");
-    clearNavigationHistory();  // 🆕 เพิ่มเรื่อง: ล้างประวัติหน้าเมื่อ logout
-    navigateToPage("home");     // 🆕 เปลี่ยน: render() เป็น navigateToPage() เพื่อ navigation stack
+    render();
 }
 
 /* ===== PROGRESS BAR & NOTIFICATION SYSTEM ===== */
@@ -879,7 +878,11 @@ let navigationHistory = [];
 const MAX_HISTORY = 50;
 
 function navigateToPage(pageName, skipHistory = false) {
-    if (!skipHistory) {
+    // 🆕 เมื่อไป Home ให้เคลียร์ history ทั้งหมด (Home = หน้าแรก)
+    if (pageName === "home") {
+        navigationHistory = [];
+        console.log("🏠 Navigated to home - history cleared");
+    } else if (!skipHistory) {
         navigationHistory.push({
             page: currentPage,
             timestamp: Date.now()
