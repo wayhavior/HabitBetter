@@ -4392,18 +4392,17 @@ select {
   font-family: inherit !important;
 }
 /* =====================================================
-   HOME MENU RESPONSIVE FIT
-   ให้ปุ่มเมนูยืด/หดตามความสูงจอ
-   แก้เฉพาะเมนู ไม่ยุ่ง navbar / dashboard / achievement
+   HOME MENU AUTO FIT BASE
+   ให้ JS เป็นคนคำนวณความสูงเมนูจริง
 ===================================================== */
 
 .home-menu-grid {
-    gap: clamp(5px, 0.8vh, 9px) !important;
+    gap: var(--home-menu-gap, 8px) !important;
     margin-top: 4px !important;
 }
 
 .home-menu-grid .menu-item {
-    height: clamp(44px, 7.2vh, 74px) !important;
+    height: var(--home-menu-item-height, 52px) !important;
     min-height: 0 !important;
 
     padding: 6px 8px !important;
@@ -4419,9 +4418,8 @@ select {
     justify-content: center !important;
 }
 
-/* ปุ่มเต็มแถว ใช้ขนาดเดียวกัน จะได้ไม่ดัน layout เกิน */
 .home-menu-grid .menu-item.full-row {
-    height: clamp(46px, 7.5vh, 78px) !important;
+    height: var(--home-menu-item-height, 52px) !important;
     min-height: 0 !important;
     padding: 6px 8px !important;
 }
