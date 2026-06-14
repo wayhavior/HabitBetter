@@ -2069,16 +2069,16 @@ function fitHomeMenuToNavbar() {
 
     // ถ้าเมนูยังชน navbar ให้ลดขนาด Achievement card ลงนิดหนึ่ง
     if (badgeCard && overlap > 0) {
-        const shrink = Math.min(overlap, 32);
+        const shrink = Math.min(overlap, 24);
 
-        const badgePadding = Math.max(4, 10 - shrink * 0.2);
-        const badgeItemHeight = Math.max(36, 50 - shrink * 0.5);
-        const badgeItemPadding = Math.max(4, 8 - shrink * 0.13);
-        const labelSize = Math.max(10, 13 - shrink * 0.07);
-        const labelMargin = Math.max(1, 6 - shrink * 0.18);
-        const emojiSize = Math.max(18, 24 - shrink * 0.2);
-        const nameSize = Math.max(9, 12 - shrink * 0.07);
-        const descSize = Math.max(8, 10 - shrink * 0.06);
+const badgePadding = Math.max(6, 10 - shrink * 0.12);
+const badgeItemHeight = Math.max(42, 50 - shrink * 0.28);
+const badgeItemPadding = Math.max(6, 8 - shrink * 0.08);
+const labelSize = Math.max(11, 13 - shrink * 0.04);
+const labelMargin = Math.max(3, 6 - shrink * 0.10);
+const emojiSize = Math.max(20, 24 - shrink * 0.12);
+const nameSize = Math.max(10, 12 - shrink * 0.04);
+const descSize = Math.max(8.5, 10 - shrink * 0.03);
 
         badgeCard.style.setProperty("--home-badge-padding", `${badgePadding}px`);
         badgeCard.style.setProperty("--home-badge-margin-bottom", "1px");
@@ -6939,10 +6939,10 @@ function renderSettingsPage() {
                             <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px;">ℹ️</div>
                             <div>
                                 <p style="font-size: 15px; font-weight: 500; margin: 0; color: white;">เวอร์ชัน</p>
-                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.4</p>
+                                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin: 0.25rem 0 0 0;">v1.0.5</p>
                             </div>
                         </div>
-                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.4</div>
+                        <div style="font-size: 16px; color: rgba(255,255,255,0.5); font-weight: 600;">v1.0.5</div>
                     </div>
                 </div>
             </div>
