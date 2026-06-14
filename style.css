@@ -2513,7 +2513,7 @@ body.cyberpunk-mode #jar-pig-canvas {
     transform: none;
     margin: 0px auto 0;
     width: 90%;
-       max-width: 95vw;
+    max-width: 95vw;
     justify-content: space-around;
     padding: 12px 20px;
     z-index: 10;
@@ -2752,11 +2752,11 @@ body.home-lock #app {
 }
 
 body.home-lock .home-container {
-    height: calc(100dvh - 96px) !important;
+    height: auto !important;
     min-height: 0 !important;
-    max-height: calc(100dvh - 96px) !important;
+    max-height: none !important;
 
-    overflow: hidden !important;
+    overflow: visible !important;
     padding-bottom: 0 !important;
     margin-bottom: 0 !important;
     box-sizing: border-box !important;
