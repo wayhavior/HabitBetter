@@ -674,13 +674,22 @@ body.dark-mode{
 
 /* --- ส่วน Dashboard Card --- */
 .dashboard-card-big {
-    width: 90%; max-width: 350px;
+    width: 90%;
+    max-width: 350px;
+
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 25px; padding: 18px;
-    margin-bottom: 10px; display: flex;
-    flex-direction: column; gap: 12px;
+
+    border: 2px solid #f1c40f; /* กรอบสีเหลือง */
+
+    border-radius: 25px;
+    padding: 18px;
+
+    margin-bottom: 10px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
     
 .db-big-row { display: flex; justify-content: space-between; align-items: center; }
@@ -2505,20 +2514,6 @@ body.cyberpunk-mode #jar-pig-canvas {
     width: auto;
 }
 
-/* ✅ Navbar for HOME page (NOT fixed - inline with menu) */
-.floating-navbar.in-home {
-    position: relative;
-    bottom: auto;
-    left: auto;
-    transform: none;
-    margin: 0px auto 0;
-    width: 90%;
-    max-width: 95vw;
-    justify-content: space-around;
-    padding: 12px 20px;
-    z-index: 10;
-}
-
 .navbar-btn {
     display: flex;
     flex-direction: column;
@@ -2752,11 +2747,11 @@ body.home-lock #app {
 }
 
 body.home-lock .home-container {
-    height: auto !important;
+    height: calc(100dvh - 96px) !important;
     min-height: 0 !important;
-    max-height: none !important;
+    max-height: calc(100dvh - 96px) !important;
 
-    overflow: visible !important;
+    overflow: hidden !important;
     padding-bottom: 0 !important;
     margin-bottom: 0 !important;
     box-sizing: border-box !important;
