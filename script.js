@@ -2011,14 +2011,12 @@ function fitHomeMenuToNavbar() {
     const homeContainer = document.querySelector(".home-container");
     const menuGrid = document.querySelector(".home-menu-grid");
     const navbar = document.getElementById("floating-navbar");
+    const badgeCard = document.querySelector(".home-badge-container");
 
     if (!homeContainer || !menuGrid || !navbar) return;
 
     const menuItems = menuGrid.querySelectorAll(".menu-item");
     if (!menuItems.length) return;
-
-    const gridRect = menuGrid.getBoundingClientRect();
-    const navbarRect = navbar.getBoundingClientRect();
 
     const style = window.getComputedStyle(menuGrid);
     const gap = parseFloat(style.rowGap || style.gap || 8);
@@ -2029,16 +2027,75 @@ function fitHomeMenuToNavbar() {
     const totalRows = fullRows + normalRows;
 
     const safetySpace = 8;
-    const availableHeight = navbarRect.top - gridRect.top - safetySpace;
+    const minMenuItemHeight = 40;
+    const maxMenuItemHeight = 86;
 
-    const totalGapHeight = gap * Math.max(totalRows - 1, 0);
+    function calculateMenuHeight() {
+        const gridRect = menuGrid.getBoundingClientRect();
+        const navbarRect = navbar.getBoundingClientRect();
 
-    let itemHeight = (availableHeight - totalGapHeight) / totalRows;
+        const availableHeight = navbarRect.top - gridRect.top - safetySpace;
+        const totalGapHeight = gap * Math.max(totalRows - 1, 0);
 
-    itemHeight = Math.max(40, Math.min(itemHeight, 86));
+        let itemHeight = (availableHeight - totalGapHeight) / totalRows;
 
-    menuGrid.style.setProperty("--home-menu-item-height", `${itemHeight}px`);
-    menuGrid.style.setProperty("--home-menu-gap", `${Math.max(5, Math.min(gap, 9))}px`);
+        itemHeight = Math.max(minMenuItemHeight, Math.min(itemHeight, maxMenuItemHeight));
+
+        menuGrid.style.setProperty("--home-menu-item-height", `${itemHeight}px`);
+        menuGrid.style.setProperty("--home-menu-gap", `${Math.max(5, Math.min(gap, 9))}px`);
+    }
+
+    // รีเซ็ต Achievement card กลับค่าปกติก่อนทุกครั้ง
+    if (badgeCard) {
+        badgeCard.style.setProperty("--home-badge-padding", "10px");
+        badgeCard.style.setProperty("--home-badge-margin-bottom", "2px");
+        badgeCard.style.setProperty("--home-badge-label-size", "13px");
+        badgeCard.style.setProperty("--home-badge-label-margin", "6px");
+        badgeCard.style.setProperty("--home-badge-gap", "6px");
+        badgeCard.style.setProperty("--home-badge-item-padding", "8px");
+        badgeCard.style.setProperty("--home-badge-item-height", "50px");
+        badgeCard.style.setProperty("--home-badge-emoji-size", "24px");
+        badgeCard.style.setProperty("--home-badge-name-size", "12px");
+        badgeCard.style.setProperty("--home-badge-desc-size", "10px");
+    }
+
+    // คำนวณเมนูก่อนรอบแรก
+    calculateMenuHeight();
+
+    const menuRect = menuGrid.getBoundingClientRect();
+    const navbarRect = navbar.getBoundingClientRect();
+
+    const overlap = menuRect.bottom + safetySpace - navbarRect.top;
+
+    // ถ้าเมนูยังชน navbar ให้ลดขนาด Achievement card ลงนิดหนึ่ง
+    if (badgeCard && overlap > 0) {
+        const shrink = Math.min(overlap, 32);
+
+        const badgePadding = Math.max(4, 10 - shrink * 0.2);
+        const badgeItemHeight = Math.max(36, 50 - shrink * 0.5);
+        const badgeItemPadding = Math.max(4, 8 - shrink * 0.13);
+        const labelSize = Math.max(10, 13 - shrink * 0.07);
+        const labelMargin = Math.max(1, 6 - shrink * 0.18);
+        const emojiSize = Math.max(18, 24 - shrink * 0.2);
+        const nameSize = Math.max(9, 12 - shrink * 0.07);
+        const descSize = Math.max(8, 10 - shrink * 0.06);
+
+        badgeCard.style.setProperty("--home-badge-padding", `${badgePadding}px`);
+        badgeCard.style.setProperty("--home-badge-margin-bottom", "1px");
+        badgeCard.style.setProperty("--home-badge-label-size", `${labelSize}px`);
+        badgeCard.style.setProperty("--home-badge-label-margin", `${labelMargin}px`);
+        badgeCard.style.setProperty("--home-badge-gap", "5px");
+        badgeCard.style.setProperty("--home-badge-item-padding", `${badgeItemPadding}px`);
+        badgeCard.style.setProperty("--home-badge-item-height", `${badgeItemHeight}px`);
+        badgeCard.style.setProperty("--home-badge-emoji-size", `${emojiSize}px`);
+        badgeCard.style.setProperty("--home-badge-name-size", `${nameSize}px`);
+        badgeCard.style.setProperty("--home-badge-desc-size", `${descSize}px`);
+
+        // หลังบีบ Achievement แล้ว คำนวณเมนูใหม่อีกที
+        requestAnimationFrame(() => {
+            calculateMenuHeight();
+        });
+    }
 }
 window.addEventListener("resize", () => {
     requestAnimationFrame(() => {
