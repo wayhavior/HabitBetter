@@ -4414,3 +4414,44 @@ select {
     min-height: 0 !important;
     padding: 6px 8px !important;
 }
+/* =====================================================
+   HOME ACHIEVEMENT AUTO SHRINK
+   ให้ JS คุมขนาด Achievement Card อัตโนมัติ
+===================================================== */
+
+.home-badge-container {
+    padding: var(--home-badge-padding, 10px) !important;
+    margin-top: 0 !important;
+    margin-bottom: var(--home-badge-margin-bottom, 2px) !important;
+    box-sizing: border-box !important;
+}
+
+.home-badge-container .badge-label {
+    font-size: var(--home-badge-label-size, 13px) !important;
+    line-height: 1.15 !important;
+    margin-bottom: var(--home-badge-label-margin, 6px) !important;
+}
+
+.home-badge-container .badge-scroll-wrapper {
+    gap: var(--home-badge-gap, 6px) !important;
+}
+
+.home-badge-container .home-badge-item {
+    padding: var(--home-badge-item-padding, 8px) !important;
+    min-height: var(--home-badge-item-height, 50px) !important;
+    box-sizing: border-box !important;
+}
+
+.home-badge-container .badge-emoji-box {
+    font-size: var(--home-badge-emoji-size, 24px) !important;
+}
+
+.home-badge-container .badge-name {
+    font-size: var(--home-badge-name-size, 12px) !important;
+    line-height: 1.15 !important;
+}
+
+.home-badge-container .badge-desc {
+    font-size: var(--home-badge-desc-size, 10px) !important;
+    line-height: 1.15 !important;
+}
