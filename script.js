@@ -1737,7 +1737,7 @@ function getProfileCardHTML(displayName, displayImage, googleUser, userProfileDa
         statusText = '👆 แตะเพื่อตั้งค่าโปรไฟล์';
     }
     
-    return `<div style="background: transparent; border: 2px solid #7e57c2; border-radius: 16px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);">
+    return `<div style="background: transparent; border: 0.5px solid var(--color-border-tertiary); border-radius: 16px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, rgba(102,126,234,0.05) 0%, rgba(118,75,162,0.05) 100%);">
         <div style="display: flex; align-items: center; gap: 10px; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                 <div style="width: 56px; height: 56px; border-radius: 12px; background: linear-gradient(135deg, #ff6b9d 0%, #c06c84 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; overflow: hidden;">${imageHTML}</div>
@@ -1790,7 +1790,38 @@ function render() {
         
         levelBox.innerHTML = getProfileCardHTML(displayName, displayImage, googleUser, userProfileData);
         homeContainer.appendChild(levelBox);
-      
+      // สร้าง Coach Section ใหม่ (ลบรูปโค้ชแล้ว)
+const coachSection = document.createElement("div");
+coachSection.className = "home-coach-card";
+
+// ใส่กรอบคำพูดแบบสุ่ม
+const quoteBox = document.createElement("div");
+quoteBox.className = "home-quote-bubble";
+const randomQuoteIdx = Math.floor(Math.random() * myQuotes.length);
+quoteBox.innerHTML = `
+    "${myQuotes[randomQuoteIdx]}"
+`;
+// --- วางโค้ดนี้แทรกเข้าไปตรงบรรทัดว่าง (บรรทัดที่ 350) ---
+const coachVoice = new Audio("https://videotourl.com/audio/1778680846934-aae99bc1-dcc2-4fdf-9b46-c46ad438af4f.mp3");
+quoteBox.style.cursor = "pointer";
+
+quoteBox.onclick = () => {
+    if (!coachVoice.paused) {
+        coachVoice.pause();
+        coachVoice.currentTime = 0; 
+        quoteBox.style.borderColor = "#ff4d4d"; 
+        setTimeout(() => { quoteBox.style.borderColor = "#f1c40f"; }, 200);
+    } else {
+        coachVoice.play().catch(e => console.log("Check link audio"));
+        quoteBox.style.borderColor = "#2ecc71";
+        setTimeout(() => { quoteBox.style.borderColor = "#f1c40f"; }, 200);
+    }
+    quoteBox.style.transform = "scale(0.95)";
+    setTimeout(() => { quoteBox.style.transform = "scale(1)"; }, 100);
+};
+// -----------------------------------------------------
+coachSection.appendChild(quoteBox);
+homeContainer.appendChild(coachSection); // ใส่เข้าไปในหน้า Home แทนหัวข้อเดิม
         
         // สร้าง Badge Container ใหม่ (Horizontal Scrollable)
         if (unlockedList.length > 0) {
@@ -1962,7 +1993,7 @@ app.appendChild(homeContainer);
         renderSavingsPage();
     }
     
-    // ✅ เรียก renderFloatingNavbar() ในทุกหน้า
+   // ✅ เรียก renderFloatingNavbar() ในทุกหน้า
 renderFloatingNavbar();
 
 requestAnimationFrame(() => {
