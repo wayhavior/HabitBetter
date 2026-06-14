@@ -853,7 +853,40 @@ function renderFloatingNavbar() {
             navbar.appendChild(btn);
         });
         
-        document.body.appendChild(navbar);
+        // ✅ ตรวจสอบว่า currentPage เป็น "home" หรือไม่
+        if (currentPage === "home") {
+            // 🏠 วาง navbar ใน homeContainer ท้ายสุด (ไม่ fixed)
+            navbar.classList.add("in-home");
+            const homeContainer = document.querySelector(".home-container");
+            if (homeContainer) {
+                homeContainer.appendChild(navbar);
+            } else {
+                // Fallback: ถ้าหาไม่เจอ homeContainer ให้ใส่ใน app
+                const app = document.getElementById("app");
+                if (app) app.appendChild(navbar);
+            }
+        } else {
+            // 📍 หน้าอื่น: วาง navbar ใน body แบบ fixed
+            document.body.appendChild(navbar);
+        }
+    }
+    
+    // ✅ Update CSS class เมื่อเปลี่ยนหน้า
+    if (currentPage === "home") {
+        navbar.classList.add("in-home");
+        // ถ้า navbar ยังอยู่ใน document.body ให้ย้ายมาที่ homeContainer
+        if (navbar.parentElement === document.body) {
+            const homeContainer = document.querySelector(".home-container");
+            if (homeContainer) {
+                homeContainer.appendChild(navbar);
+            }
+        }
+    } else {
+        navbar.classList.remove("in-home");
+        // ถ้า navbar ยังอยู่ใน homeContainer ให้ย้ายไปที่ document.body
+        if (navbar.parentElement !== document.body) {
+            document.body.appendChild(navbar);
+        }
     }
     
     // อัพเดต active state (Dashboard เป็นปุ่มหลักตั้งแต่เริ่มต้น)
