@@ -4402,9 +4402,8 @@ select {
     margin-top: 4px !important;
 }
 
-/* ปุ่มเมนูจะสูงตามจอ แต่มีขอบเขตกันเล็ก/ใหญ่เกิน */
 .home-menu-grid .menu-item {
-    height: clamp(44px, 6.3vh, 60px) !important;
+    height: clamp(44px, 7.2vh, 74px) !important;
     min-height: 0 !important;
 
     padding: 6px 8px !important;
@@ -4422,7 +4421,7 @@ select {
 
 /* ปุ่มเต็มแถว ใช้ขนาดเดียวกัน จะได้ไม่ดัน layout เกิน */
 .home-menu-grid .menu-item.full-row {
-    height: clamp(46px, 6.5vh, 62px) !important;
+    height: clamp(46px, 7.5vh, 78px) !important;
     min-height: 0 !important;
     padding: 6px 8px !important;
 }
