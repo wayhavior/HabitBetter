@@ -1963,9 +1963,63 @@ app.appendChild(homeContainer);
     }
     
     // ✅ เรียก renderFloatingNavbar() ในทุกหน้า
-    renderFloatingNavbar();
-}
+renderFloatingNavbar();
 
+requestAnimationFrame(() => {
+    fitHomeMenuToNavbar();
+});
+}
+/* =====================================================
+   AUTO FIT HOME MENU TO NAVBAR
+   คำนวณความสูงเมนู Home ให้พอดีกับ navbar
+===================================================== */
+
+function fitHomeMenuToNavbar() {
+    if (currentPage !== "home") return;
+
+    const homeContainer = document.querySelector(".home-container");
+    const menuGrid = document.querySelector(".home-menu-grid");
+    const navbar = document.getElementById("floating-navbar");
+
+    if (!homeContainer || !menuGrid || !navbar) return;
+
+    const menuItems = menuGrid.querySelectorAll(".menu-item");
+    if (!menuItems.length) return;
+
+    const gridRect = menuGrid.getBoundingClientRect();
+    const navbarRect = navbar.getBoundingClientRect();
+
+    const style = window.getComputedStyle(menuGrid);
+    const gap = parseFloat(style.rowGap || style.gap || 8);
+
+    const fullRows = menuGrid.querySelectorAll(".menu-item.full-row").length;
+    const normalItems = menuItems.length - fullRows;
+    const normalRows = Math.ceil(normalItems / 2);
+    const totalRows = fullRows + normalRows;
+
+    const safetySpace = 8;
+    const availableHeight = navbarRect.top - gridRect.top - safetySpace;
+
+    const totalGapHeight = gap * Math.max(totalRows - 1, 0);
+
+    let itemHeight = (availableHeight - totalGapHeight) / totalRows;
+
+    itemHeight = Math.max(40, Math.min(itemHeight, 86));
+
+    menuGrid.style.setProperty("--home-menu-item-height", `${itemHeight}px`);
+    menuGrid.style.setProperty("--home-menu-gap", `${Math.max(5, Math.min(gap, 9))}px`);
+}
+window.addEventListener("resize", () => {
+    requestAnimationFrame(() => {
+        fitHomeMenuToNavbar();
+    });
+});
+
+window.addEventListener("orientationchange", () => {
+    setTimeout(() => {
+        fitHomeMenuToNavbar();
+    }, 300);
+});
 /* ===== SAVING JARS SYSTEM ===== */
 
 function savingJarsMilestones(goal) {
