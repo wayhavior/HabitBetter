@@ -2505,6 +2505,20 @@ body.cyberpunk-mode #jar-pig-canvas {
     width: auto;
 }
 
+/* ✅ Navbar for HOME page (NOT fixed - inline with menu) */
+.floating-navbar.in-home {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    margin: 0px auto 0;
+    width: 90%;
+       max-width: 95vw;
+    justify-content: space-around;
+    padding: 12px 20px;
+    z-index: 10;
+}
+
 .navbar-btn {
     display: flex;
     flex-direction: column;
